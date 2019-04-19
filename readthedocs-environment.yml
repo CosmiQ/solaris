@@ -1,15 +1,23 @@
-name: cw-eval
-channels:
-  - conda-forge
-  - defaults
+name: solaris
 dependencies:
   - python=3.6
-  - pip
-  - shapely
-  - pandas
-  - geopandas
-  - ipykernel
-  - nbsphinx
-  - numpy
-  - tqdm
-  - rtree
+  - pip=19.0
+  - shapely=1.6.4
+  - fiona=1.8.6
+  - pandas=0.23.4
+  - geopandas=0.4.0
+  - opencv=4.1.0
+  - numpy=1.15.4
+  - tqdm=4.28.1
+  - rtree=0.8.3
+  - networkx=2.2
+  - nbsphinx=0.4.2
+  - rasterio=1.0.18
+  - scipy=1.2.0
+  - scikit-image=0.15.dev0
+  - tensorflow=1.13.1
+  - pytorch=1.0.1
+  - pip:
+    - affine=2.2.1
+    - albumentations=0.2.2
+    - rio-tiler=1.2.4

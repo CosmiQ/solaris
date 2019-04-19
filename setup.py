@@ -1,8 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '1.0.0'
-
-readme = ''
+version = '0.0.1'
 
 # Runtime requirements.
 inst_reqs = ["shapely", "rtree", "tqdm", "geopandas", "pandas"]
@@ -12,8 +10,7 @@ extra_reqs = {
 
 setup(name='cw_eval',
       version=version,
-      description=u"""Provide Evaluation Metrics for Machine Learning Challenges""",
-      long_description=readme,
+      description="CosmiQ Works Geospatial Analysis Pipeline Toolkit",
       classifiers=[
           'Intended Audience :: Information Technology',
           'Intended Audience :: Science/Research',
@@ -22,9 +19,9 @@ setup(name='cw_eval',
           'Programming Language :: Python :: 2.7',
           'Topic :: Scientific/Engineering :: GIS'],
       keywords='spacenet machinelearning iou aws',
-      author=u"David Lindenbaum and Nicholas Weir",
+      author=u"CosmiQ Works",
       author_email='nweir@iqt.org',
-      url='https://github.com/CosmiQ/cw_eval',
+      url='https://github.com/CosmiQ/solaris',
       license='Apache-2.0',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       zip_safe=False,
@@ -32,6 +29,5 @@ setup(name='cw_eval',
       install_requires=inst_reqs,
       extras_require=extra_reqs,
       entry_points={
-          'console_scripts': ['spacenet_eval=cw_eval.challenge_eval.spacenet_eval:main']
       }
       )

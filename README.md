@@ -1,95 +1,62 @@
-<h1 align="center">CosmiQ Works Evaluation Tools</h1>
+<h1 align="center">Solaris</h1>
+<h2 align="center">CosmiQ Works Geospatial Analysis Pipeline Toolkit
 <p align="center">
 <a href="http://www.cosmiqworks.org"><img src="http://www.cosmiqworks.org/wp-content/uploads/2016/02/cropped-CosmiQ-Works-Logo_R_RGB.png" width="350" alt="CosmiQ Works"></a>
 <br>
 <br>
-<img align="center" src="https://img.shields.io/pypi/v/cw-eval.svg" alt="PyPI">
-<img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge">
+<!-- <img align="center" src="https://img.shields.io/pypi/v/cw-eval.svg" alt="PyPI"> -->
+<!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge">
 <img align="center" src="https://travis-ci.com/CosmiQ/cw-eval.svg?branch=master" alt="build">
 <img align="center" src="https://readthedocs.org/projects/cw-eval/badge/" alt="docs">
 <img align="center" src="https://img.shields.io/github/license/cosmiq/cw-eval.svg" alt="license">
 <img align="center" src="https://img.shields.io/docker/build/cosmiqworks/cw-eval.svg" alt="docker">
 <a href="https://codecov.io/gh/CosmiQ/cw-eval"><img align="center" src="https://codecov.io/gh/CosmiQ/cw-eval/branch/master/graph/badge.svg" /></a>
-</p>
+</p> -->
 
 - [Installation Instructions](#installation-instructions)
-- [API Documentation](https://cw-eval.readthedocs.io/)
+<!-- - [API Documentation](https://cw-eval.readthedocs.io/) -->
 - [Dependencies](#dependencies)
 - [License](#license)
 ---
-This package is purpose-built to support evaluation of computer vision models for geospatial imagery. The functionality contained here is used in evaluation of the SpaceNet Challenges.
+This repository provides the source code for the CosmiQ Works `solaris` project, which provides software tools for:
+- Tiling large-format overhead images and vector labels
+- Converting between geospatial raster and vector formats and machine learning-compatible formats
+- Performing semantic and instance segmentation, object detection, and related tasks using deep learning models designed specifically for overhead image analysis
+- Evaluating performance of deep learning model predictions
 
 ## Installation Instructions
-Several packages require binaries to be installed before pip installing the other packages.  Conda is a simple way to install everything and their dependencies:
-
-#### Conda
+We recommend creating a `conda` environment with the dependencies defined in [environment.yml](./environment.yml) before installing `solaris`. After cloning the repository:
 ```
-conda install -c conda-forge cw-eval
+cd solaris
+conda create -n solaris -f environment.yml
+conda activate solaris
+pip install .
 ```
 
 #### pip
 
-You may use `pip` to install this package; however, note that one of the dependencies, [rtree](https://github.com/Toblerity/rtree), can require pre-installation of [libspatialindex](https://libspatialindex.github.io/) binaries. This can all be done by installing rtree using conda:
-```
-conda install -c conda-forge rtree
-```
-or by following the instructions for libspatialindex install.
+The package also exists on[ PyPI](https://pypi.org), but note that some of the dependencies, specifically [rtree](https://github.com/Toblerity/) and [gdal](https://www.gdal.org), are challenging to install without anaconda. We therefore recommend installing at least those dependency using `conda` before installing from PyPI.
 
-Once you have dependencies set up, install as usual using `pip`:
 ```
-pip install cw-eval
+conda install -c conda-forge rtree gdal
 ```
-For bleeding-edge versions (use at your own risk), `pip install` from the dev branch of this repository:
+If you don't want to use `conda`, you can [install libspatialindex](https://libspatialindex.org), then `pip install rtree`. Installing GDAL without conda can be very difficult and approaches vary dramatically depending upon the build environment and version, but online resources may help with specific use cases.
+
+Once you have that dependency set up, install as usual using `pip`:
+
 ```
-pip install --upgrade git+https://github.com/CosmiQ/cw-eval.git@dev
+pip install solaris
 ```
 
-#### Docker
+<!-- #### Docker
 
 You may also use our Docker container:
 ```
-docker pull cosmiqworks/cw-eval
-```
+docker pull cosmiqworks/solaris
+``` -->
 
-## API Documentation
-See the [readthedocs](https://cw-eval.readthedocs.io/) page.
-
-
-## Evaluation Metric
-The evaluation metric for this competition is an F1 score with the matching algorithm inspired by Algorithm 2 in the [ILSVRC paper applied to the detection of building footprints](https://arxiv.org/pdf/1409.0575v3.pdf). For each building there is a geospatially defined polygon label to represent the footprint of the building. A SpaceNet entry will generate polygons to represent proposed building footprints.  Each proposed building footprint is either a “true positive” or a “false positive”.
-
-* The proposed footprint is a “true positive” if the proposal is the closest (measured by the IoU) proposal to a labeled polygon AND the IoU between the proposal and the label is about the prescribed threshold of 0.5.
-* Otherwise, the proposed footprint is a “false positive”.
-
-There is at most one “true positive” per labeled polygon.
-The measure of proximity between labeled polygons and proposed polygons is the Jaccard similarity or the “Intersection over Union (IoU)”, defined as:
-
-![alt text](https://github.com/SpaceNetChallenge/utilities/blob/master/content/IoU.jpg "IoU")
-
-The value of IoU is between 0 and 1, where closer polygons have higher IoU values.
-
-The F1 score is the harmonic mean of precision and recall, combining the accuracy in the precision measure and the completeness in the recall measure. For this competition, the number of true positives and false positives are aggregated over all of the test imagery and the F1 score is computed from the aggregated counts.
-
-For example, suppose there are N polygon labels for building footprints that are considered ground truth and suppose there are M proposed polygons by an entry in the SpaceNet competition.  Let tp denote the number of true positives of the M proposed polygons.  The F1 score is calculated as follows:
-
-![alt text](https://github.com/SpaceNetChallenge/utilities/blob/master/content/F1.jpg "IoU")
-
-The F1 score is between 0 and 1, where larger numbers are better scores.
-
-Hints:
-* The images provided could contain anywhere from zero to multiple buildings.
-* All proposed polygons should be legitimate (they should have an area, they should have points that at least make a triangle instead of a point or a line, etc).
-* Use the [metric implementation code](https://github.com/SpaceNetChallenge/utilities/blob/master/python/evaluateScene.py) to self evaluate.
-To run the metric you can use the following command:
-
-```
-spacenet_eval --help
-
-spacenet_eval --proposal_csv ./TestCases_SpaceNet4/AOI_6_Atlanta_Test_v3_prop_1extra.csv \
-              --truth_csv ./TestCases_SpaceNet4/AOI_6_Atlanta_Test_v3.csv \
-              --challenge off-nadir \
-              --output_file test.csv
-```
+<!-- ## API Documentation
+See the [readthedocs](https://cw-eval.readthedocs.io/) page. -->
 
 ## Dependencies
 All dependencies can be found in the docker file [Dockerfile](./Dockerfile) or
@@ -97,8 +64,8 @@ All dependencies can be found in the docker file [Dockerfile](./Dockerfile) or
 
 ## License
 See [LICENSE](./LICENSE.txt).
-
+<!--
 ## Traffic
 ![GitHub](https://img.shields.io/github/downloads/cosmiq/cw-eval/total.svg)
 ![PyPI](https://img.shields.io/pypi/dm/cw-eval.svg)
-![Conda](https://img.shields.io/conda/dn/conda-forge/cw-eval.svg)
+![Conda](https://img.shields.io/conda/dn/conda-forge/cw-eval.svg) -->

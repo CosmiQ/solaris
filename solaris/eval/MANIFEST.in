@@ -1,4 +1,0 @@
-include *.txt
-include *.md
-include cw_eval/data/*.geojson
-include cw_eval/data/*.csv
