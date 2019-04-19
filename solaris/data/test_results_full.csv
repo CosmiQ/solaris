@@ -1,0 +1,2 @@
+F1Score,FalseNeg,FalsePos,Precision,Recall,TruePos,imageID,iou_field,nadir-category
+1.0,0,0,1.0,1.0,151,Atlanta_nadir10_catid_1030010003CAF100_740801_3728289,iou_score,Nadir

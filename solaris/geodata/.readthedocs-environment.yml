@@ -1,0 +1,14 @@
+name: cw-geodata
+dependencies:
+  - python=3.6
+  - pip
+  - shapely
+  - fiona
+  - pandas
+  - geopandas
+  - numpy
+  - scikit-image
+  - networkx
+  - rasterio
+  - pip:
+    - affine

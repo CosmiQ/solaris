@@ -1,0 +1,989 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>CosmiQ Works Tiler (cw-tiler) Documentation &mdash; cw-tiler 0.2.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="#" class="icon icon-home"> cw-tiler
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">CosmiQ Works Tiler (cw-tiler) Documentation</a><ul>
+<li><a class="reference internal" href="#sections">Sections</a></li>
+<li><a class="reference internal" href="#module-cw_tiler.main">Tiling functions</a></li>
+<li><a class="reference internal" href="#utility-functions">Utility functions</a><ul>
+<li><a class="reference internal" href="#module-cw_tiler.utils">Raster utilities</a></li>
+<li><a class="reference internal" href="#module-cw_tiler.vector_utils">Vector utilities</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">cw-tiler</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>CosmiQ Works Tiler (cw-tiler) Documentation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="cosmiq-works-tiler-cw-tiler-documentation">
+<h1>CosmiQ Works Tiler (<a class="reference external" href="https://github.com/cosmiq/cw-tiler">cw-tiler</a>) Documentation<a class="headerlink" href="#cosmiq-works-tiler-cw-tiler-documentation" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body"><a class="reference external" href="https://www.cosmiqworks.org">CosmiQ Works</a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Version:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Copyright:</th><td class="field-body">2018, CosmiQ Works</td>
+</tr>
+<tr class="field-even field"><th class="field-name">License:</th><td class="field-body">This work is licensed under the <a class="reference external" href="https://opensource.org/licenses/BSD-3-Clause">BSD 3-Clause license</a>.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="sections">
+<h2>Sections<a class="headerlink" href="#sections" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="#tiling-functions"><span class="std std-ref">Tiling functions</span></a></li>
+<li><a class="reference internal" href="#utility-functions"><span class="std std-ref">Utility functions</span></a></li>
+<li><a class="reference internal" href="#raster-utilities"><span class="std std-ref">Raster utilities</span></a></li>
+<li><a class="reference internal" href="#vector-utilities"><span class="std std-ref">Vector utilities</span></a></li>
+</ul>
+</div>
+<div class="section" id="module-cw_tiler.main">
+<span id="id2"></span><span id="tiling-functions"></span><h2>Tiling functions<a class="headerlink" href="#module-cw_tiler.main" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="cw_tiler.main.calculate_analysis_grid">
+<code class="descclassname">cw_tiler.main.</code><code class="descname">calculate_analysis_grid</code><span class="sig-paren">(</span><em>utm_bounds</em>, <em>stride_size_meters=300</em>, <em>cell_size_meters=400</em>, <em>quad_space=False</em>, <em>snapToGrid=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/main.html#calculate_analysis_grid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.main.calculate_analysis_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for <a class="reference internal" href="#cw_tiler.main.calculate_anchor_points" title="cw_tiler.main.calculate_anchor_points"><code class="xref py py-func docutils literal notranslate"><span class="pre">calculate_anchor_points()</span></code></a> and <a class="reference internal" href="#cw_tiler.main.calculate_cells" title="cw_tiler.main.calculate_cells"><code class="xref py py-func docutils literal notranslate"><span class="pre">calculate_cells()</span></code></a>.</p>
+<p>Based on UTM boundaries of an image tile, stride size, and cell size,
+output a dictionary of boundary lists for analysis chips.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>utm_bounds</strong> (list-like of shape <code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code>) – UTM coordinate limits of the input tile.</li>
+<li><strong>stride_size_meters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Step size in both X and Y directions between cells in units of meters.
+Defaults to <code class="docutils literal notranslate"><span class="pre">300</span></code> .</li>
+<li><strong>cell_size_meters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Extent of each cell in both X and Y directions in units of meters.
+Defaults to <code class="docutils literal notranslate"><span class="pre">400</span></code> .</li>
+<li><strong>quad_space</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – See <a class="reference internal" href="#cw_tiler.main.calculate_anchor_points" title="cw_tiler.main.calculate_anchor_points"><code class="xref py py-func docutils literal notranslate"><span class="pre">calculate_anchor_points()</span></code></a> . <code class="docutils literal notranslate"><span class="pre">quad_space</span></code> . Defaults to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> .</li>
+<li><strong>snapToGrid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>cells_list_dict</strong> – A dict whose keys are either <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></code> (see
+<a class="reference internal" href="#cw_tiler.main.calculate_anchor_points" title="cw_tiler.main.calculate_anchor_points"><code class="xref py py-func docutils literal notranslate"><span class="pre">calculate_anchor_points()</span></code></a> . <code class="docutils literal notranslate"><span class="pre">quad_space</span></code> ), and whose values are
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> s of boundaries in the shape <code class="docutils literal notranslate"><span class="pre">[W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N]</span></code> . Boundaries
+are in UTM coordinates.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict of list(s) of lists</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.main.calculate_anchor_points">
+<code class="descclassname">cw_tiler.main.</code><code class="descname">calculate_anchor_points</code><span class="sig-paren">(</span><em>utm_bounds</em>, <em>stride_size_meters=400</em>, <em>extend=False</em>, <em>quad_space=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/main.html#calculate_anchor_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.main.calculate_anchor_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get anchor point (lower left corner of bbox) for chips from a tile.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>utm_bounds</strong> (<em>tuple of 4 floats</em>) – A <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple</span></code></a> of shape <code class="docutils literal notranslate"><span class="pre">(min_x,</span> <span class="pre">min_y,</span> <span class="pre">max_x,</span> <span class="pre">max_y)</span></code> that defines
+the spatial extent of the tile to be split. Coordinates should be in
+UTM.</li>
+<li><strong>stride_size_meters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Stride size in both X and Y directions for generating chips. Defaults
+to <code class="docutils literal notranslate"><span class="pre">400</span></code>.</li>
+<li><strong>extend</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – Defines whether UTM boundaries should be rounded to the nearest integer
+outward from <cite>utm_bounds</cite> (<cite>extend</cite> == <code class="docutils literal notranslate"><span class="pre">True</span></code>) or
+inward from <cite>utm_bounds</cite> (<cite>extend</cite> == <code class="docutils literal notranslate"><span class="pre">False</span></code>). Defaults
+to <code class="docutils literal notranslate"><span class="pre">False</span></code> (inward).</li>
+<li><strong>quad_space</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – If tiles will overlap by no more than half their X and/or Y extent in
+each direction, <cite>quad_space</cite> can be used to split chip
+anchors into four non-overlapping subsets. For example, if anchor
+points are 400m apart and each chip will be 800m by 800m, <cite>quad_space</cite>
+will generate four sets which do not internally overlap;
+however, this would fail if tiles are 900m by 900m. Defaults to
+<code class="docutils literal notranslate"><span class="pre">False</span></code>, in which case the returned <code class="docutils literal notranslate"><span class="pre">anchor_point_list_dict</span></code> will
+comprise a single list of anchor points.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>anchor_point_list_dict</strong> (<em>dict of list(s) of lists</em>)</li>
+<li>If <code class="docutils literal notranslate"><span class="pre">quad_space==True</span></code> , <cite>anchor_point_list_dict</cite> is a</li>
+<li><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a> with four keys <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></code> corresponding to the four</li>
+<li>subsets of chips generated (see <cite>quad_space</cite> ). If</li>
+<li><code class="docutils literal notranslate"><span class="pre">quad_space==False</span></code> , <cite>anchor_point_list_dict</cite> is a</li>
+<li><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a> with a single key, <code class="docutils literal notranslate"><span class="pre">0</span></code> , that corresponds to a list of all</li>
+<li><em>of the generated anchor points. Each anchor point in the list(s) is an</em></li>
+<li><code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y]</span></code> pair of UTM coordinates denoting the SW corner of a chip.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.main.calculate_cells">
+<code class="descclassname">cw_tiler.main.</code><code class="descname">calculate_cells</code><span class="sig-paren">(</span><em>anchor_point_list_dict</em>, <em>cell_size_meters</em>, <em>utm_bounds=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/main.html#calculate_cells"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.main.calculate_cells" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate boundaries for image cells (chips) from anchor points.</p>
+<p>This function takes the output from <a class="reference internal" href="#cw_tiler.main.calculate_anchor_points" title="cw_tiler.main.calculate_anchor_points"><code class="xref py py-func docutils literal notranslate"><span class="pre">calculate_anchor_points()</span></code></a> as well
+as a desired cell size (<cite>cell_size_meters</cite>) and outputs
+<code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code> tuples for generating cells.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>anchor_point_list_dict</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – Output of <a class="reference internal" href="#cw_tiler.main.calculate_anchor_points" title="cw_tiler.main.calculate_anchor_points"><code class="xref py py-func docutils literal notranslate"><span class="pre">calculate_anchor_points()</span></code></a>. See that function for
+details.</li>
+<li><strong>cell_size_meters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Desired width and height of each cell in meters.</li>
+<li><strong>utm_bounds</strong> (<em>list -like of float s</em><em>, </em><em>optional</em>) – A <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a>-like of shape <code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code> that defines the limits
+of an input image tile in UTM coordinates to ensure that no cells
+extend beyond those limits. If not provided, all cells will be included
+even if they extend beyond the UTM limits of the source imagery.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>cells_list_dict</strong> – A dict whose keys are either <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></code> (see
+<a class="reference internal" href="#cw_tiler.main.calculate_anchor_points" title="cw_tiler.main.calculate_anchor_points"><code class="xref py py-func docutils literal notranslate"><span class="pre">calculate_anchor_points()</span></code></a> . <code class="docutils literal notranslate"><span class="pre">quad_space</span></code> ), and whose values are
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> s of boundaries in the shape <code class="docutils literal notranslate"><span class="pre">[W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N]</span></code> . Boundaries
+are in UTM coordinates.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict of list(s) of lists</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.main.get_chip">
+<code class="descclassname">cw_tiler.main.</code><code class="descname">get_chip</code><span class="sig-paren">(</span><em>source</em>, <em>ll_x</em>, <em>ll_y</em>, <em>gsd</em>, <em>utm_crs=''</em>, <em>indexes=None</em>, <em>tilesize=256</em>, <em>nodata=None</em>, <em>alpha=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/main.html#get_chip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.main.get_chip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an image tile of specific pixel size.</p>
+<p>This wrapper function permits passing of <cite>ll_x</cite>, <cite>ll_y</cite>, <cite>gsd</cite>, and
+<cite>tile_size_pixels</cite> in place of boundary coordinates to extract an image
+region of defined pixel extent.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.Dataset</span></code>) – Source imagery dataset to tile.</li>
+<li><strong>ll_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Lower left x position (i.e. Western bound).</li>
+<li><strong>ll_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Lower left y position (i.e. Southern bound).</li>
+<li><strong>gsd</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Ground sample distance of the source imagery in meter/pixel units.</li>
+<li><strong>utm_crs</strong> (<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.crs.html#rasterio.crs.CRS" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.crs.CRS</span></code></a>, optional) – UTM coordinate reference system string for the imagery. If not
+provided, this is calculated using
+<a class="reference internal" href="#cw_tiler.utils.get_wgs84_bounds" title="cw_tiler.utils.get_wgs84_bounds"><code class="xref py py-func docutils literal notranslate"><span class="pre">cw_tiler.utils.get_wgs84_bounds()</span></code></a> and
+<a class="reference internal" href="#cw_tiler.utils.calculate_UTM_crs" title="cw_tiler.utils.calculate_UTM_crs"><code class="xref py py-func docutils literal notranslate"><span class="pre">cw_tiler.utils.calculate_UTM_crs()</span></code></a> .</li>
+<li><strong>indexes</strong> (<em>tuple of 3 ints</em><em>, </em><em>optional</em>) – Band indexes for the output. By default, extracts all of the
+indexes from <cite>source</cite>.</li>
+<li><strong>tilesize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Output image X and Y pixel extent. Defaults to <code class="docutils literal notranslate"><span class="pre">256</span></code> .</li>
+<li><strong>nodata</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – Value to use for <cite>nodata</cite> pixels during tiling. By default, uses
+the existing <cite>nodata</cite> value in <cite>source</cite>.</li>
+<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Alpha band index for tiling. By default, uses the same band as
+specified by <cite>source</cite>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></span></dt>
+<dd><p class="first last">int pixel values. Shape is <code class="docutils literal notranslate"><span class="pre">(C,</span> <span class="pre">Y,</span> <span class="pre">X)</span></code> if retrieving multiple
+channels, <code class="docutils literal notranslate"><span class="pre">(Y,</span> <span class="pre">X)</span></code> otherwise.</p>
+</dd>
+<dt>mask <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></span></dt>
+<dd><p class="first last">int mask indicating which pixels contain information and which are
+<cite>nodata</cite>. Pixels containing data have value <code class="docutils literal notranslate"><span class="pre">255</span></code>, <cite>nodata</cite> pixels
+have value <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+</dd>
+<dt>window <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.windows.html#rasterio.windows.Window" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.windows.Window</span></code></a></span></dt>
+<dd><p class="first last"><a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.windows.html#rasterio.windows.Window" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.windows.Window</span></code></a> object indicating the raster
+location of the dataset subregion being returned in <cite>data</cite>.</p>
+</dd>
+<dt>window_transform <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">affine.Affine</span></code></span></dt>
+<dd><p class="first last">Affine transformation for the window.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="docutils literal notranslate"><span class="pre">(data,</span> <span class="pre">mask,</span> <span class="pre">window,</span> <span class="pre">window_transform</span></code> tuple.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.main.tile_utm">
+<code class="descclassname">cw_tiler.main.</code><code class="descname">tile_utm</code><span class="sig-paren">(</span><em>source</em>, <em>ll_x</em>, <em>ll_y</em>, <em>ur_x</em>, <em>ur_y</em>, <em>indexes=None</em>, <em>tilesize=256</em>, <em>nodata=None</em>, <em>alpha=None</em>, <em>dst_crs='epsg:4326'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/main.html#tile_utm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.main.tile_utm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a UTM tile from a file or a <code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.Dataset</span></code> in memory.</p>
+<p>This function is a wrapper around <a class="reference internal" href="#cw_tiler.main.tile_utm_source" title="cw_tiler.main.tile_utm_source"><code class="xref py py-func docutils literal notranslate"><span class="pre">tile_utm_source()</span></code></a> to enable passing
+of file paths instead of pre-loaded <code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.Dataset</span></code> s.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.Dataset</span></code>) – Source imagery dataset to tile.</li>
+<li><strong>ll_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Lower left x position (i.e. Western bound).</li>
+<li><strong>ll_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Lower left y position (i.e. Southern bound).</li>
+<li><strong>ur_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Upper right x position (i.e. Eastern bound).</li>
+<li><strong>ur_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Upper right y position (i.e. Northern bound).</li>
+<li><strong>indexes</strong> (<em>tuple of 3 ints</em><em>, </em><em>optional</em>) – Band indexes for the output. By default, extracts all of the
+indexes from <cite>source</cite> .</li>
+<li><strong>tilesize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>, optional) – Output image X and Y pixel extent. Defaults to <code class="docutils literal notranslate"><span class="pre">256</span></code>.</li>
+<li><strong>nodata</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – Value to use for <code class="docutils literal notranslate"><span class="pre">nodata</span></code> pixels during tiling. By default, uses
+the existing <code class="docutils literal notranslate"><span class="pre">nodata</span></code> value in <cite>src</cite>.</li>
+<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code></a>, optional) – Alpha band index for tiling. By default, uses the same band as
+specified by <cite>src</cite>.</li>
+<li><strong>dst_crs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>optional</em>) – Coordinate reference system for output. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;epsg:4326&quot;</span></code>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></span></dt>
+<dd><p class="first last">int pixel values. Shape is <code class="docutils literal notranslate"><span class="pre">(C,</span> <span class="pre">Y,</span> <span class="pre">X)</span></code> if retrieving multiple
+channels, <code class="docutils literal notranslate"><span class="pre">(Y,</span> <span class="pre">X)</span></code> otherwise.</p>
+</dd>
+<dt>mask <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></span></dt>
+<dd><p class="first last">int mask indicating which pixels contain information and which are
+<cite>nodata</cite>. Pixels containing data have value <code class="docutils literal notranslate"><span class="pre">255</span></code>, <cite>nodata</cite> pixels
+have value <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+</dd>
+<dt>window <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.windows.html#rasterio.windows.Window" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.windows.Window</span></code></a></span></dt>
+<dd><p class="first last"><a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.windows.html#rasterio.windows.Window" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.windows.Window</span></code></a> object indicating the raster
+location of the dataset subregion being returned in <cite>data</cite>.</p>
+</dd>
+<dt>window_transform <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">affine.Affine</span></code></span></dt>
+<dd><p class="first last">Affine transformation for the window.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="docutils literal notranslate"><span class="pre">(data,</span> <span class="pre">mask,</span> <span class="pre">window,</span> <span class="pre">window_transform</span></code> tuple.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.main.tile_utm_source">
+<code class="descclassname">cw_tiler.main.</code><code class="descname">tile_utm_source</code><span class="sig-paren">(</span><em>src</em>, <em>ll_x</em>, <em>ll_y</em>, <em>ur_x</em>, <em>ur_y</em>, <em>indexes=None</em>, <em>tilesize=256</em>, <em>nodata=None</em>, <em>alpha=None</em>, <em>dst_crs='epsg:4326'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/main.html#tile_utm_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.main.tile_utm_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a UTM tile from a <code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.Dataset</span></code> in memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>src</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.Dataset</span></code>) – Source imagery dataset to tile.</li>
+<li><strong>ll_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Lower left x position (i.e. Western bound).</li>
+<li><strong>ll_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><em>f</em>) – </li>
+<li><strong>loat</strong> – Lower left y position (i.e. Southern bound).</li>
+<li><strong>ur_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Upper right x position (i.e. Eastern bound).</li>
+<li><strong>ur_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Upper right y position (i.e. Northern bound).</li>
+<li><strong>indexes</strong> (<em>tuple of 3 ints</em><em>, </em><em>optional</em>) – Band indexes for the output. By default, extracts all of the
+indexes from <cite>src</cite>.</li>
+<li><strong>tilesize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Output image X and Y pixel extent. Defaults to <code class="docutils literal notranslate"><span class="pre">256</span></code>.</li>
+<li><strong>nodata</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – Value to use for <cite>nodata</cite> pixels during tiling. By default, uses
+the existing <cite>nodata</cite> value in <cite>src</cite>.</li>
+<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Alpha band index for tiling. By default, uses the same band as
+specified by <cite>src</cite>.</li>
+<li><strong>dst_crs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>optional</em>) – Coordinate reference system for output. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;epsg:4326&quot;</span></code>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></span></dt>
+<dd><p class="first last">int pixel values. Shape is <code class="docutils literal notranslate"><span class="pre">(C,</span> <span class="pre">Y,</span> <span class="pre">X)</span></code> if retrieving multiple
+channels, <code class="docutils literal notranslate"><span class="pre">(Y,</span> <span class="pre">X)</span></code> otherwise.</p>
+</dd>
+<dt>mask <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></span></dt>
+<dd><p class="first last">int mask indicating which pixels contain information and which are
+<cite>nodata</cite>. Pixels containing data have value <code class="docutils literal notranslate"><span class="pre">255</span></code>, <cite>nodata</cite>
+pixels have value <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+</dd>
+<dt>window <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.windows.html#rasterio.windows.Window" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.windows.Window</span></code></a></span></dt>
+<dd><p class="first last"><a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.windows.html#rasterio.windows.Window" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.windows.Window</span></code></a> object indicating the raster
+location of the dataset subregion being returned in <cite>data</cite>.</p>
+</dd>
+<dt>window_transform <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">affine.Affine</span></code></span></dt>
+<dd><p class="first last">Affine transformation for the window.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="docutils literal notranslate"><span class="pre">(data,</span> <span class="pre">mask,</span> <span class="pre">window,</span> <span class="pre">window_transform)</span></code> tuple.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="utility-functions">
+<span id="id3"></span><h2>Utility functions<a class="headerlink" href="#utility-functions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-cw_tiler.utils">
+<span id="id4"></span><span id="raster-utilities"></span><h3>Raster utilities<a class="headerlink" href="#module-cw_tiler.utils" title="Permalink to this headline">¶</a></h3>
+<p>cw_tiler.utils: utility functions for raster files.</p>
+<dl class="function">
+<dt id="cw_tiler.utils.calculate_UTM_crs">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">calculate_UTM_crs</code><span class="sig-paren">(</span><em>coords</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#calculate_UTM_crs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.calculate_UTM_crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate UTM Projection String.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>coords</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) – <code class="docutils literal notranslate"><span class="pre">[longitude,</span> <span class="pre">latitude]</span></code> or
+<code class="docutils literal notranslate"><span class="pre">[min_longitude,</span> <span class="pre">min_latitude,</span> <span class="pre">max_longitude,</span> <span class="pre">max_latitude]</span></code> .</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – returns <a class="reference external" href="https://proj4.org/usage/quickstart.html">proj4 projection string</a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.utils.get_utm_bounds">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">get_utm_bounds</code><span class="sig-paren">(</span><em>source</em>, <em>utm_EPSG</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#get_utm_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.get_utm_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform bounds from source crs to a UTM crs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (str or <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.io.html#rasterio.io.DatasetReader" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.io.DatasetReader</span></code></a>) – Source dataset. Can either be a string path to a dataset GeoTIFF or
+a <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.io.html#rasterio.io.DatasetReader" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.io.DatasetReader</span></code></a> object.</li>
+<li><strong>utm_EPSG</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.crs.html#rasterio.crs.CRS" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.crs.CRS</span></code></a> string indicating the UTM crs to transform
+into.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>utm_bounds</strong> – Bounding box limits in <cite>utm_EPSG</cite> crs coordinates with shape
+<code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.utils.get_utm_vrt">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">get_utm_vrt</code><span class="sig-paren">(</span><em>source</em>, <em>crs='EPSG:3857'</em>, <em>resampling=&lt;Resampling.bilinear: 1&gt;</em>, <em>src_nodata=None</em>, <em>dst_nodata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#get_utm_vrt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.get_utm_vrt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.vrt.html#rasterio.vrt.WarpedVRT" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.vrt.WarpedVRT</span></code></a> projection of a dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.io.html#rasterio.io.DatasetReader" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.io.DatasetReader</span></code></a>) – The dataset to virtually warp using <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.vrt.html#rasterio.vrt.WarpedVRT" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.vrt.WarpedVRT</span></code></a>.</li>
+<li><strong>crs</strong> (<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.crs.html#rasterio.crs.CRS" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.crs.CRS</span></code></a>, optional) – Coordinate reference system for the VRT. Defaults to ‘EPSG:3857’
+(Web Mercator).</li>
+<li><strong>resampling</strong> (<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.enums.html#rasterio.enums.Resampling" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.enums.Resampling</span></code></a> method, optional) – Resampling method to use. Defaults to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">rasterio.enums.Resampling.bilinear()</span></code>. Alternatives include
+<code class="xref py py-func docutils literal notranslate"><span class="pre">rasterio.enums.Resampling.average()</span></code>,
+<code class="xref py py-func docutils literal notranslate"><span class="pre">rasterio.enums.Resampling.cubic()</span></code>, and others. See docs for
+<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.enums.html#rasterio.enums.Resampling" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.enums.Resampling</span></code></a> for more information.</li>
+<li><strong>src_nodata</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – Source nodata value which will be ignored for interpolation. Defaults
+to <code class="docutils literal notranslate"><span class="pre">None</span></code> (all data used in interpolation).</li>
+<li><strong>dst_nodata</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – Destination nodata value which will be ignored for interpolation.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>, in which case the value of <cite>src_nodata</cite> will be
+used if provided, or <code class="docutils literal notranslate"><span class="pre">0</span></code> otherwise.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.vrt.html#rasterio.vrt.WarpedVRT" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.vrt.WarpedVRT</span></code></a> instance with the transformation.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.utils.get_utm_vrt_profile">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">get_utm_vrt_profile</code><span class="sig-paren">(</span><em>source</em>, <em>crs='EPSG:3857'</em>, <em>resampling=&lt;Resampling.bilinear: 1&gt;</em>, <em>src_nodata=None</em>, <em>dst_nodata=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#get_utm_vrt_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.get_utm_vrt_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.profiles.html#rasterio.profiles.Profile" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.profiles.Profile</span></code></a> for projection of a VRT.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.io.html#rasterio.io.DatasetReader" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.io.DatasetReader</span></code></a>) – The dataset to virtually warp using <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.vrt.html#rasterio.vrt.WarpedVRT" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.vrt.WarpedVRT</span></code></a>.</li>
+<li><strong>crs</strong> (<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.crs.html#rasterio.crs.CRS" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.crs.CRS</span></code></a>, optional) – Coordinate reference system for the VRT. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;EPSG:3857&quot;</span></code>
+(Web Mercator).</li>
+<li><strong>resampling</strong> (<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.enums.html#rasterio.enums.Resampling" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.enums.Resampling</span></code></a> method, optional) – Resampling method to use. Defaults to
+<code class="docutils literal notranslate"><span class="pre">rasterio.enums.Resampling.bilinear</span></code>. Alternatives include
+<code class="docutils literal notranslate"><span class="pre">rasterio.enums.Resampling.average</span></code>,
+<code class="docutils literal notranslate"><span class="pre">rasterio.enums.Resampling.cubic</span></code>, and others. See docs for
+<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.enums.html#rasterio.enums.Resampling" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.enums.Resampling</span></code></a> for more information.</li>
+<li><strong>src_nodata</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – Source nodata value which will be ignored for interpolation. Defaults
+to <code class="docutils literal notranslate"><span class="pre">None</span></code> (all data used in interpolation).</li>
+<li><strong>dst_nodata</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – Destination nodata value which will be ignored for interpolation.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>, in which case the value of <cite>src_nodata</cite>
+will be used if provided, or <code class="docutils literal notranslate"><span class="pre">0</span></code> otherwise.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li>A <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.profiles.html#rasterio.profiles.Profile" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.profiles.Profile</span></code></a> instance with the transformation</li>
+<li><em>applied.</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.utils.get_wgs84_bounds">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">get_wgs84_bounds</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#get_wgs84_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.get_wgs84_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform dataset bounds from source crs to wgs84.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>source</strong> (str or <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.io.html#rasterio.io.DatasetReader" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.io.DatasetReader</span></code></a>) – Source dataset to get bounds transformation for. Can either be a string
+path to a dataset file or an opened
+<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.io.html#rasterio.io.DatasetReader" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.io.DatasetReader</span></code></a>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>wgs_bounds</strong> – Bounds tuple for <cite>source</cite> in wgs84 crs with shape <code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code>.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)">tuple</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.utils.tile_exists_utm">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">tile_exists_utm</code><span class="sig-paren">(</span><em>boundsSrc</em>, <em>boundsTile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#tile_exists_utm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.tile_exists_utm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if suggested tile is within bounds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>boundsSrc</strong> (<em>list-like</em>) – Bounding box limits for the source data in the shape <code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code>.</li>
+<li><strong>boundsTile</strong> (<em>list-like</em>) – Bounding box limits for the target tile in the shape <code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Do the <cite>boundsSrc</cite> and <cite>boundsTile</cite> bounding boxes overlap?</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)">bool</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.utils.tile_read_utm">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">tile_read_utm</code><span class="sig-paren">(</span><em>source, bounds, tilesize, indexes=[1], nodata=None, alpha=None, dst_crs='EPSG:3857', verbose=False, boundless=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#tile_read_utm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.tile_read_utm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read data and mask.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> (str or <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.io.html#rasterio.io.DatasetReader" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.io.DatasetReader</span></code></a>) – input file path or <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.io.html#rasterio.io.DatasetReader" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.io.DatasetReader</span></code></a> object.</li>
+<li><strong>bounds</strong> (<code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code> tuple) – bounds in <cite>dst_crs</cite> .</li>
+<li><strong>tilesize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – Length of one edge of the output tile in pixels.</li>
+<li><strong>indexes</strong> (<em>list of ints</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Channel index(es) to output. Returns a 3D <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code> of
+shape (C, Y, X) if <cite>indexes</cite> is a list, or a 2D array if <cite>indexes</cite> is
+an int channel index. Defaults to <code class="docutils literal notranslate"><span class="pre">1</span></code>.</li>
+<li><strong>nodata</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – nodata value to use in <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.vrt.html#rasterio.vrt.WarpedVRT" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.vrt.WarpedVRT</span></code></a>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (use all data in warping).</li>
+<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>optional</em>) – Force alphaband if not present in the dataset metadata. Defaults to
+<code class="docutils literal notranslate"><span class="pre">None</span></code> (don’t force).</li>
+<li><strong>dst_crs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>optional</em>) – Destination coordinate reference system. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;EPSG:3857&quot;</span></code>
+(Web Mercator)</li>
+<li><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – Verbose text output. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</li>
+<li><strong>boundless</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – This argument is deprecated and should never be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code>) – int pixel values. Shape is <code class="docutils literal notranslate"><span class="pre">(C,</span> <span class="pre">Y,</span> <span class="pre">X)</span></code> if retrieving multiple
+channels, <code class="docutils literal notranslate"><span class="pre">(Y,</span> <span class="pre">X)</span></code> otherwise.</li>
+<li><strong>mask</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code>) – int mask indicating which pixels contain information and which are
+<cite>nodata</cite>. Pixels containing data have value <code class="docutils literal notranslate"><span class="pre">255</span></code>, <cite>nodata</cite>
+pixels have value <code class="docutils literal notranslate"><span class="pre">0</span></code>.</li>
+<li><strong>window</strong> (<a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.windows.html#rasterio.windows.Window" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.windows.Window</span></code></a>) – <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.windows.html#rasterio.windows.Window" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.windows.Window</span></code></a> object indicating the raster
+location of the dataset subregion being returned in <cite>data</cite>.</li>
+<li><strong>window_transform</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">affine.Affine</span></code>) – Affine transformation for <cite>window</cite> .</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.utils.utm_getZone">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">utm_getZone</code><span class="sig-paren">(</span><em>longitude</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#utm_getZone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.utm_getZone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate UTM Zone from Longitude.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>longitude</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – longitude coordinate (Degrees.decimal degrees)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – UTM Zone number.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)">int</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.utils.utm_isNorthern">
+<code class="descclassname">cw_tiler.utils.</code><code class="descname">utm_isNorthern</code><span class="sig-paren">(</span><em>latitude</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/utils.html#utm_isNorthern"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.utils.utm_isNorthern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if a latitude coordinate is in the northern hemisphere.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>latitude</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – latitude coordinate (Deg.decimal degrees)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – <code class="docutils literal notranslate"><span class="pre">True</span></code> if <cite>latitude</cite> is in the northern hemisphere, <code class="docutils literal notranslate"><span class="pre">False</span></code>
+otherwise.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)">bool</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cw_tiler.vector_utils">
+<span id="id5"></span><span id="vector-utilities"></span><h3>Vector utilities<a class="headerlink" href="#module-cw_tiler.vector_utils" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="cw_tiler.vector_utils.clip_gdf">
+<code class="descclassname">cw_tiler.vector_utils.</code><code class="descname">clip_gdf</code><span class="sig-paren">(</span><em>gdf</em>, <em>poly_to_cut</em>, <em>min_partial_perc=0.0</em>, <em>geom_type='Polygon'</em>, <em>use_sindex=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/vector_utils.html#clip_gdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.vector_utils.clip_gdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clip GDF to a provided polygon.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Clips objects within <cite>gdf</cite> to the region defined by
+<cite>poly_to_cut</cite>. Also adds several columns to the output:</p>
+<dl class="last docutils">
+<dt><cite>origarea</cite></dt>
+<dd>The original area of the polygons (only used if <cite>geom_type</cite> ==
+<code class="docutils literal notranslate"><span class="pre">&quot;Polygon&quot;</span></code>).</dd>
+<dt><cite>origlen</cite></dt>
+<dd>The original length of the objects (only used if <cite>geom_type</cite> ==
+<code class="docutils literal notranslate"><span class="pre">&quot;LineString&quot;</span></code>).</dd>
+<dt><cite>partialDec</cite></dt>
+<dd>The fraction of the object that remains after clipping
+(fraction of area for Polygons, fraction of length for
+LineStrings.) Can filter based on this by using <cite>min_partial_perc</cite>.</dd>
+<dt><cite>truncated</cite></dt>
+<dd>Boolean indicator of whether or not an object was clipped.</dd>
+</dl>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>gdf</strong> (<a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a>) – A <a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a> of polygons to clip.</li>
+<li><strong>poly_to_cut</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">shapely.geometry.Polygon</span></code>) – The polygon to clip objects in <cite>gdf</cite> to.</li>
+<li><strong>min_partial_perc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a><em>, </em><em>optional</em>) – The minimum fraction of an object in <cite>gdf</cite> that must be
+preserved. Defaults to 0.0 (include any object if any part remains
+following clipping).</li>
+<li><strong>geom_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>optional</em>) – Type of objects in <cite>gdf</cite>. Can be one of
+<code class="docutils literal notranslate"><span class="pre">[&quot;Polygon&quot;,</span> <span class="pre">&quot;LineString&quot;]</span></code> . Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;Polygon&quot;</span></code> .</li>
+<li><strong>use_sindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – Use the <cite>gdf</cite> sindex be used for searching. Improves efficiency
+but requires <a class="reference external" href="http://libspatialindex.github.io/">libspatialindex</a> .</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>cutGeoDF</strong> – <cite>gdf</cite> with all contained objects clipped to <cite>poly_to_cut</cite> .
+See notes above for details on additional clipping columns added.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.vector_utils.rasterize_gdf">
+<code class="descclassname">cw_tiler.vector_utils.</code><code class="descname">rasterize_gdf</code><span class="sig-paren">(</span><em>gdf</em>, <em>src_shape</em>, <em>burn_value=1</em>, <em>src_transform=Affine(1.0</em>, <em>0.0</em>, <em>0.0</em>, <em>0.0</em>, <em>1.0</em>, <em>0.0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/vector_utils.html#rasterize_gdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.vector_utils.rasterize_gdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a GeoDataFrame to a binary image (array) mask.</p>
+<p>Uses <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.features.html#rasterio.features.rasterize" title="(in rasterio v1.0.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">rasterio.features.rasterize()</span></code></a> to generate a raster mask from
+object geometries in <cite>gdf</cite> .</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>gdf</strong> (<a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a>) – A <a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a> of objects to convert into a mask.</li>
+<li><strong>src_shape</strong> (<em>list-like of 2 ints</em>) – Shape of the output array in <code class="docutils literal notranslate"><span class="pre">(Y,</span> <span class="pre">X)</span></code> pixel units.</li>
+<li><strong>burn_value</strong> (<em>int in range</em><em>(</em><em>0</em><em>, </em><em>255</em><em>)</em><em>, </em><em>optional</em>) – Integer value for pixels corresponding to objects from <cite>gdf</cite> .
+Defaults to 1.</li>
+<li><strong>src_transform</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">affine.Affine</span></code>, optional) – Affine transformation for the output raster. If not provided, defaults
+to arbitrary pixel units.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>img</strong> – A NumPy array of integers with 0s where no pixels from objects in
+<cite>gdf</cite> exist, and <cite>burn_value</cite> where they do. Shape is
+defined by <cite>src_shape</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code>, dtype <code class="docutils literal notranslate"><span class="pre">uint8</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.vector_utils.read_vector_file">
+<code class="descclassname">cw_tiler.vector_utils.</code><code class="descname">read_vector_file</code><span class="sig-paren">(</span><em>geoFileName</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/vector_utils.html#read_vector_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.vector_utils.read_vector_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read Fiona-Supported Files into GeoPandas GeoDataFrame.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This will raise an exception for empty GeoJSON files, which GDAL and Fiona
+cannot read. <code class="docutils literal notranslate"><span class="pre">try/except</span></code> the <code class="xref py py-exc docutils literal notranslate"><span class="pre">Fiona.errors.DriverError</span></code> or
+<code class="xref py py-exc docutils literal notranslate"><span class="pre">Fiona._err.CPLE_OpenFailedError</span></code> if you must use this.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.vector_utils.search_gdf_bounds">
+<code class="descclassname">cw_tiler.vector_utils.</code><code class="descname">search_gdf_bounds</code><span class="sig-paren">(</span><em>gdf</em>, <em>tile_bounds</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/vector_utils.html#search_gdf_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.vector_utils.search_gdf_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use <cite>tile_bounds</cite> to subset <cite>gdf</cite> and return the intersect.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>gdf</strong> (<a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a>) – A <a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a> of polygons to subset.</li>
+<li><strong>tile_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)"><em>tuple</em></a>) – A tuple of shape <code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code> that denotes the boundaries of a
+tile.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>smallGdf</strong> – The subset of <cite>gdf</cite> that overlaps with <cite>tile_bounds</cite> .</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.vector_utils.search_gdf_polygon">
+<code class="descclassname">cw_tiler.vector_utils.</code><code class="descname">search_gdf_polygon</code><span class="sig-paren">(</span><em>gdf</em>, <em>tile_polygon</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/vector_utils.html#search_gdf_polygon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.vector_utils.search_gdf_polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find polygons in a GeoDataFrame that overlap with <cite>tile_polygon</cite> .</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>gdf</strong> (<a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a>) – A <a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a> of polygons to search.</li>
+<li><strong>tile_polygon</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">shapely.geometry.Polygon</span></code>) – A <code class="xref py py-class docutils literal notranslate"><span class="pre">shapely.geometry.Polygon</span></code> denoting a tile’s bounds.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>precise_matches</strong> – The subset of <cite>gdf</cite> that overlaps with <cite>tile_polygon</cite> . If
+there are no overlaps, this will return an empty
+<a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.vector_utils.transformToUTM">
+<code class="descclassname">cw_tiler.vector_utils.</code><code class="descname">transformToUTM</code><span class="sig-paren">(</span><em>gdf</em>, <em>utm_crs</em>, <em>estimate=True</em>, <em>calculate_sindex=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/vector_utils.html#transformToUTM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.vector_utils.transformToUTM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform GeoDataFrame to UTM coordinate reference system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>gdf</strong> (<a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a>) – <a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a> to transform.</li>
+<li><strong>utm_crs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – <a class="reference external" href="https://rasterio.readthedocs.io/en/latest/api/rasterio.crs.html#rasterio.crs.CRS" title="(in rasterio v1.0.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">rasterio.crs.CRS</span></code></a> string for destination UTM CRS.</li>
+<li><strong>estimate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – <div class="deprecated">
+<p><span class="versionmodified">Deprecated since version 0.2.0: </span>This argument is no longer used.</p>
+</div>
+</li>
+<li><strong>calculate_sindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – <div class="deprecated">
+<p><span class="versionmodified">Deprecated since version 0.2.0: </span>This argument is no longer used.</p>
+</div>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>gdf</strong> – The input <a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a> converted to
+<cite>utm_crs</cite> coordinate reference system.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cw_tiler.vector_utils.vector_tile_utm">
+<code class="descclassname">cw_tiler.vector_utils.</code><code class="descname">vector_tile_utm</code><span class="sig-paren">(</span><em>gdf</em>, <em>tile_bounds</em>, <em>min_partial_perc=0.1</em>, <em>geom_type='Polygon'</em>, <em>use_sindex=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cw_tiler/vector_utils.html#vector_tile_utm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cw_tiler.vector_utils.vector_tile_utm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for <a class="reference internal" href="#cw_tiler.vector_utils.clip_gdf" title="cw_tiler.vector_utils.clip_gdf"><code class="xref py py-func docutils literal notranslate"><span class="pre">clip_gdf()</span></code></a> that converts <cite>tile_bounds</cite> to a polygon.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>gdf</strong> (<a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a>) – A <a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a> of polygons to clip.</li>
+<li><strong>tile_bounds</strong> (<em>list-like of floats</em>) – <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></a> of shape <code class="docutils literal notranslate"><span class="pre">(W,</span> <span class="pre">S,</span> <span class="pre">E,</span> <span class="pre">N)</span></code> denoting the boundaries of an
+imagery tile. Converted to a polygon for <a class="reference internal" href="#cw_tiler.vector_utils.clip_gdf" title="cw_tiler.vector_utils.clip_gdf"><code class="xref py py-func docutils literal notranslate"><span class="pre">clip_gdf()</span></code></a>.</li>
+<li><strong>min_partial_perc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – The minimum fraction of an object in <cite>gdf</cite> that must be
+preserved. Defaults to 0.0 (include any object if any part remains
+following clipping).</li>
+<li><strong>use_sindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>, </em><em>optional</em>) – Use the <cite>gdf</cite> sindex be used for searching. Improves efficiency
+but requires <a class="reference external" href="http://libspatialindex.github.io/">libspatialindex</a> .</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>small_gdf</strong> – <cite>gdf</cite> with all contained objects clipped to <cite>tile_bounds</cite>.
+See notes above for details on additional clipping columns added.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://geopandas.org/reference/geopandas.GeoDataFrame.html#geopandas.GeoDataFrame" title="(in GeoPandas v0.4.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">geopandas.GeoDataFrame</span></code></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, CosmiQ Works
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

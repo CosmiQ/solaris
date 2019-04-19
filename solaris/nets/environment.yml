@@ -1,0 +1,19 @@
+name: cw-nets
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6
+  - pip
+  - pytorch-cpu
+  - opencv
+  - numpy
+  - scipy
+  - tqdm
+  - pillow
+  - pandas
+  - scikit-image
+  - tensorflow
+  - pip:
+    - albumentations
+    - keras

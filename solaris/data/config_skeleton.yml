@@ -1,0 +1,85 @@
+################################################################################
+################# CW-NETS MODEL CONFIGURATION SKELETON #########################
+################################################################################
+
+# This skeleton lays out the required instructions for running a model using
+# cw-nets. See the full documentation at [INCLUDE DOC LINK HERE] for details on
+# options, required arguments, and sample usage.
+
+model_name: # include the name of the model to be used here. See the docs
+            # for options.
+train: true  # set to false for inference only
+infer: true  # set to false for training only
+
+pretrained: true  # use pretrained weights associated with the model?
+model_src:  # if not using a model included with the package, you must specify
+            # a path to find the model architecture. See documentation.
+nn_framework:  # if not using a model included with the package, use this
+               # argument to specify if it uses keras, pytorch, tf, etc.
+
+data_specs:
+  width: # width of the input images taken in by the neural net.
+  height:  # height of the input images taken in by the neural net.
+  bit_depth:  # 8 or 16.
+  channels:  # number of channels in the input imagery.
+  val_holdout_frac:  # if empty, assumes that separate data ref files define the
+                     # training and validation dataset. If a float between 0 and
+                     # 1, indicates the fraction of training data that's held
+                     # out for validation (and validation_data_csv will be
+                     # ignored)
+  data_workers:  # number of cpu threads to use for loading and preprocessing
+                 # input images.
+#  other_inputs:  # this can provide a list of additional inputs to pass to the
+                 # neural net for training. These inputs should be specified in
+                 # extra columns of the csv files (denoted below), either as
+                 # filepaths to additional data to load or as values to include.
+                 # NOTE: This is not currently implemented.
+
+training_data_csv:  # path to the reference csv that defines training data.
+                    # see the documentation for the specifications of this file.
+validation_data_csv:  # path to the validation ref csv. See the docs. If
+                      # val_holdout_frac is specified (under data_specs), then
+                      # this argument will be ignored.
+inference_data_csv:  # path to the reference csv that defines inference data.
+                     # see the documentation for the specs of this file.
+
+training_augmentation:  # augmentations for use with training data
+  augmentations:
+    # include augmentations here. See the documentation for options and
+    # required arguments.
+  p: 1.0  # probability of applying the entire training augmentation pipeline.
+validation_augmentation:  # augmentations for use with validation data
+  augmentations:
+    # include augmentations here
+  p:  # probability of applying the full validation augmentation pipeline.
+inference_augmentation:  # this is optional. If not provided,
+                         # validation_augmentation will be used instead.
+
+training:
+  epochs:  # number of epochs. A list can also be provided here indicating
+           # distinct sets of epochs at different learning rates, etc; if so,
+           # a list of equal length must be provided in the parameter that varies
+           # with the values for each set of epochs.
+  batch_size:  # size of each batch fed into nn.
+  steps_per_epoch:  # optional argument defining # steps/epoch. If not provided,
+                    # each epoch will include the number of steps needed to go
+                    # through the entire training dataset.
+  optimizer:  # optimizer function name. see docs for options.
+  lr:  # learning rate.
+  opt_args:  # dictionary of values (e.g. alpha, gamma, momentum) specific to
+             # the optimizer.
+  loss:  # loss function name. See docs for options. If using a composite loss
+         # function, enter composite here, then specify the individual components
+         # in a subdict below with keys loss_1, loss_2, etc. Parameters to the
+         # loss function should also be specified in this subdict (or in
+         # subdicts for the components of the composite loss function). See the
+         # docs for an example.
+  checkpoints:  # a list of epoch numbers to checkpoint at.
+  additional_callbacks:  # a list of callbacks to use for Keras models.
+
+inference:
+  batch_size:  # size of each batch.
+  window_step_size:  # size of each step for the sliding window for inference.
+                     # set to the same size as the input image size for zero
+                     # overlap; to average predictions across multiple images,
+                     # use a smaller step size.

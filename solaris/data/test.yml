@@ -1,0 +1,12 @@
+training_augmentation:
+  augmentations:
+    flip:
+    CenterCrop:
+      height: 10
+      width: 10
+      p: 0.5
+    oneof:
+      VerticalFlip:
+      RandomBrightnessContrast:
+        p: 0.2
+  p: 1.0

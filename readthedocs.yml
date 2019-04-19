@@ -1,0 +1,15 @@
+version: 2
+formats:
+  - htmlzip
+  - pdf
+
+python:
+  version: 3.6
+  install:
+    - method: pip
+      path: .
+conda:
+  environment: readthedocs-environment.yml
+
+build:
+  image: latest

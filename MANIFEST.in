@@ -1,0 +1,8 @@
+include *.txt
+include *.md
+include cw_geodata/data/*json
+include cw_geodata/data/*.csv
+include cw_geodata/data/*.pkl
+include cw_geodata/data/*.tif
+include cw_geodata/data/*.txt
+include cw_geodata/data/cli_test/expected/*

@@ -1,0 +1,592 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cw_tiler.main &mdash; cw-tiler 0.2.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> cw-tiler
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">cw-tiler</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>cw_tiler.main</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for cw_tiler.main</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">rasterio</span>
+<span class="kn">from</span> <span class="nn">rasterio.warp</span> <span class="k">import</span> <span class="n">transform_bounds</span>
+<span class="kn">from</span> <span class="nn">rasterio.io</span> <span class="k">import</span> <span class="n">DatasetReader</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">rio_tiler.errors</span> <span class="k">import</span> <span class="n">TileOutsideBounds</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">utils</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="tile_utm_source"><a class="viewcode-back" href="../../index.html#cw_tiler.main.tile_utm_source">[docs]</a><span class="k">def</span> <span class="nf">tile_utm_source</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">ll_x</span><span class="p">,</span> <span class="n">ll_y</span><span class="p">,</span> <span class="n">ur_x</span><span class="p">,</span> <span class="n">ur_y</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tilesize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                    <span class="n">nodata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dst_crs</span><span class="o">=</span><span class="s1">&#39;epsg:4326&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a UTM tile from a :py:class:`rasterio.Dataset` in memory.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    src : :py:class:`rasterio.Dataset`</span>
+<span class="sd">        Source imagery dataset to tile.</span>
+<span class="sd">    ll_x : int or float</span>
+<span class="sd">        Lower left x position (i.e. Western bound).</span>
+<span class="sd">    ll_y : int or f</span>
+<span class="sd">    loat</span>
+<span class="sd">        Lower left y position (i.e. Southern bound).</span>
+<span class="sd">    ur_x : int or float</span>
+<span class="sd">        Upper right x position (i.e. Eastern bound).</span>
+<span class="sd">    ur_y : int or float</span>
+<span class="sd">        Upper right y position (i.e. Northern bound).</span>
+<span class="sd">    indexes : tuple of 3 ints, optional</span>
+<span class="sd">        Band indexes for the output. By default, extracts all of the</span>
+<span class="sd">        indexes from `src`.</span>
+<span class="sd">    tilesize : int, optional</span>
+<span class="sd">        Output image X and Y pixel extent. Defaults to ``256``.</span>
+<span class="sd">    nodata : int or float, optional</span>
+<span class="sd">        Value to use for `nodata` pixels during tiling. By default, uses</span>
+<span class="sd">        the existing `nodata` value in `src`.</span>
+<span class="sd">    alpha : int, optional</span>
+<span class="sd">        Alpha band index for tiling. By default, uses the same band as</span>
+<span class="sd">        specified by `src`.</span>
+<span class="sd">    dst_crs : str, optional</span>
+<span class="sd">        Coordinate reference system for output. Defaults to ``&quot;epsg:4326&quot;``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ``(data, mask, window, window_transform)`` tuple.</span>
+<span class="sd">        data : :py:class:`numpy.ndarray`</span>
+<span class="sd">            int pixel values. Shape is ``(C, Y, X)`` if retrieving multiple</span>
+<span class="sd">            channels, ``(Y, X)`` otherwise.</span>
+<span class="sd">        mask : :py:class:`numpy.ndarray`</span>
+<span class="sd">            int mask indicating which pixels contain information and which are</span>
+<span class="sd">            `nodata`. Pixels containing data have value ``255``, `nodata`</span>
+<span class="sd">            pixels have value ``0``.</span>
+<span class="sd">        window : :py:class:`rasterio.windows.Window`</span>
+<span class="sd">            :py:class:`rasterio.windows.Window` object indicating the raster</span>
+<span class="sd">            location of the dataset subregion being returned in `data`.</span>
+<span class="sd">        window_transform : :py:class:`affine.Affine`</span>
+<span class="sd">            Affine transformation for the window.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">wgs_bounds</span> <span class="o">=</span> <span class="n">transform_bounds</span><span class="p">(</span>
+        <span class="o">*</span><span class="p">[</span><span class="n">src</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">dst_crs</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">bounds</span><span class="p">),</span> <span class="n">densify_pts</span><span class="o">=</span><span class="mi">21</span><span class="p">)</span>
+
+    <span class="n">indexes</span> <span class="o">=</span> <span class="n">indexes</span> <span class="k">if</span> <span class="n">indexes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">src</span><span class="o">.</span><span class="n">indexes</span>
+    <span class="n">tile_bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">ll_x</span><span class="p">,</span> <span class="n">ll_y</span><span class="p">,</span> <span class="n">ur_x</span><span class="p">,</span> <span class="n">ur_y</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">utils</span><span class="o">.</span><span class="n">tile_exists_utm</span><span class="p">(</span><span class="n">wgs_bounds</span><span class="p">,</span> <span class="n">tile_bounds</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">TileOutsideBounds</span><span class="p">(</span>
+            <span class="s1">&#39;Tile </span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1"> is outside image bounds&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tile_bounds</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">tile_read_utm</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">tile_bounds</span><span class="p">,</span> <span class="n">tilesize</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="n">indexes</span><span class="p">,</span>
+                               <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dst_crs</span><span class="o">=</span><span class="n">dst_crs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tile_utm"><a class="viewcode-back" href="../../index.html#cw_tiler.main.tile_utm">[docs]</a><span class="k">def</span> <span class="nf">tile_utm</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">ll_x</span><span class="p">,</span> <span class="n">ll_y</span><span class="p">,</span> <span class="n">ur_x</span><span class="p">,</span> <span class="n">ur_y</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tilesize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+             <span class="n">nodata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dst_crs</span><span class="o">=</span><span class="s1">&#39;epsg:4326&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a UTM tile from a file or a :py:class:`rasterio.Dataset` in memory.</span>
+
+<span class="sd">    This function is a wrapper around :func:`tile_utm_source` to enable passing</span>
+<span class="sd">    of file paths instead of pre-loaded :py:class:`rasterio.Dataset` s.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    source : :py:class:`rasterio.Dataset`</span>
+<span class="sd">        Source imagery dataset to tile.</span>
+<span class="sd">    ll_x : int or float</span>
+<span class="sd">        Lower left x position (i.e. Western bound).</span>
+<span class="sd">    ll_y : int or float</span>
+<span class="sd">        Lower left y position (i.e. Southern bound).</span>
+<span class="sd">    ur_x : int or float</span>
+<span class="sd">        Upper right x position (i.e. Eastern bound).</span>
+<span class="sd">    ur_y : int or float</span>
+<span class="sd">        Upper right y position (i.e. Northern bound).</span>
+<span class="sd">    indexes : tuple of 3 ints, optional</span>
+<span class="sd">        Band indexes for the output. By default, extracts all of the</span>
+<span class="sd">        indexes from `source` .</span>
+<span class="sd">    tilesize : :obj:`int`, optional</span>
+<span class="sd">        Output image X and Y pixel extent. Defaults to ``256``.</span>
+<span class="sd">    nodata : int or float, optional</span>
+<span class="sd">        Value to use for ``nodata`` pixels during tiling. By default, uses</span>
+<span class="sd">        the existing ``nodata`` value in `src`.</span>
+<span class="sd">    alpha : :obj:`int`, optional</span>
+<span class="sd">        Alpha band index for tiling. By default, uses the same band as</span>
+<span class="sd">        specified by `src`.</span>
+<span class="sd">    dst_crs : str, optional</span>
+<span class="sd">        Coordinate reference system for output. Defaults to ``&quot;epsg:4326&quot;``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ``(data, mask, window, window_transform`` tuple.</span>
+<span class="sd">        data : :py:class:`numpy.ndarray`</span>
+<span class="sd">            int pixel values. Shape is ``(C, Y, X)`` if retrieving multiple</span>
+<span class="sd">            channels, ``(Y, X)`` otherwise.</span>
+<span class="sd">        mask : :class:`numpy.ndarray`</span>
+<span class="sd">            int mask indicating which pixels contain information and which are</span>
+<span class="sd">            `nodata`. Pixels containing data have value ``255``, `nodata` pixels</span>
+<span class="sd">            have value ``0``.</span>
+<span class="sd">        window : :py:class:`rasterio.windows.Window`</span>
+<span class="sd">            :py:class:`rasterio.windows.Window` object indicating the raster</span>
+<span class="sd">            location of the dataset subregion being returned in `data`.</span>
+<span class="sd">        window_transform : :py:class:`affine.Affine`</span>
+<span class="sd">            Affine transformation for the window.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">DatasetReader</span><span class="p">):</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">source</span>
+    <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>  <span class="c1"># read in the file</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Source is not a rasterio.Dataset or a valid path.&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tile_utm_source</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">ll_x</span><span class="p">,</span> <span class="n">ll_y</span><span class="p">,</span> <span class="n">ur_x</span><span class="p">,</span> <span class="n">ur_y</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="n">indexes</span><span class="p">,</span>
+                           <span class="n">tilesize</span><span class="o">=</span><span class="n">tilesize</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+                           <span class="n">dst_crs</span><span class="o">=</span><span class="n">dst_crs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_chip"><a class="viewcode-back" href="../../index.html#cw_tiler.main.get_chip">[docs]</a><span class="k">def</span> <span class="nf">get_chip</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">ll_x</span><span class="p">,</span> <span class="n">ll_y</span><span class="p">,</span> <span class="n">gsd</span><span class="p">,</span>
+             <span class="n">utm_crs</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+             <span class="n">indexes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">tilesize</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+             <span class="n">nodata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">alpha</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an image tile of specific pixel size.</span>
+
+<span class="sd">    This wrapper function permits passing of `ll_x`, `ll_y`, `gsd`, and</span>
+<span class="sd">    `tile_size_pixels` in place of boundary coordinates to extract an image</span>
+<span class="sd">    region of defined pixel extent.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    source : :py:class:`rasterio.Dataset`</span>
+<span class="sd">        Source imagery dataset to tile.</span>
+<span class="sd">    ll_x : int or float</span>
+<span class="sd">        Lower left x position (i.e. Western bound).</span>
+<span class="sd">    ll_y : int or float</span>
+<span class="sd">        Lower left y position (i.e. Southern bound).</span>
+<span class="sd">    gsd : float</span>
+<span class="sd">        Ground sample distance of the source imagery in meter/pixel units.</span>
+<span class="sd">    utm_crs : :py:class:`rasterio.crs.CRS`, optional</span>
+<span class="sd">        UTM coordinate reference system string for the imagery. If not</span>
+<span class="sd">        provided, this is calculated using</span>
+<span class="sd">        :func:`cw_tiler.utils.get_wgs84_bounds` and</span>
+<span class="sd">        :func:`cw_tiler.utils.calculate_UTM_crs` .</span>
+<span class="sd">    indexes : tuple of 3 ints, optional</span>
+<span class="sd">        Band indexes for the output. By default, extracts all of the</span>
+<span class="sd">        indexes from `source`.</span>
+<span class="sd">    tilesize : int, optional</span>
+<span class="sd">        Output image X and Y pixel extent. Defaults to ``256`` .</span>
+<span class="sd">    nodata : int or float, optional</span>
+<span class="sd">        Value to use for `nodata` pixels during tiling. By default, uses</span>
+<span class="sd">        the existing `nodata` value in `source`.</span>
+<span class="sd">    alpha : int, optional</span>
+<span class="sd">        Alpha band index for tiling. By default, uses the same band as</span>
+<span class="sd">        specified by `source`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ``(data, mask, window, window_transform`` tuple.</span>
+<span class="sd">        data : :class:`numpy.ndarray`</span>
+<span class="sd">            int pixel values. Shape is ``(C, Y, X)`` if retrieving multiple</span>
+<span class="sd">            channels, ``(Y, X)`` otherwise.</span>
+<span class="sd">        mask : :class:`numpy.ndarray`</span>
+<span class="sd">            int mask indicating which pixels contain information and which are</span>
+<span class="sd">            `nodata`. Pixels containing data have value ``255``, `nodata` pixels</span>
+<span class="sd">            have value ``0``.</span>
+<span class="sd">        window : :py:class:`rasterio.windows.Window`</span>
+<span class="sd">            :py:class:`rasterio.windows.Window` object indicating the raster</span>
+<span class="sd">            location of the dataset subregion being returned in `data`.</span>
+<span class="sd">        window_transform : :py:class:`affine.Affine`</span>
+<span class="sd">            Affine transformation for the window.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ur_x</span> <span class="o">=</span> <span class="n">ll_x</span> <span class="o">+</span> <span class="n">gsd</span> <span class="o">*</span> <span class="n">tilesize</span>
+    <span class="n">ur_y</span> <span class="o">=</span> <span class="n">ll_y</span> <span class="o">+</span> <span class="n">gsd</span> <span class="o">*</span> <span class="n">tilesize</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">DatasetReader</span><span class="p">):</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">source</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">utm_crs</span><span class="p">:</span>
+        <span class="n">wgs_bounds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_wgs84_bounds</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="n">utm_crs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">calculate_UTM_crs</span><span class="p">(</span><span class="n">wgs_bounds</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tile_utm</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">ll_x</span><span class="p">,</span> <span class="n">ll_y</span><span class="p">,</span> <span class="n">ur_x</span><span class="p">,</span> <span class="n">ur_y</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="n">indexes</span><span class="p">,</span>
+                    <span class="n">tilesize</span><span class="o">=</span><span class="n">tilesize</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">nodata</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+                    <span class="n">dst_crs</span><span class="o">=</span><span class="n">utm_crs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="calculate_anchor_points"><a class="viewcode-back" href="../../index.html#cw_tiler.main.calculate_anchor_points">[docs]</a><span class="k">def</span> <span class="nf">calculate_anchor_points</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">,</span> <span class="n">stride_size_meters</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">extend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">quad_space</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get anchor point (lower left corner of bbox) for chips from a tile.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    utm_bounds : tuple of 4 floats</span>
+<span class="sd">        A :obj:`tuple` of shape ``(min_x, min_y, max_x, max_y)`` that defines</span>
+<span class="sd">        the spatial extent of the tile to be split. Coordinates should be in</span>
+<span class="sd">        UTM.</span>
+<span class="sd">    stride_size_meters : int, optional</span>
+<span class="sd">        Stride size in both X and Y directions for generating chips. Defaults</span>
+<span class="sd">        to ``400``.</span>
+<span class="sd">    extend : bool, optional</span>
+<span class="sd">        Defines whether UTM boundaries should be rounded to the nearest integer</span>
+<span class="sd">        outward from `utm_bounds` (`extend` == ``True``) or</span>
+<span class="sd">        inward from `utm_bounds` (`extend` == ``False``). Defaults</span>
+<span class="sd">        to ``False`` (inward).</span>
+<span class="sd">    quad_space : bool, optional</span>
+<span class="sd">        If tiles will overlap by no more than half their X and/or Y extent in</span>
+<span class="sd">        each direction, `quad_space` can be used to split chip</span>
+<span class="sd">        anchors into four non-overlapping subsets. For example, if anchor</span>
+<span class="sd">        points are 400m apart and each chip will be 800m by 800m, `quad_space`</span>
+<span class="sd">        will generate four sets which do not internally overlap;</span>
+<span class="sd">        however, this would fail if tiles are 900m by 900m. Defaults to</span>
+<span class="sd">        ``False``, in which case the returned ``anchor_point_list_dict`` will</span>
+<span class="sd">        comprise a single list of anchor points.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    anchor_point_list_dict : dict of list(s) of lists</span>
+
+<span class="sd">    If ``quad_space==True`` , `anchor_point_list_dict` is a</span>
+<span class="sd">    :obj:`dict` with four keys ``[0, 1, 2, 3]`` corresponding to the four</span>
+<span class="sd">    subsets of chips generated (see `quad_space` ). If</span>
+<span class="sd">    ``quad_space==False`` , `anchor_point_list_dict` is a</span>
+<span class="sd">    :obj:`dict` with a single key, ``0`` , that corresponds to a list of all</span>
+<span class="sd">    of the generated anchor points. Each anchor point in the list(s) is an</span>
+<span class="sd">    ``[x, y]`` pair of UTM coordinates denoting the SW corner of a chip.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">extend</span><span class="p">:</span>
+        <span class="n">min_x</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">min_y</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">max_x</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">max_y</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NoExtend&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;UTM_Bounds: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">))</span>
+        <span class="n">min_x</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">min_y</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">max_x</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">max_y</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">quad_space</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;quad_space&quot;</span><span class="p">)</span>
+        <span class="n">row_cell</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+        <span class="n">anchor_point_list_dict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">[],</span> <span class="mi">1</span><span class="p">:</span> <span class="p">[],</span> <span class="mi">2</span><span class="p">:</span> <span class="p">[],</span> <span class="mi">3</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">anchor_point_list_dict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">[]}</span>
+
+    <span class="k">for</span> <span class="n">rowidx</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">min_x</span><span class="p">,</span> <span class="n">max_x</span><span class="p">,</span> <span class="n">stride_size_meters</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">colidx</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">min_y</span><span class="p">,</span> <span class="n">max_y</span><span class="p">,</span>
+                                             <span class="n">stride_size_meters</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">quad_space</span><span class="p">:</span>
+                <span class="n">anchor_point_list_dict</span><span class="p">[</span>
+                    <span class="n">row_cell</span><span class="p">[</span><span class="n">rowidx</span> <span class="o">%</span> <span class="mi">2</span><span class="p">,</span> <span class="n">colidx</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">anchor_point_list_dict</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">anchor_point_list_dict</span></div>
+
+
+<div class="viewcode-block" id="calculate_cells"><a class="viewcode-back" href="../../index.html#cw_tiler.main.calculate_cells">[docs]</a><span class="k">def</span> <span class="nf">calculate_cells</span><span class="p">(</span><span class="n">anchor_point_list_dict</span><span class="p">,</span> <span class="n">cell_size_meters</span><span class="p">,</span> <span class="n">utm_bounds</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot; Calculate boundaries for image cells (chips) from anchor points.</span>
+
+<span class="sd">    This function takes the output from :func:`calculate_anchor_points` as well</span>
+<span class="sd">    as a desired cell size (`cell_size_meters`) and outputs</span>
+<span class="sd">    ``(W, S, E, N)`` tuples for generating cells.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    anchor_point_list_dict : dict</span>
+<span class="sd">        Output of :func:`calculate_anchor_points`. See that function for</span>
+<span class="sd">        details.</span>
+<span class="sd">    cell_size_meters : int or float</span>
+<span class="sd">        Desired width and height of each cell in meters.</span>
+<span class="sd">    utm_bounds : list -like of float s, optional</span>
+<span class="sd">        A :obj:`list`-like of shape ``(W, S, E, N)`` that defines the limits</span>
+<span class="sd">        of an input image tile in UTM coordinates to ensure that no cells</span>
+<span class="sd">        extend beyond those limits. If not provided, all cells will be included</span>
+<span class="sd">        even if they extend beyond the UTM limits of the source imagery.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cells_list_dict : dict of list(s) of lists</span>
+<span class="sd">        A dict whose keys are either ``0`` or ``[0, 1, 2, 3]`` (see</span>
+<span class="sd">        :func:`calculate_anchor_points` . ``quad_space`` ), and whose values are</span>
+<span class="sd">        :obj:`list` s of boundaries in the shape ``[W, S, E, N]`` . Boundaries</span>
+<span class="sd">        are in UTM coordinates.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cells_list_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">anchor_point_list_id</span><span class="p">,</span> <span class="n">anchor_point_list</span> <span class="ow">in</span> <span class="n">anchor_point_list_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">cells_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">anchor_point</span> <span class="ow">in</span> <span class="n">anchor_point_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">utm_bounds</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">anchor_point</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">cell_size_meters</span> <span class="o">&lt;</span> <span class="n">utm_bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="ow">and</span> <span class="p">(</span>
+                        <span class="n">anchor_point</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">cell_size_meters</span> <span class="o">&lt;</span> <span class="n">utm_bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]):</span>
+                    <span class="n">cells_list</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">anchor_point</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">anchor_point</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="n">anchor_point</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">cell_size_meters</span><span class="p">,</span>
+                                       <span class="n">anchor_point</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">cell_size_meters</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># include it regardless of extending beyond bounds</span>
+                <span class="n">cells_list</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">anchor_point</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">anchor_point</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                   <span class="n">anchor_point</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">cell_size_meters</span><span class="p">,</span>
+                                   <span class="n">anchor_point</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">cell_size_meters</span><span class="p">])</span>
+
+        <span class="n">cells_list_dict</span><span class="p">[</span><span class="n">anchor_point_list_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cells_list</span>
+
+    <span class="k">return</span> <span class="n">cells_list_dict</span></div>
+
+
+<div class="viewcode-block" id="calculate_analysis_grid"><a class="viewcode-back" href="../../index.html#cw_tiler.main.calculate_analysis_grid">[docs]</a><span class="k">def</span> <span class="nf">calculate_analysis_grid</span><span class="p">(</span><span class="n">utm_bounds</span><span class="p">,</span> <span class="n">stride_size_meters</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+                            <span class="n">cell_size_meters</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">quad_space</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">snapToGrid</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for :func:`calculate_anchor_points` and :func:`calculate_cells`.</span>
+
+<span class="sd">    Based on UTM boundaries of an image tile, stride size, and cell size,</span>
+<span class="sd">    output a dictionary of boundary lists for analysis chips.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    utm_bounds : list-like of shape ``(W, S, E, N)``</span>
+<span class="sd">        UTM coordinate limits of the input tile.</span>
+<span class="sd">    stride_size_meters : int, optional</span>
+<span class="sd">        Step size in both X and Y directions between cells in units of meters.</span>
+<span class="sd">        Defaults to ``300`` .</span>
+<span class="sd">    cell_size_meters : int, optional</span>
+<span class="sd">        Extent of each cell in both X and Y directions in units of meters.</span>
+<span class="sd">        Defaults to ``400`` .</span>
+<span class="sd">    quad_space : bool, optional</span>
+<span class="sd">        See :func:`calculate_anchor_points` . ``quad_space`` . Defaults to</span>
+<span class="sd">        ``False`` .</span>
+<span class="sd">    snapToGrid : bool, optional</span>
+<span class="sd">        .. :deprecated: 0.2.0</span>
+<span class="sd">            This argument is deprecated and no longer has any effect.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cells_list_dict : dict of list(s) of lists</span>
+<span class="sd">        A dict whose keys are either ``0`` or ``[0, 1, 2, 3]`` (see</span>
+<span class="sd">        :func:`calculate_anchor_points` . ``quad_space`` ), and whose values are</span>
+<span class="sd">        :obj:`list` s of boundaries in the shape ``[W, S, E, N]`` . Boundaries</span>
+<span class="sd">        are in UTM coordinates.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">anchor_point_list_dict</span> <span class="o">=</span> <span class="n">calculate_anchor_points</span><span class="p">(</span>
+        <span class="n">utm_bounds</span><span class="p">,</span> <span class="n">stride_size_meters</span><span class="o">=</span><span class="n">stride_size_meters</span><span class="p">,</span>
+        <span class="n">quad_space</span><span class="o">=</span><span class="n">quad_space</span><span class="p">)</span>
+    <span class="n">cells_list_dict</span> <span class="o">=</span> <span class="n">calculate_cells</span><span class="p">(</span><span class="n">anchor_point_list_dict</span><span class="p">,</span> <span class="n">cell_size_meters</span><span class="p">,</span>
+                                      <span class="n">utm_bounds</span><span class="o">=</span><span class="n">utm_bounds</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cells_list_dict</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">utmX</span><span class="p">,</span> <span class="n">utmY</span> <span class="o">=</span> <span class="mi">658029</span><span class="p">,</span> <span class="mi">4006947</span>
+    <span class="n">cll_x</span> <span class="o">=</span> <span class="n">utmX</span>
+    <span class="n">cur_x</span> <span class="o">=</span> <span class="n">utmX</span> <span class="o">+</span> <span class="mi">500</span>
+    <span class="n">cll_y</span> <span class="o">=</span> <span class="n">utmY</span>
+    <span class="n">cur_y</span> <span class="o">=</span> <span class="n">utmY</span> <span class="o">+</span> <span class="mi">500</span>
+    <span class="n">stride_size_meters</span> <span class="o">=</span> <span class="mi">300</span>
+    <span class="n">cell_size_meters</span> <span class="o">=</span> <span class="mi">400</span>
+    <span class="n">ctile_size_pixels</span> <span class="o">=</span> <span class="mi">1600</span>
+    <span class="n">spacenetPath</span> <span class="o">=</span> <span class="s2">&quot;s3://spacenet-dataset/AOI_2_Vegas/srcData/rasterData/AOI_2_Vegas_MUL-PanSharpen_Cloud.tif&quot;</span>
+    <span class="n">address</span> <span class="o">=</span> <span class="n">spacenetPath</span>
+
+    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+        <span class="n">cwgs_bounds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_wgs84_bounds</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="n">cutm_crs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">calculate_UTM_crs</span><span class="p">(</span><span class="n">cwgs_bounds</span><span class="p">)</span>
+        <span class="n">cutm_bounds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_utm_bounds</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">cutm_crs</span><span class="p">)</span>
+
+        <span class="c1">#ccells_list = calculate_analysis_grid(cutm_bounds, stride_size_meters=stride_size_meters,</span>
+        <span class="c1">#                                     cell_size_meters=cell_size_meters)</span>
+
+        <span class="c1">#random_cell = random.choice(ccells_list)</span>
+        <span class="c1">#cll_x, cll_y, cur_x, cur_y = random_cell</span>
+        <span class="n">tile</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">window_transform</span> <span class="o">=</span> <span class="n">tile_utm</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">cll_x</span><span class="p">,</span> <span class="n">cll_y</span><span class="p">,</span> <span class="n">cur_x</span><span class="p">,</span> <span class="n">cur_y</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tilesize</span><span class="o">=</span><span class="n">ctile_size_pixels</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">dst_crs</span><span class="o">=</span><span class="n">cutm_crs</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, CosmiQ Works
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

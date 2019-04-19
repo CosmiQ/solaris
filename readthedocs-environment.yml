@@ -1,0 +1,15 @@
+name: cw-eval
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6
+  - pip
+  - shapely
+  - pandas
+  - geopandas
+  - ipykernel
+  - nbsphinx
+  - numpy
+  - tqdm
+  - rtree
