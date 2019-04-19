@@ -2,6 +2,7 @@ from cw_eval.evalfunctions import calculate_iou, process_iou
 from cw_eval import data
 from shapely.geometry import Polygon
 
+
 class TestEvalFuncs(object):
     def test_overlap(self):
         gt_gdf = data.gt_gdf()

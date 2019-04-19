@@ -1,22 +1,23 @@
 from setuptools import setup, find_packages
+from pip.req import parse_requirements
+
 
 version = '0.0.1'
 
+requirements_path = 'requirements.txt'
 # Runtime requirements.
-inst_reqs = ["shapely", "rtree", "tqdm", "geopandas", "pandas"]
+inst_reqs = parse_requirements(requirements_path)
 
 extra_reqs = {
     'test': ['mock', 'pytest', 'pytest-cov', 'codecov']}
 
-setup(name='cw_eval',
+setup(name='solaris',
       version=version,
-      description="CosmiQ Works Geospatial Analysis Pipeline Toolkit",
+      description="CosmiQ Works Geospatial Machine Learning Analysis Toolkit",
       classifiers=[
           'Intended Audience :: Information Technology',
           'Intended Audience :: Science/Research',
-          'License :: OSI Approved :: BSD License',
           'Programming Language :: Python :: 3.6',
-          'Programming Language :: Python :: 2.7',
           'Topic :: Scientific/Engineering :: GIS'],
       keywords='spacenet machinelearning iou aws',
       author=u"CosmiQ Works",
