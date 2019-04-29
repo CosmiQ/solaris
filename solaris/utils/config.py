@@ -1,9 +1,9 @@
 import yaml
-from .. import models
+from ..nets import zoo
 
 
 def parse(path):
-    """Parse a config file for cw-nets.
+    """Parse a config file for running a model.
 
     Arguments
     ---------
@@ -19,7 +19,7 @@ def parse(path):
     with open(path, 'r') as f:
         config = yaml.safe_load(f)
         f.close()
-    if config['model_name'] not in models.models:
+    if config['model_name'] not in zoo.models:
         raise ValueError('{} is not a valid model name.'.format(
             config['model_name']))
     if not config['train'] and not config['infer']:

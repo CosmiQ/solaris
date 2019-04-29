@@ -2,8 +2,8 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 from multiprocessing import Pool
-from cw_geodata.vector_label.graph import geojson_to_graph
-from cw_geodata.utils.cli import _func_wrapper
+from ..vector.graph import geojson_to_graph
+from ..utils.cli import _func_wrapper
 from itertools import repeat
 
 

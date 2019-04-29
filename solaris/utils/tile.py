@@ -1,6 +1,3 @@
-"""cw_tiler.utils: utility functions for raster files."""
-
-
 import numpy as np
 from shapely.geometry import box
 import rasterio

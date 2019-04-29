@@ -1,5 +1,5 @@
-from __future__ import print_function, with_statement, division
 import geopandas as gpd
+
 
 def calculate_iou(pred_poly, test_data_GDF):
     """Get the best intersection over union for a predicted polygon.

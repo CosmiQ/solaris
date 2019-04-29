@@ -5,7 +5,7 @@ import rasterio
 from rasterio.warp import transform_bounds
 from ..utils.geo import list_to_affine, _reduce_geom_precision
 from ..utils.core import _check_gdf_load
-from ..raster_image.image import get_geo_transform
+from ..raster.image import get_geo_transform
 from shapely.geometry import box, Polygon
 import pandas as pd
 import geopandas as gpd

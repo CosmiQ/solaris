@@ -5,7 +5,7 @@ import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 import os
-from cw_eval import evalfunctions as eF
+from . import evalfunctions as eF
 from fiona.errors import DriverError
 from fiona._err import CPLE_OpenFailedError
 

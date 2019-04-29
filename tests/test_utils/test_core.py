@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import rasterio
-from cw_geodata.data import data_dir
-from cw_geodata.utils.core import _check_df_load, _check_gdf_load
-from cw_geodata.utils.core import _check_rasterio_im_load
+from solaris.data import data_dir
+from solaris.utils.core import _check_df_load, _check_gdf_load
+from solaris.utils.core import _check_rasterio_im_load
 
 
 class TestLoadCheckers(object):

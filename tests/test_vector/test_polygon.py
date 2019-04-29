@@ -5,8 +5,8 @@ from shapely.geometry import Polygon
 from shapely.wkt import loads, dumps
 import geopandas as gpd
 import rasterio
-from cw_geodata.data import data_dir
-from cw_geodata.vector_label.polygon import convert_poly_coords, \
+from solaris.data import data_dir
+from solaris.vector.polygon import convert_poly_coords, \
     affine_transform_gdf, georegister_px_df, geojson_to_px_gdf
 
 square = Polygon([(10, 20), (10, 10), (20, 10), (20, 20)])
@@ -24,12 +24,12 @@ class TestConvertPolyCoords(object):
     """Test the convert_poly_coords functionality."""
 
     def test_square_pass_affine(self):
-        """Test both forward and inverse affine transforms when passed affine obj."""
+        """Test both forward and inverse transforms when passed affine obj."""
         xform_result = convert_poly_coords(square, affine_obj=aff)
         assert xform_result == forward_result
         rev_xform_result = convert_poly_coords(square,
-                                                affine_obj=aff,
-                                                inverse=True)
+                                               affine_obj=aff,
+                                               inverse=True)
         assert rev_xform_result == reverse_result
 
     def test_square_pass_raster(self):

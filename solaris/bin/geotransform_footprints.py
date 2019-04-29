@@ -2,9 +2,9 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 from multiprocessing import Pool
-from cw_geodata.vector_label.polygon import geojson_to_px_gdf
-from cw_geodata.vector_label.polygon import georegister_px_df
-from cw_geodata.utils.cli import _func_wrapper
+from ..vector.polygon import geojson_to_px_gdf
+from ..vector.polygon import georegister_px_df
+from ..utils.cli import _func_wrapper
 from itertools import repeat
 
 

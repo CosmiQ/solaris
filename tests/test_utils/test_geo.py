@@ -4,8 +4,8 @@ import geopandas as gpd
 import shapely
 from affine import Affine
 from shapely.wkt import loads
-from cw_geodata.data import data_dir
-from cw_geodata.utils.geo import list_to_affine, split_multi_geometries, \
+from solaris.data import data_dir
+from solaris.utils.geo import list_to_affine, split_multi_geometries, \
     geometries_internal_intersection
 
 

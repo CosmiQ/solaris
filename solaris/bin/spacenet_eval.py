@@ -1,9 +1,11 @@
 """Script for executing eval for SpaceNet challenges."""
 from __future__ import print_function, with_statement, division
-from cw_eval.challenge_eval import off_nadir_dataset
+from ..eval.challenges import off_nadir_dataset
+from ..eval.challenges import spacenet_buildings2_dataset
 import argparse
 import pandas as pd
-supported_challenges = ['off-nadir']#, 'spaceNet-buildings2', 'spaceNet-building1', 'spacenet-roads1', 'buildings', 'roads']
+supported_challenges = ['off-nadir', 'spaceNet-buildings2']
+# , 'spaceNet-buildings1', 'spacenet-roads1', 'buildings', 'roads']
 
 
 def main():
@@ -13,7 +15,7 @@ def main():
                         help='Proposal CSV')
     parser.add_argument('--truth_csv', '-t', type=str,
                         help='Truth CSV')
-    parser.add_argument('--challenge', type=str,
+    parser.add_argument('--challenge', '-c', type=str,
                         default='off-nadir',
                         choices=supported_challenges,
                         help='SpaceNet Challenge eval type')
@@ -30,6 +32,12 @@ def main():
                         'minArea': 20}
         results_DF, results_DF_Full = off_nadir_dataset.eval_off_nadir(
             prop_csv=prop_file, truth_csv=truth_file, **evalSettings)
+    elif args.challenge.lower() == 'spaceNet-buildings2'.lower():
+        evalSettings = {'miniou': 0.5,
+                        'minArea': 20}
+        results_DF, results_DF_Full = spacenet_buildings2_dataset \
+            .eval_spacenet_buildings2(
+                prop_csv=prop_file, truth_csv=truth_file, **evalSettings)
 
     with pd.option_context('display.max_rows', None,
                            'display.max_columns', None):

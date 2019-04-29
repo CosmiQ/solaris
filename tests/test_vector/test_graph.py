@@ -1,6 +1,6 @@
 import os
-from cw_geodata.data import data_dir
-from cw_geodata.vector_label.graph import geojson_to_graph
+from solaris.data import data_dir
+from solaris.vector.graph import geojson_to_graph
 import pickle
 import networkx as nx
 

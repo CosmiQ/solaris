@@ -1,6 +1,6 @@
 import os
-from cw_geodata.data import data_dir, sample_load_rasterio, sample_load_gdal
-from cw_geodata.raster_image.image import get_geo_transform
+from solaris.data import data_dir, sample_load_rasterio, sample_load_gdal
+from solaris.raster.image import get_geo_transform
 from affine import Affine
 
 

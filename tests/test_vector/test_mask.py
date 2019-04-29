@@ -6,8 +6,8 @@ from affine import Affine
 from shapely.geometry import Polygon
 import skimage
 import rasterio
-from cw_geodata.data import data_dir
-from cw_geodata.vector_label.mask import footprint_mask, boundary_mask, \
+from solaris.data import data_dir
+from solaris.vector.mask import footprint_mask, boundary_mask, \
     contact_mask, df_to_px_mask, mask_to_poly_geojson
 
 

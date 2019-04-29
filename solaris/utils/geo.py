@@ -3,11 +3,7 @@ import numpy as np
 import pandas as pd
 from affine import Affine
 import geopandas as gpd
-import os
 import rasterio
-from rasterio.enums import Resampling
-import ogr
-import shapely
 from shapely.errors import WKTReadingError
 from shapely.wkt import loads
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape

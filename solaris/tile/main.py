@@ -4,7 +4,7 @@ from rasterio.warp import transform_bounds
 from rasterio.io import DatasetReader
 import math
 from rio_tiler.errors import TileOutsideBounds
-from . import utils
+from ..utils import tile
 import numpy as np
 
 

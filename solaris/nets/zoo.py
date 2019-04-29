@@ -1,1 +1,1 @@
-models = ['spacenet4_baseline']
+models = []  # fill with string names for models once added

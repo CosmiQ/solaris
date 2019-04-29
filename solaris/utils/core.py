@@ -4,6 +4,7 @@ import geopandas as gpd
 import rasterio
 import skimage
 
+
 def _check_rasterio_im_load(im):
     """Check if `im` is already loaded in; if not, load it in."""
     if isinstance(im, str):

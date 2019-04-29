@@ -2,8 +2,8 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 from multiprocessing import Pool
-from cw_geodata.vector_label.mask import df_to_px_mask
-from cw_geodata.utils.cli import _func_wrapper
+from ..vector.mask import df_to_px_mask
+from ..utils.cli import _func_wrapper
 from itertools import repeat
 
 

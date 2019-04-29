@@ -1,11 +1,8 @@
-from shapely import geometry
 from shapely.geometry import box
 import geopandas as gpd
 from rasterio import features
 from rasterio import Affine
 import numpy as np
-# Note, for mac osx compatability import something from shapely.geometry before
-# importing fiona or geopandas: https://github.com/Toblerity/Shapely/issues/553
 
 
 def read_vector_file(geoFileName):

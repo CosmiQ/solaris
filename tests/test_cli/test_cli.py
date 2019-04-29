@@ -3,12 +3,13 @@ import numpy as np
 import pickle
 import subprocess
 import skimage
-from cw_geodata.data import data_dir
+from solaris.data import data_dir
 import networkx as nx
 
 
 class TestCLI(object):
     """CLI tests using subprocess."""
+
     def test_geotransform_footprints(self):
         """test the geotransform_footprints CLI command."""
         # make sure the result directory is empty
