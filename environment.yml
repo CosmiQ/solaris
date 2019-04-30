@@ -22,6 +22,6 @@ dependencies:
   - tensorflow=1.13.1
   - pytorch=1.0.1
   - pip:
-    - affine==2.2.1
+    - affine==2.2.2
     - albumentations==0.2.2
     - rio-tiler==1.2.4
