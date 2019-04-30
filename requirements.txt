@@ -4,7 +4,7 @@ pandas==0.24.2
 geopandas==0.5.0
 opencv-python==4.1.0.25
 numpy==1.16.3
-tqdm==4.28.1
+tqdm==4.31.1
 GDAL==2.4.0
 rtree==0.8.3
 networkx==2.2
