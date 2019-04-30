@@ -1,7 +1,7 @@
 from __future__ import print_function, with_statement, division
 
 import pandas as pd
-from cw_eval import baseeval as bF
+from .. import baseeval as bF
 import re
 
 # Note, for mac osx compatability import something from shapely.geometry before
