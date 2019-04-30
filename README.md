@@ -13,8 +13,9 @@
 <a href="https://codecov.io/gh/CosmiQ/solaris"><img align="center" src="https://codecov.io/gh/CosmiQ/solaris/branch/master/graph/badge.svg" /></a>
 </p>
 
+## This package is under active development. Check back soon for updates!
+
 - [Installation Instructions](#installation-instructions)
-<!-- - [API Documentation](https://cw-eval.readthedocs.io/) -->
 - [Dependencies](#dependencies)
 - [License](#license)
 ---
