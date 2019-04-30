@@ -26,6 +26,9 @@ search: True
 # default: empty
 # allowed: list
 requirements:
+  - requirements.txt:
+      update: all
+      pin: True
   - readthedocs-environment.yml:
       # update all dependencies and pin them
       update: all
