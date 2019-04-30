@@ -14,5 +14,5 @@ scikit-image==0.15.0
 tensorflow==1.13.1
 torch==1.0.1.post2
 affine==2.2.2
-albumentations==0.2.2
+albumentations==0.2.3
 rio-tiler==1.2.4
