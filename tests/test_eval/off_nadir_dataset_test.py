@@ -45,3 +45,6 @@ class TestEvalCLI(object):
         assert pred_results.equals(test_results)
         assert pred_results_full.sort_values(by='imageID').reset_index(drop=True).equals(
             full_test_results.sort_values(by='imageID').reset_index(drop=True))
+
+        os.remove('test_out.csv')
+        os.remove('test_out_full.csv')

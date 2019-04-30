@@ -60,6 +60,9 @@ class TestEvalCLISN2(object):
                                         .sort_values(by='imageID')
                                         .reset_index(drop=True))
 
+        os.remove('test_out.csv')
+        os.remove('test_out_full.csv')
+
 
 def almostequal(df1, df2, epsilon=1E-9):
     """
