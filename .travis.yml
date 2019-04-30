@@ -1,6 +1,8 @@
 language: python
-sudo: true
+sudo: required
+dist: xenial
 python:
+  - "3.5"
   - "3.6"
   - "3.7"
 
