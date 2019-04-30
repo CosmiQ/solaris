@@ -1,6 +1,7 @@
 class TestImports(object):
 
     def test_imports(self):
+        import torch  # workaround for TLS error
         from solaris.utils import core, geo, config, tile, cli
         from solaris import data
         from solaris.vector import polygon, graph, mask

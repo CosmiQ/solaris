@@ -12,7 +12,7 @@ from solaris.vector.mask import footprint_mask, boundary_mask, \
 
 
 class TestFootprintMask(object):
-    """Tests for cw_geodata.vector_label.mask.footprint_mask."""
+    """Tests for solaris.vector.mask.footprint_mask."""
 
     def test_make_mask(self):
         """test creating a basic mask using a csv input."""
@@ -62,7 +62,7 @@ class TestFootprintMask(object):
 
 
 class TestBoundaryMask(object):
-    """Tests for cw_geodata.vector_label.mask.boundary_mask."""
+    """Tests for solaris.vector.mask.boundary_mask."""
 
     def test_make_inner_mask_from_fp(self):
         """test creating a boundary mask using an existing footprint mask."""
@@ -107,7 +107,7 @@ class TestBoundaryMask(object):
 
 
 class TestContactMask(object):
-    """Tests for cw_geodata.vector_label.mask.contact_mask."""
+    """Tests for solaris.vector.mask.contact_mask."""
 
     def test_make_contact_mask_w_save(self):
         """test creating a contact point mask."""
@@ -128,7 +128,7 @@ class TestContactMask(object):
 
 
 class TestDFToPxMask(object):
-    """Tests for cw_geodata.vector_label.mask.df_to_px_mask."""
+    """Tests for solaris.vector.mask.df_to_px_mask."""
 
     def test_basic_footprint_w_save(self):
         output_mask = df_to_px_mask(
