@@ -44,7 +44,7 @@ def main():
                         ' multiple files in batch. In this case,' +
                         ' --argument-csv must be provided. See help' +
                         ' for --argument_csv and the codebase docs at' +
-                        ' https://cw-geodata.readthedocs.io for more info.')
+                        ' https://solaris.readthedocs.io for more info.')
     parser.add_argument('--argument_csv', '-a', type=str,
                         help='The reference file for variable values for' +
                         ' batch processing. It must contain columns to pass' +

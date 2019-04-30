@@ -4,7 +4,8 @@
 <a href="http://www.cosmiqworks.org"><img src="http://www.cosmiqworks.org/wp-content/uploads/2016/02/cropped-CosmiQ-Works-Logo_R_RGB.png" width="350" alt="CosmiQ Works"></a>
 <br>
 <br>
-<img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI">
+<img align="center" src="https://img.shields.io/pypi/pyversions/solaris.svg" alt="PyPI python version" href="https://pypi.org/project/solaris/">
+<img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI" href="https://pypi.org/project/solaris/">
 <!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge"> -->
 <img align="center" src="https://travis-ci.com/CosmiQ/solaris.svg?branch=master" alt="build">
 <img align="center" src="https://readthedocs.org/projects/solaris/badge/" alt="docs">
