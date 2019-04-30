@@ -7,7 +7,7 @@ numpy==1.16.3
 tqdm==4.31.1
 GDAL==2.4.0
 rtree==0.8.3
-networkx==2.2
+networkx==2.3
 rasterio==1.0.18
 scipy==1.2.0
 scikit-image==0.14.0
