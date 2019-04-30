@@ -9,7 +9,7 @@ GDAL==2.4.0
 rtree==0.8.3
 networkx==2.3
 rasterio==1.0.22
-scipy==1.2.0
+scipy==1.2.1
 scikit-image==0.14.0
 tensorflow==1.13.1
 torch==1.0.1
