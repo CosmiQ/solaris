@@ -4,14 +4,14 @@
 <a href="http://www.cosmiqworks.org"><img src="http://www.cosmiqworks.org/wp-content/uploads/2016/02/cropped-CosmiQ-Works-Logo_R_RGB.png" width="350" alt="CosmiQ Works"></a>
 <br>
 <br>
-<!-- <img align="center" src="https://img.shields.io/pypi/v/cw-eval.svg" alt="PyPI"> -->
-<!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge">
-<img align="center" src="https://travis-ci.com/CosmiQ/cw-eval.svg?branch=master" alt="build">
-<img align="center" src="https://readthedocs.org/projects/cw-eval/badge/" alt="docs">
-<img align="center" src="https://img.shields.io/github/license/cosmiq/cw-eval.svg" alt="license">
-<img align="center" src="https://img.shields.io/docker/build/cosmiqworks/cw-eval.svg" alt="docker">
-<a href="https://codecov.io/gh/CosmiQ/cw-eval"><img align="center" src="https://codecov.io/gh/CosmiQ/cw-eval/branch/master/graph/badge.svg" /></a>
-</p> -->
+<img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI">
+<!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge"> -->
+<img align="center" src="https://travis-ci.com/CosmiQ/solaris.svg?branch=master" alt="build">
+<img align="center" src="https://readthedocs.org/projects/solaris/badge/" alt="docs">
+<img align="center" src="https://img.shields.io/github/license/cosmiq/solaris.svg" alt="license">
+<!-- <img align="center" src="https://img.shields.io/docker/build/cosmiqworks/cw-eval.svg" alt="docker"> -->
+<a href="https://codecov.io/gh/CosmiQ/solaris"><img align="center" src="https://codecov.io/gh/CosmiQ/solaris/branch/master/graph/badge.svg" /></a>
+</p>
 
 - [Installation Instructions](#installation-instructions)
 <!-- - [API Documentation](https://cw-eval.readthedocs.io/) -->
