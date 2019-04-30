@@ -12,7 +12,7 @@ rasterio==1.0.22
 scipy==1.2.1
 scikit-image==0.15.0
 tensorflow==1.13.1
-torch==1.0.1
+torch==1.0.1.post2
 affine==2.2.1
 albumentations==0.2.2
 rio-tiler==1.2.4
