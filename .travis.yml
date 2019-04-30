@@ -3,10 +3,6 @@ sudo: true
 python:
   - "3.6"
 
-before_install:
-# get kcov for testing CLI scripts
-- wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz
-
 # command to install dependencies
 install:
   - sudo apt-get update
@@ -27,8 +23,8 @@ install:
   # switch python version spec in environment.yml to match TRAVIS_PYTHON_VERSION
   # annoying workaround to `conda env create python=$TRAVIS_PYTHON_VERSION` not working
   - sed -i -E 's/(python=)(.*)/\1'$TRAVIS_PYTHON_VERSION'/' ./environment.yml
-  - conda env create -n cw-geodata --file=environment.yml
-  - source activate cw-geodata
+  - conda env create -n solaris -f environment.yml
+  - source activate solaris
   - python --version
   - pip install -q -e .[test]
   - pip install codecov pytest pytest-cov
