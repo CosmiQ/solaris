@@ -178,7 +178,7 @@ class TorchDataset(Dataset):
         image = imread(self.df['image'].iloc[idx])
         mask = imread(self.df['mask'].iloc[idx])
         sample = {'image': image, 'mask': mask}
-        if self.transform:
-            sample = self.transform(**sample)
+        if self.aug:
+            sample = self.aug(**sample)
 
         return sample
