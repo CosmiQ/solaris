@@ -108,3 +108,57 @@ def preprocess_im_arr(im_arr, im_format):
         # why are you using this format?
         im_arr = (im_arr*255/65535).astype('uint8')
     return im_arr
+
+
+def scale_for_model(image, output_type=None):
+    """Scale an image to a model's required parameters.
+
+    Arguments
+    ---------
+    image : :class:`np.array`
+        The image array to be transformed to a desired output format.
+    output_type : str, optional
+        The data format of the output to pass into the model. There are five
+        possible values:
+
+        * ``'normalized'`` : values rescaled to 0-1.
+        * ``'zscored'`` : image converted to zero mean and unit stdev.
+        * ``'8bit'`` : image converted to 8-bit format.
+        * ``'16bit'`` : image converted to 16-bit format.
+
+        If no value is provided, no re-scaling is performed (input array is
+        returned directly).
+    """
+
+    if output_type is None:
+        return image
+    elif output_type == 'normalized':
+        out_im = image - image.max()
+        out_im = out_im/out_im.max()
+        return out_im
+    elif output_type == 'zscored':
+        return (image - np.mean(image))/np.std(image)
+    elif output_type == '8bit':
+        if image.max() > 255:
+            # scale to min/max
+            out_im = 255.*image/image.max()
+            return out_im.astype('uint8')
+        elif image.max() <= 1:
+            out_im = 255.*image
+            return out_im.astype('uint8')
+        else:
+            return image.astype('uint8')
+    elif output_type == '16bit':
+        if (image.max() < 255) and (image.max() > 1):
+            # scale to min/max
+            out_im = 65535.*image/255
+            return out_im.astype('uint16')
+        elif image.max() <= 1:
+            out_im = 65535.*image
+            return out_im.astype('uint16')
+        else:
+            return image.astype('uint16')
+    else:
+        raise ValueError(
+            'output_type must be one of "normalized", "zscored", "8bit", "16bit"'
+            )

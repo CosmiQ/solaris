@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Image transformation, augmentation, etc. for use in models.
 -----------------------------------------------------------
@@ -67,7 +68,7 @@ __all__ = ['Crop', 'VerticalFlip', 'HorizontalFlip', 'Flip', 'Transpose',
            'RandomBrightnessContrast', 'Blur', 'MotionBlur', 'MedianBlur',
            'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate',
            'RandomScale', 'Cutout', 'Compose', 'OneOf', 'OneOrOther', 'NoOp',
-           'process_pipeline_dict', 'get_augs', 'build_pipeline']
+           'process_aug_dict', 'get_augs', 'build_pipeline']
 
 
 class Rotate(DualTransform):
@@ -92,6 +93,7 @@ class Rotate(DualTransform):
         to ``0.5``.
 
     """
+
     def __init__(self, limit=90, border_mode='reflect', cval=0.0,
                  always_apply=False, p=0.5):
         super(Rotate, self).__init__(always_apply, p)
@@ -143,6 +145,7 @@ class RandomScale(DualTransform):
     .. _: https://pillow.readthedocs.io/en/4.1.x/handbook/concepts.html#filters-comparison-table
 
     """
+
     def __init__(self, scale_limit, axis='both', interpolation='bicubic',
                  always_apply=False, p=0.5):
         super(RandomScale, self).__init__(always_apply, p)
@@ -210,6 +213,7 @@ class Cutout(ImageOnlyTransform):
     Image types:
         uint8, float32
     """
+
     def __init__(self, num_holes=8, max_h_size=8, max_w_size=8,
                  always_apply=False, p=0.5):
         super(Cutout, self).__init__(always_apply, p)
@@ -353,7 +357,7 @@ def cutout(img, num_holes, h_size, w_size):
 
 
 def build_pipeline(config):
-    """Create an augmentation pipeline from a config object.
+    """Create train and val augmentation pipelines from a config object.
 
     Arguments
     ---------
@@ -370,13 +374,13 @@ def build_pipeline(config):
 
     train_aug_dict = config['training_augmentation']
     val_aug_dict = config['validation_augmentation']
-    train_aug_pipeline = get_augs(train_aug_dict)
-    val_aug_pipeline = get_augs(val_aug_dict)
+    train_aug_pipeline = process_aug_dict(train_aug_dict)
+    val_aug_pipeline = process_aug_dict(val_aug_dict)
 
     return train_aug_pipeline, val_aug_pipeline
 
 
-def process_pipeline_dict(pipeline_dict, meta_augs_list=['oneof', 'oneorother']):
+def process_aug_dict(pipeline_dict, meta_augs_list=['oneof', 'oneorother']):
     """Create a Compose object from an augmentation config dict.
 
     Notes

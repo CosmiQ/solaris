@@ -17,7 +17,8 @@ inst_reqs = ['shapely>=1.6.4',
              'torch>=1.0.1',
              'affine>=2.2.1',
              'albumentations>=0.2.2',
-             'rio-tiler>=1.2.4'
+             'rio-tiler>=1.2.4',
+             'pyyaml>=5.1'
              ]
 
 version = '0.0.1'
