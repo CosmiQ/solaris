@@ -1,4 +1,4 @@
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 # TODO: IMPLEMENT WRAPPER FOR THESE FOR DIFFERENT ML FRAMEWORKS
 

@@ -7,7 +7,7 @@ class TestImports(object):
         from solaris.vector import polygon, graph, mask
         from solaris.tile import main, vector_utils
         from solaris.raster import image
-        from solaris.nets import callbacks, datagen, infer, io, losses
+        from solaris.nets import callbacks, datagen, infer, model_io, losses
         from solaris.nets import train, transform, zoo
         from solaris.eval import baseeval, evalfunctions
         from solaris.eval.challenges import off_nadir_dataset
