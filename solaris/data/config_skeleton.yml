@@ -1,5 +1,5 @@
 ################################################################################
-################# CW-NETS MODEL CONFIGURATION SKELETON #########################
+################# SOLARIS MODEL CONFIGURATION SKELETON #########################
 ################################################################################
 
 # This skeleton lays out the required instructions for running a model using
@@ -20,8 +20,11 @@ nn_framework:  # if not using a model included with the package, use this
 data_specs:
   width: # width of the input images taken in by the neural net.
   height:  # height of the input images taken in by the neural net.
-  bit_depth:  # 8 or 16.
+  image_type: normalized # format of images. options are 'normalized',
+                         # 'zscore', '8bit', '16bit'
   channels:  # number of channels in the input imagery.
+  label_type: mask  # one of ['mask', 'bbox']
+  mask_channels: 1  # number of channels in the training mask
   val_holdout_frac:  # if empty, assumes that separate data ref files define the
                      # training and validation dataset. If a float between 0 and
                      # 1, indicates the fraction of training data that's held
@@ -48,6 +51,7 @@ training_augmentation:  # augmentations for use with training data
     # include augmentations here. See the documentation for options and
     # required arguments.
   p: 1.0  # probability of applying the entire training augmentation pipeline.
+  shuffle: true  # should the image order be shuffled in each epoch.
 validation_augmentation:  # augmentations for use with validation data
   augmentations:
     # include augmentations here
