@@ -2,6 +2,12 @@ from tensorflow.keras import backend as K
 
 # TODO: IMPLEMENT WRAPPER FOR THESE FOR DIFFERENT ML FRAMEWORKS
 
+def get_loss(framework, config):
+    """Load a loss function based on a config file for the specified framework.
+    """
+    pass  # TODO: IMPLEMENT
+
+
 def weighted_bce(y_true, y_pred, weight):
     """Weighted binary cross-entropy for Keras.
 
