@@ -65,10 +65,8 @@ def k_lovasz_hinge(per_image=False):
         return loss
 
     def lovasz_hinge_per_image(y_true, y_pred):
-        eps = 1e-12  # for stability
-        y_pred = K.clip(y_pred, eps, 1-eps)
-        logits = K.log(y_pred/(1-y_pred))
-        losses = tf.map_fn(_treat_image, (y_true, logits), dtype=tf.float32)
+        # modified from Maxim Berman's GitHub repo tf implementation for Lovasz
+        losses = tf.map_fn(_treat_image, (y_true, y_pred), dtype=tf.float32)
         loss = tf.reduce_mean(losses)
         return loss
 
@@ -85,6 +83,8 @@ def k_lovasz_hinge(per_image=False):
 
 def tf_lovasz_grad(gt_sorted):
     """
+    Code from Maxim Berman's GitHub repo for Lovasz.
+
     Computes gradient of the Lovasz extension w.r.t sorted errors
     See Alg. 1 in paper
     """
