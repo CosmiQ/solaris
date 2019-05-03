@@ -80,6 +80,16 @@ training:
          # loss function should also be specified in this subdict (or in
          # subdicts for the components of the composite loss function). See the
          # docs for an example.
+  sublosses:  # individual loss functions that comprise a composite loss. Only
+              # has an effect if using loss: 'composite'.
+  loss_weights:  # (optional) weights to use for each loss function if using
+                 # loss: composite. This must be a set of key:value pairs where
+                 # defining the weight for each sub-loss within the composite.
+                 # If using a composite and a value isn't provided here, all
+                 # losses will be weighted equally.
+  loss_params:  # (optional) this should have sub-headings of
+                # argument_name: value pairs to be converted to a dict, which
+                # will be passed to the loss function as kwargs.
   checkpoint_frequency:  # how frequently should checkpoints be saved?
                          # this can be an int, in which case every n epochs
                          # a checkpoint will be made, or a list, in which case
