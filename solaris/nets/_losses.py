@@ -1,8 +1,16 @@
+import torch
+from torch.autograd import Variable
+import torch.nn.functional as F
 from tensorflow.keras import losses
 from tensorflow.keras import backend as K
 from .metrics import dice_coef_binary
 import tensorflow as tf
 from torch import nn
+
+try:
+    from itertools import  ifilterfalse
+except ImportError: # py3k
+    from itertools import  filterfalse as ifilterfalse
 
 
 def k_dice_loss(y_true, y_pred):
