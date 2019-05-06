@@ -136,6 +136,6 @@ class Test_gdf_to_yolo(object):
         truth_gdf = pd.read_csv(os.path.join(data_dir, 'yolo_gdf_result.csv'))
         truth_gdf = truth_gdf.sort_values(by='area').reset_index(drop=True)
         output_gdf = output_gdf.sort_values(by='area').reset_index(drop=True)
-        truth_gdf = truth_gdf['w']
-        output_gdf = output_gdf['w']
+        truth_gdf = truth_gdf['w'].round(4)
+        output_gdf = output_gdf['w'].round(4)
         assert truth_gdf.equals(output_gdf)
