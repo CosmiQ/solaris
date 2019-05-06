@@ -10,7 +10,6 @@ from rasterio.io import DatasetReader
 from rasterio.warp import transform_bounds
 from rio_tiler.errors import RioTilerError
 from rasterio import transform
-import fiona
 import osr
 
 
@@ -607,20 +606,20 @@ def rasterize_gdf(gdf, src_shape, burn_value=1,
     return img
 
 
-def vector_get_projection_unit(vector_file):
-    """Get the projection unit for a vector_file.
+def vector_gdf_get_projection_unit(vector_file):
+    """Get the projection unit for a vector_file or gdf.
 
     Arguments
     ---------
-    vector_file : geojson or shapefile or other
-        A vector file with georeferencing
+    vector_file : :py:class:`geopandas.GeoDataFrame` or geojson/shapefile
+        A vector file or gdf with georeferencing
 
     Returns
     -------
     unit : String
         The unit i.e. meters or degrees, of the projection
     """
-    c = fiona.open(vector_file)
+    c = gpd.read_file(vector_file)
     crs = c.crs
     srs = osr.SpatialReference()
     x = (crs['init']).split(":")[1]
