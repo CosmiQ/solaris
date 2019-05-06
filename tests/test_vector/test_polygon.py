@@ -134,4 +134,4 @@ class Test_gdf_to_yolo(object):
         image = os.path.join(data_dir, 'sample_geotiff.tif')
         output_gdf = gdf_to_yolo(gdf, image, data_dir, column='origlen')
         truth_gdf = pd.read_csv(os.path.join(data_dir, 'yolo_gdf_result.csv'))
-        assert truth_gdf.equals(output_gdf)
+        assert truth_gdf.sort_values(by='area').reset_index(drop=True).equals(output_gdf.sort_values(by='area').reset_index(drop=True))
