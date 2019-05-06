@@ -1,79 +1,67 @@
+import numpy as np
 from tensorflow.keras import backend as K
-from ._losses import keras_losses, torch_losses, k_focal_loss
+from ._keras_losses import keras_losses, k_focal_loss
+from ._torch_losses import torch_losses
 import tensorflow as tf
 import torch
 from torch import nn
 
 
-def get_loss(framework, config, loss_name):
+def get_loss(framework, config):
     """Load a loss function based on a config file for the specified framework.
     """
-
     # lots of exception handling here. TODO: Refactor.
-    if loss_name == 'composite':
-        # get elements of the loss composite
-        sublosses = []
-        if config['training']['sublosses'] is None:
-            raise ValueError('Sublosses must be defined in the config if using'
-                             '`loss: "composite"`.')
-        for loss_func in config['training']['sublosses']:
-            sublosses.append(get_loss(framework, config, loss_func))
+    if not isinstance(config['training']['loss'], dict):
+        raise TypeError('The loss description in the config file is formatted'
+                        ' improperly. See the docs for details.')
+    if len(config['training']['loss']) > 1:
 
         # get the weights for each loss within the composite
         if config['training']['loss_weights'] is None:
-            weights = 1  # weight all losses equally
+            # weight all losses equally
+            weights = {k: 1 for k, _ in config['training']['loss'].items()}
         else:
             weights = config['training']['loss_weights']
-        if isinstance(weights, int) or isinstance(weights, float):
-            if weights == 1:
-                weights = [1 for i in sublosses]  # equal weight
-            else:
-                if len(sublosses) > 2:
-                    raise ValueError('A list of loss weights must be provided'
-                                     'if using a composite with more than two'
-                                     'sub-losses.')
-                else:
-                    if weights < 1:
-                        weights = [weights, 1-weights]
-                    else:
-                        # assume 1st loss weight is a multiple of the
-                        # weight of the 2nd sub-loss's weight
-                        weights = [weights, 1]
-        else:
-            if len(weights) != len(sublosses):
-                raise ValueError(
-                    'The number of sublosses and loss weights must match.')
+
+        # check if sublosses dict and weights dict have the same keys
+        if config['training']['loss'].keys().sort() != weights.keys().sort():
+            raise ValueError(
+                'The losses and weights must have the same name keys.')
 
         if framework == 'keras':
-            return keras_composite_loss(sublosses, weights)
+            return keras_composite_loss(config['training']['loss'], weights)
         elif framework == 'pytorch':
-            return torch_composite_loss(sublosses, weights)
+            return TorchCompositeLoss(config['training']['loss'], weights)
 
     else:  # parse individual loss functions
-        if framework == 'keras':
-            if loss_name.lower() == 'focal_loss':
-                return k_focal_loss(**config['training']['loss_params'])
-            else:
-                # keras_losses in the next line is a matching dict
-                return keras_losses.get(loss_name.lower(), None)
-        elif framework == 'pytorch':
-            pass
+        loss_name, loss_dict = config['training']['loss'].items()[0]
+        return get_single_loss(framework, loss_name, loss_dict)
 
 
-def keras_composite_loss(loss_list, weight_list):
+def get_single_loss(framework, loss_name, loss_dict):
+    if framework == 'keras':
+        if loss_name.lower() == 'focal':
+            return k_focal_loss(**loss_dict)
+        else:
+            # keras_losses in the next line is a matching dict
+            # TODO: the next line doesn't handle non-focal loss functions that
+            # have hyperparameters associated with them. It would be great to
+            # refactor this to handle that possibility.
+            return keras_losses.get(loss_name.lower(), None)
+    elif framework in ['torch', 'pytorch']:
+        return torch_losses.get(loss_name.lower(), None)(**loss_dict)
+
+
+def keras_composite_loss(loss_dict, weight_dict):
     """Wrapper to other loss functions to create keras-compatible composite."""
 
     def composite(y_true, y_pred):
-        loss = [weight_list[i]*loss_list[i](y_true, y_pred)
-                for i in range(len(weight_list))]
+        loss = np.sum(np.array([weight_dict[loss_name]*get_single_loss(
+            'keras', loss_name, loss_params)(y_true, y_pred)])
+                for loss_name, loss_params in loss_dict.items())
         return loss
 
     return composite
-
-
-def torch_composite_loss(loss_list, weight_list):
-    """Create a composite loss function for PyTorch from losses and weights."""
-    pass  # TODO: IMPLEMENT.
 
 
 def weighted_bce(y_true, y_pred, weight):
@@ -234,14 +222,17 @@ def hybrid_bce_jaccard(y_true, y_pred, jac_frac=0.25):
     return jac_frac*jac_loss + (1-jac_frac)*bce
 
 
-class CompositeLoss(nn.Module):
+class TorchCompositeLoss(nn.Module):
     """Composite loss function."""
 
     def __init__(self, loss_dict, weight_dict=None):
         """Create a composite loss function from a set of pytorch losses."""
         super().__init__()
         self.weights = weight_dict
-        self.losses = loss_dict
+        self.losses = {loss_name: get_single_loss('pytorch',
+                                                  loss_name,
+                                                  loss_params)
+                       for loss_name, loss_params in loss_dict.items()}
         self.values = {}  # values from the individual loss functions
 
     def forward(self, outputs, targets):

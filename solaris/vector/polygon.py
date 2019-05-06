@@ -68,8 +68,8 @@ def convert_poly_coords(geom, raster_src=None, affine_obj=None, inverse=False,
     elif isinstance(geom, shapely.geometry.base.BaseGeometry):
         g = geom
     else:
-        raise TypeError('The provided geometry is not an accepted format. ' +
-                        'This function can only accept WKT strings and ' +
+        raise TypeError('The provided geometry is not an accepted format. '
+                        'This function can only accept WKT strings and '
                         'shapely geometries.')
 
     xformed_g = shapely.affinity.affine_transform(g, [affine_xform.a,

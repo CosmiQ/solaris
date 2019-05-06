@@ -1,16 +1,7 @@
-import torch
-from torch.autograd import Variable
-import torch.nn.functional as F
 from tensorflow.keras import losses
 from tensorflow.keras import backend as K
 from .metrics import dice_coef_binary
 import tensorflow as tf
-from torch import nn
-
-try:
-    from itertools import  ifilterfalse
-except ImportError: # py3k
-    from itertools import  filterfalse as ifilterfalse
 
 
 def k_dice_loss(y_true, y_pred):
@@ -124,42 +115,4 @@ keras_losses = {
     'squared_hinge': losses.squared_hinge,
     'jaccard': k_jaccard_loss,
     'dice': k_dice_loss
-}
-
-torch_losses = {
-    'l1loss': nn.L1Loss,
-    'l1': nn.L1Loss,
-    'mae': nn.L1Loss,
-    'mean_absolute_error': nn.L1Loss,
-    'smoothl1loss': nn.SmoothL1Loss,
-    'smoothl1': nn.SmoothL1Loss,
-    'mean_squared_error': nn.MSELoss,
-    'mse': nn.MSELoss,
-    'mseloss': nn.MSELoss,
-    'categorical_crossentropy': nn.CrossEntropyLoss,
-    'cce': nn.CrossEntropyLoss,
-    'crossentropyloss': nn.CrossEntropyLoss,
-    'negative_log_likelihood': nn.NLLLoss,
-    'nll': nn.NLLLoss,
-    'nllloss': nn.NLLLoss,
-    'poisson_negative_log_likelihood': nn.PoissonNLLLoss,
-    'poisson_nll': nn.PoissonNLLLoss,
-    'poissonnll': nn.PoissonNLLLoss,
-    'kullback_leibler_divergence': nn.KLDivLoss,
-    'kld': nn.KLDivLoss,
-    'kldivloss': nn.KLDivLoss,
-    'binary_crossentropy': nn.BCELoss,
-    'bce': nn.BCELoss,
-    'bceloss': nn.BCELoss,
-    'hinge': nn.HingeEmbeddingLoss,
-    'hingeembeddingloss': nn.HingeEmbeddingLoss,
-    'multiclass_hinge': nn.MultiMarginLoss,
-    'multimarginloss': nn.MultiMarginLoss,
-    'softmarginloss': nn.SoftMarginLoss,
-    'softmargin': nn.SoftMarginLoss,
-    'multiclass_softmargin': nn.MultiLabelSoftMarginLoss,
-    'multilabelsoftmarginloss': nn.MultiLabelSoftMarginLoss,
-    'cosine': nn.CosineEmbeddingLoss,
-    'cosineloss': nn.CosineEmbeddingLoss,
-    'cosineembeddingloss': nn.CosineEmbeddingLoss
 }
