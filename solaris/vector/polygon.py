@@ -11,7 +11,6 @@ import pandas as pd
 import geopandas as gpd
 from rtree.core import RTreeError
 import shutil
-import gdal
 
 
 def convert_poly_coords(geom, raster_src=None, affine_obj=None, inverse=False,
@@ -340,7 +339,7 @@ def gdf_to_yolo(geodataframe, image, output_dir, column='single_id', im_size=(0,
     can be returned from this function if required.
     """
     if im_size == (0, 0):
-        imsize_extract = gdal.Open(image).ReadAsArray()
+        imsize_extract = rasterio.open(image).read()
         if len(imsize_extract.shape) == 3:
             im_size = (imsize_extract.shape[1], imsize_extract.shape[2])
         else:

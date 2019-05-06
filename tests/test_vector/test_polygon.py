@@ -126,7 +126,7 @@ class TestGeojsonToPxGDF(object):
         assert truth_subset.equals(output_subset)
 
 
-class Test_gdf_to_yolo(object):
+class TestGDFToYOLO(object):
     """Test the gdf_to_yolo function."""
 
     def test_gdf_to_yolo(self):
