@@ -90,8 +90,10 @@ class EvalBase():
             self.ground_truth_GDF_Edit = self.ground_truth_GDF_Edit[
                 self.ground_truth_GDF_Edit.area >= minArea
                 ]
-            proposal_GDF_copy = self.proposal_GDF[self.proposal_GDF[imageIDField] == imageID].copy(deep=True)
-            proposal_GDF_copy = proposal_GDF_copy[proposal_GDF_copy.area > minArea]
+            proposal_GDF_copy = self.proposal_GDF[self.proposal_GDF[
+                imageIDField] == imageID].copy(deep=True)
+            proposal_GDF_copy = proposal_GDF_copy[proposal_GDF_copy.area
+                                                  > minArea]
             if debug:
                 print(iou_field)
             for _, pred_row in proposal_GDF_copy.iterrows():
@@ -107,8 +109,11 @@ class EvalBase():
                             iou_GDF['iou_score'].idxmax(axis=0, skipna=True)
                             ]
                         if max_iou_row['iou_score'] > miniou:
-                            self.proposal_GDF.loc[pred_row.name, iou_field] = max_iou_row['iou_score']
-                            self.ground_truth_GDF_Edit = self.ground_truth_GDF_Edit.drop(max_iou_row.name, axis=0)
+                            self.proposal_GDF.loc[pred_row.name, iou_field] \
+                                = max_iou_row['iou_score']
+                            self.ground_truth_GDF_Edit \
+                                = self.ground_truth_GDF_Edit.drop(
+                                    max_iou_row.name, axis=0)
                         else:
                             self.proposal_GDF.loc[pred_row.name, iou_field] = 0
                     else:
@@ -209,7 +214,8 @@ class EvalBase():
 
         if calculate_class_scores:
             if not ground_truth_class_field:
-                raise ValueError('Must provide ground_truth_class_field if using calculate_class_scores.')
+                raise ValueError('Must provide ground_truth_class_field '
+                                 + 'if using calculate_class_scores.')
             if class_list == ['all']:
                 class_list = list(
                     self.ground_truth_GDF[ground_truth_class_field].unique())
@@ -229,7 +235,8 @@ class EvalBase():
                     deep=True)
 
             for _, pred_row in tqdm(self.proposal_GDF.iterrows()):
-                if pred_row['__max_conf_class'] == class_id or class_id == 'all':
+                if pred_row['__max_conf_class'] == class_id \
+                   or class_id == 'all':
                     pred_poly = pred_row.geometry
                     iou_GDF = eF.calculate_iou(pred_poly,
                                                self.ground_truth_GDF_Edit)
@@ -238,8 +245,11 @@ class EvalBase():
                         max_iou_row = iou_GDF.loc[iou_GDF['iou_score'].idxmax(
                             axis=0, skipna=True)]
                         if max_iou_row['iou_score'] > miniou:
-                            self.proposal_GDF.loc[pred_row.name, iou_field] = max_iou_row['iou_score']
-                            self.ground_truth_GDF_Edit = self.ground_truth_GDF_Edit.drop(max_iou_row.name, axis=0)
+                            self.proposal_GDF.loc[pred_row.name, iou_field] \
+                                = max_iou_row['iou_score']
+                            self.ground_truth_GDF_Edit \
+                                = self.ground_truth_GDF_Edit.drop(
+                                    max_iou_row.name, axis=0)
                         else:
                             self.proposal_GDF.loc[pred_row.name, iou_field] = 0
                     else:
