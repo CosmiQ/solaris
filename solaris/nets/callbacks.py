@@ -2,6 +2,11 @@ from tensorflow.keras.callbacks import Callback
 import numpy as np
 
 
+def get_callbacks(framework, config):
+    """Load callbacks based on a config file for a specific framework."""
+    pass  # TODO: IMPLEMENT
+
+
 def terminate_on_metric_nan(model, metric):
     """Get a terminate on metric NaN callback for `metric` in `model`.
 
@@ -39,6 +44,7 @@ class KerasTerminateOnMetricNaN(Callback):
     m.fit(X, y, callbacks=[TerminateOnMetricNaN('val_f1_score')])
     ```
     """
+
     def __init__(self, metric=None, checkpoint='epoch'):
         super(KerasTerminateOnMetricNaN, self).__init__()
         self.metric = metric

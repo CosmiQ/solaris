@@ -10,7 +10,7 @@ from ..utils.core import get_data_paths
 from ..utils.io import imread, scale_for_model
 
 
-def DataGenerator(framework, config, stage='train'):
+def make_data_generator(framework, config, df, stage='train'):
     """Create an appropriate data generator based on the framework used.
 
     Arguments
@@ -20,6 +20,10 @@ def DataGenerator(framework, config, stage='train'):
         learning framework used for the model to be used.
     config : dict
         The config dictionary for the entire pipeline.
+    df : :class:`pandas.DataFrame`
+        A :class:`pandas.DataFrame` containing two columns: ``'image'``, with
+        the path to images for training, and ``'label'``, with the path to the
+        label file corresponding to each image.
 
     Returns
     -------
@@ -27,20 +31,25 @@ def DataGenerator(framework, config, stage='train'):
     to feed data during model training or inference.
     """
 
-    if framework not in ['keras', 'pytorch', 'simrdwn', 'tf', 'tf_obj_api']:
+    if framework.lower() not in ['keras', 'pytorch',
+                                 'simrdwn', 'tf', 'tf_obj_api']:
         raise ValueError('{} is not an accepted value for `framework`'.format(
             framework))
 
     # get list of images and masks
-    if stage == 'train':
-        df = get_data_paths(config['training_data_csv'])
-    elif stage == 'validate':
-        df = get_data_paths(config['validation_data_csv'])
-    elif stage == 'infer':
-        df = get_data_paths(config['inference_data_csv'])
 
-    if framework == 'keras':
+    if framework.lower() == 'keras':
         return KerasSegmentationSequence(config, df, stage=stage)
+
+    elif framework == 'pytorch':
+        dataset = TorchDataset(config, df, stage)
+        # set up workers for DataLoader for pytorch
+        data_workers = config['data_specs']['data_workers']
+        if data_workers == 1 or data_workers is None:
+            data_workers = 0  # for DataLoader to run in main process
+        return DataLoader(dataset, batch_size=config['batch_size'],
+                          shuffle=config['training_augmentation']['shuffle'],
+                          data_workers=data_workers)
 
 
 class KerasSegmentationSequence(keras.utils.Sequence):
