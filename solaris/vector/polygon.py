@@ -336,11 +336,15 @@ def gdf_to_yolo(geodataframe, image, output_dir, column='single_id', im_size=(0,
         path as your input image.  If 0, no images will be moved. Default value of 1.
     Returns
     -------
-    Nothing : Outputs txt files readable by YOLO/YOLT to the output_dir
+    gdf : :class:`geopandas.GeoDataFrame`.  The txt file will be written to the output_dir, however the the output gdf itself
+    can be returned from this function if required.
     """
     if im_size == (0, 0):
         imsize_extract = gdal.Open(image).ReadAsArray()
-        im_size = (imsize_extract.shape[1], imsize_extract.shape[2])
+        if len(imsize_extract.shape) == 3:
+            im_size = (imsize_extract.shape[1], imsize_extract.shape[2])
+        else:
+            im_size = (imsize_extract.shape[0], imsize_extract.shape[1])
     [x0, y0, x1, y1] = [0, 0, im_size[0], im_size[1]]
     out_coords = [[x0, y0], [x0, y1], [x1, y1], [x1, y0]]
     points = [shapely.geometry.Point(coord) for coord in out_coords]
@@ -379,3 +383,5 @@ def gdf_to_yolo(geodataframe, image, output_dir, column='single_id', im_size=(0,
             os.mkdir(remove_no_labels_dir)
         if gdf.empty or boxy.empty:
             shutil.move(image, remove_no_labels_dir)
+
+    return gdf
