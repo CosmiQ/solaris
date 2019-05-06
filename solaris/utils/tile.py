@@ -11,6 +11,8 @@ from rasterio.warp import transform_bounds
 from rio_tiler.errors import RioTilerError
 from rasterio import transform
 import osr
+from solaris.utils.core import _check_gdf_load
+from solaris.utils.core import _check_rasterio_im_load
 
 
 def utm_getZone(longitude):
@@ -619,7 +621,7 @@ def vector_gdf_get_projection_unit(vector_file):
     unit : String
         The unit i.e. meters or degrees, of the projection
     """
-    c = gpd.read_file(vector_file)
+    c = _check_gdf_load(vector_file)
     crs = c.crs
     srs = osr.SpatialReference()
     x = (crs['init']).split(":")[1]
@@ -642,7 +644,7 @@ def raster_get_projection_unit(image):
     unit : String
         The unit i.e. meters or degrees, of the projection
     """
-    c = rasterio.open(image)
+    c = _check_rasterio_im_load(image)
     crs = c.crs
     srs = osr.SpatialReference()
     x = (crs['init']).split(":")[1]
