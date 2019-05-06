@@ -7,7 +7,8 @@ import geopandas as gpd
 import rasterio
 from solaris.data import data_dir
 from solaris.vector.polygon import convert_poly_coords, \
-    affine_transform_gdf, georegister_px_df, geojson_to_px_gdf
+    affine_transform_gdf, georegister_px_df, geojson_to_px_gdf, \
+    gdf_to_yolo
 
 square = Polygon([(10, 20), (10, 10), (20, 10), (20, 20)])
 forward_result = loads("POLYGON ((733606 3725129, 733606 3725134, 733611 3725134, 733611 3725129, 733606 3725129))")
@@ -123,3 +124,14 @@ class TestGeojsonToPxGDF(object):
         output_subset = output_gdf[['geometry']].reset_index(drop=True)
 
         assert truth_subset.equals(output_subset)
+
+
+class Test_gdf_to_yolo(object):
+    """Test the gdf_to_yolo function."""
+
+    def test_gdf_to_yolo(self):
+        gdf = gpd.read_file(os.path.join(data_dir, 'geotiff_labels.geojson'))
+        image = os.path.join(data_dir, 'sample_geotiff.tif')
+        output_gdf = gdf_to_yolo(gdf, image, data_dir, column='origlen')
+        truth_gdf = pd.read_csv(os.path.join(data_dir, 'yolo_gdf_result.csv'))
+        assert truth_gdf.equals(output_gdf)
