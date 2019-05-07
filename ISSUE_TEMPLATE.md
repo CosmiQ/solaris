@@ -32,8 +32,8 @@ _Please provide detailed steps for reproducing the issue._
 _Please provide any relevant information about your setup. This is important in case the issue is not reproducible except for under certain conditions._
 - OS:
 - Python version:
-- `cw-eval` install method (Conda, pip, Docker):
-- `cw-eval` version (release vs. dev) - if you're using an older release, please update and ensure your issue isn't resolved:
+- `solaris` install method (Conda, pip, Docker):
+- `solaris` version (release vs. dev) - if you're using an older release, please update and ensure your issue isn't resolved:
 - Additional relevant environment details (e.g. using a virtual environment or not, version of GDAL and GDAL install method, etc.)
 
 ## Bug Report: Failure Logs
@@ -47,7 +47,7 @@ _Remove this section if your issue is not a feature request. Make sure to add th
 _Please describe the feature you'd like implemented._
 
 ## Feature Request: Changes to API
-_If your feature request includes changes to the `cw-eval` API, describe that here. Note that any changes to required arguments or argument order in the API will only be made at a major version release. See [the contributing guidelines]() for additional details._
+_If your feature request includes changes to the `solaris` API, describe that here. Note that any changes to required arguments or argument order in the API will only be made at a major version release. See [the contributing guidelines]() for additional details._
 
 ---
 
