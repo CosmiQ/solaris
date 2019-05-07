@@ -87,7 +87,7 @@ training:
                          # a checkpoint will be made, or a list, in which case
                          # checkpoints will be saved on those specific epochs.
                          # if not provided, only the final model is saved.
-  additional_callbacks:  # a list of callbacks to use.
+  callbacks:  # a list of callbacks to use.
 
 inference:
   window_step_size:  # size of each step for the sliding window for inference.
