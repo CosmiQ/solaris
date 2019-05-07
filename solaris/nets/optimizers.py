@@ -1,7 +1,7 @@
 """Wrappers for training optimizers."""
 
 import torch
-from tf import keras
+from tensorflow import keras
 
 
 torch_optimizers = {
