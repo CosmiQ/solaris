@@ -621,11 +621,7 @@ def vector_gdf_get_projection_unit(vector_file):
     unit : String
         The unit i.e. meters or degrees, of the projection
     """
-<<<<<<< HEAD
     c = _check_gdf_load(vector_file)
-=======
-    c = gpd.read_file(vector_file)
->>>>>>> Added two tiny helper functions that will be useful for other functions v2
     crs = c.crs
     srs = osr.SpatialReference()
     x = (crs['init']).split(":")[1]
