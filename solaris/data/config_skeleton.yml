@@ -82,6 +82,9 @@ training:
                  # defining the weight for each sub-loss within the composite.
                  # If using a composite and a value isn't provided here, all
                  # losses will be weighted equally.
+  metrics:  # metrics to monitor on the training and validation sets.
+    training:  # training set metrics.
+    validation:  # validation set metrics.
   checkpoint_frequency:  # how frequently should checkpoints be saved?
                          # this can be an int, in which case every n epochs
                          # a checkpoint will be made, or a list, in which case
