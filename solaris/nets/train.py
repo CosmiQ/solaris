@@ -4,10 +4,7 @@ import numpy as np
 from .model_io import get_model
 from .datagen import make_data_generator
 from .losses import get_loss
-<<<<<<< HEAD
 from .optimizers import get_optimizer
-=======
->>>>>>> completed solaris.nets.train.Trainer.__init__()
 from .callbacks import get_callbacks
 from .metrics import get_metrics
 from ..utils.core import get_data_paths
