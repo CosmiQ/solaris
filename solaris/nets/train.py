@@ -33,9 +33,12 @@ class Trainer(object):
         self.callbacks = get_callbacks(self.framework, self.config)
         self.metrics = get_metrics(self.framework, self.config)
 
-        self.initialize_model(self.framework)
+        self.initialize_model()
 
-        # torch initialization
+
+
+    def initialize_model(self):
+        """Load in and create all model training elements."""
         if self.framework == 'torch':
             # create optimizer
             self.optimizer = self.optimizer(
@@ -47,8 +50,11 @@ class Trainer(object):
                 if isinstance(cb, _LRScheduler):
                     self.optimizer = cb(
                         self.optimizer,
-                        **self.config['training']['callbacks']['lr_schedule']['schedule_dict']
+                        **self.config['training']['callbacks'][
+                            'lr_schedule'].get(['schedule_dict'], {})
                         )
+
+
 
     def train(self):
         """Run training on the model."""
