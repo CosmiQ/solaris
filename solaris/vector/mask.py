@@ -468,113 +468,113 @@ def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
 
     return polygon_gdf
 
-    def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
-                  do_transform=False, affine_obj=None, shape=(900, 900), buffer_in_m=2,
-                  out_type='int', burn_value=255, burn_field=None):
-        """Convert a dataframe of geometries to a pixel mask.
-        Arguments
-        ---------
-        df : :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame`
-            A :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame` instance
-            with a column containing geometries (identified by `geom_col`). If the
-            geometries in `df` are not in pixel coordinates, then `affine` or
-            `reference_im` must be passed to provide the transformation to convert.
-        out_file : str, optional
-            Path to an image file to save the output to. Must be compatible with
-            :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
-            provided (for metadata purposes).
-        reference_im : :class:`rasterio.DatasetReader` or `str`, optional
-            An image to extract necessary coordinate information from: the
-            affine transformation matrix, the image extent, etc. If provided,
-            `affine_obj` and `shape` are ignored.
-        geom_col : str, optional
-            The column containing geometries in `df`. Defaults to ``"geometry"``.
-        do_transform : bool, optional
-            Should the values in `df` be transformed from geospatial coordinates
-            to pixel coordinates? Defaults to no (``False``). If ``True``, either
-            `reference_im` or `affine_obj` must be provided as a source for the
-            the required affine transformation matrix.
-        affine_obj : `list` or :class:`affine.Affine`, optional
-            Affine transformation to use to convert from geo coordinates to pixel
-            space. Only provide this argument if `df` is a
-            :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
-            coordinate space. Ignored if `reference_im` is provided or if
-            ``do_transform=False``.
-        shape : tuple, optional
-            An ``(x_size, y_size)`` tuple defining the pixel extent of the output
-            mask. Ignored if `reference_im` is provided.
-        buffer_in_m : 'float' or 'int'
-            The amount to buffer a roadway linestring on either side in meters.
-            For example a value == 2 will create a roadway 4 meters in total width
-            around the centerline.
-        out_type : 'float' or 'int'
-        burn_value : `int` or `float`, optional
-            The value to use for labeling objects in the mask. Defaults to 255 (the
-            max value for ``uint8`` arrays). The mask array will be set to the same
-            dtype as `burn_value`. Ignored if `burn_field` is provided.
-        burn_field : str, optional
-            Name of a column in `df` that provides values for `burn_value` for each
-            independent object. If provided, `burn_value` is ignored.
-        Returns
-        -------
-        mask : :class:`numpy.array`
-            A pixel mask with 0s for non-object pixels and `burn_value` at object
-            pixels. `mask` dtype will coincide with `burn_value`.
-        """
+def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
+              do_transform=False, affine_obj=None, shape=(900, 900), buffer_in_m=2,
+              out_type='int', burn_value=255, burn_field=None):
+    """Convert a dataframe of geometries to a pixel mask.
+    Arguments
+    ---------
+    df : :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame`
+        A :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame` instance
+        with a column containing geometries (identified by `geom_col`). If the
+        geometries in `df` are not in pixel coordinates, then `affine` or
+        `reference_im` must be passed to provide the transformation to convert.
+    out_file : str, optional
+        Path to an image file to save the output to. Must be compatible with
+        :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
+        provided (for metadata purposes).
+    reference_im : :class:`rasterio.DatasetReader` or `str`, optional
+        An image to extract necessary coordinate information from: the
+        affine transformation matrix, the image extent, etc. If provided,
+        `affine_obj` and `shape` are ignored.
+    geom_col : str, optional
+        The column containing geometries in `df`. Defaults to ``"geometry"``.
+    do_transform : bool, optional
+        Should the values in `df` be transformed from geospatial coordinates
+        to pixel coordinates? Defaults to no (``False``). If ``True``, either
+        `reference_im` or `affine_obj` must be provided as a source for the
+        the required affine transformation matrix.
+    affine_obj : `list` or :class:`affine.Affine`, optional
+        Affine transformation to use to convert from geo coordinates to pixel
+        space. Only provide this argument if `df` is a
+        :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
+        coordinate space. Ignored if `reference_im` is provided or if
+        ``do_transform=False``.
+    shape : tuple, optional
+        An ``(x_size, y_size)`` tuple defining the pixel extent of the output
+        mask. Ignored if `reference_im` is provided.
+    buffer_in_m : 'float' or 'int'
+        The amount to buffer a roadway linestring on either side in meters.
+        For example a value == 2 will create a roadway 4 meters in total width
+        around the centerline.
+    out_type : 'float' or 'int'
+    burn_value : `int` or `float`, optional
+        The value to use for labeling objects in the mask. Defaults to 255 (the
+        max value for ``uint8`` arrays). The mask array will be set to the same
+        dtype as `burn_value`. Ignored if `burn_field` is provided.
+    burn_field : str, optional
+        Name of a column in `df` that provides values for `burn_value` for each
+        independent object. If provided, `burn_value` is ignored.
+    Returns
+    -------
+    mask : :class:`numpy.array`
+        A pixel mask with 0s for non-object pixels and `burn_value` at object
+        pixels. `mask` dtype will coincide with `burn_value`.
+    """
 
-        # start with required checks and pre-population of values
-        if out_file and not reference_im:
-            raise ValueError(
-                'If saving output to file, `reference_im` must be provided.')
-        df = _check_df_load(df)
-        df[geom_col] = df[geom_col].apply(_check_wkt_load)
+    # start with required checks and pre-population of values
+    if out_file and not reference_im:
+        raise ValueError(
+            'If saving output to file, `reference_im` must be provided.')
+    df = _check_df_load(df)
+    df[geom_col] = df[geom_col].apply(_check_wkt_load)
 
-        # Check if dataframe is in the appropriate units (meters, and reproject if not)
-        unit = vector_gdf_get_projection_unit(df)
-        if unit != "meter":
-            # Pick UTM zone
-            coords = [df[geom_col].bounds['minx'].min(), df[geom_col].bounds['miny'].min(), df[geom_col].bounds['maxx'].max(), df[geom_col].bounds['maxy'].max()]
-            crs = calculate_UTM_crs(coords)
-            # REPROJECT
-            orig_crs = df.crs
-            df = df.to_crs(crs)
-            df[geom_col] = df[geom_col].apply(lambda x: x.buffer(buffer_in_m))
-            # Send back to old CRS
-            df = df.to_crs(orig_crs)
+    # Check if dataframe is in the appropriate units (meters, and reproject if not)
+    unit = vector_gdf_get_projection_unit(df)
+    if unit != "meter":
+        # Pick UTM zone
+        coords = [df[geom_col].bounds['minx'].min(), df[geom_col].bounds['miny'].min(), df[geom_col].bounds['maxx'].max(), df[geom_col].bounds['maxy'].max()]
+        crs = calculate_UTM_crs(coords)
+        # REPROJECT
+        orig_crs = df.crs
+        df = df.to_crs(crs)
+        df[geom_col] = df[geom_col].apply(lambda x: x.buffer(buffer_in_m))
+        # Send back to old CRS
+        df = df.to_crs(orig_crs)
 
+    else:
+        df[geom_col] = df[geom_col].apply(lambda x: x.buffer(buffer_in_m))
+
+    # load in geoms if wkt
+    if not do_transform:
+        affine_obj = Affine(1, 0, 0, 0, 1, 0)  # identity transform
+
+    if reference_im:
+        reference_im = _check_rasterio_im_load(reference_im)
+        shape = reference_im.shape
+        if do_transform:
+            affine_obj = reference_im.transform
+
+    # extract geometries and pair them with burn values
+    if burn_field:
+        if out_type == 'int':
+            feature_list = list(zip(df[geom_col],
+                                    df[burn_field].astype('uint8')))
         else:
-            df[geom_col] = df[geom_col].apply(lambda x: x.buffer(buffer_in_m))
+            feature_list = list(zip(df[geom_col],
+                                    df[burn_field].astype('uint8')))
+    else:
+        feature_list = list(zip(df[geom_col], [burn_value] * len(df)))
 
-        # load in geoms if wkt
-        if not do_transform:
-            affine_obj = Affine(1, 0, 0, 0, 1, 0)  # identity transform
+    output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
+                                    transform=affine_obj)
 
-        if reference_im:
-            reference_im = _check_rasterio_im_load(reference_im)
-            shape = reference_im.shape
-            if do_transform:
-                affine_obj = reference_im.transform
+    if out_file:
+        meta = reference_im.meta.copy()
+        meta.update(count=1)
+        if out_type == 'int':
+            meta.update(dtype='uint8')
+        with rasterio.open(out_file, 'w', **meta) as dst:
+            dst.write(output_arr, indexes=1)
 
-        # extract geometries and pair them with burn values
-        if burn_field:
-            if out_type == 'int':
-                feature_list = list(zip(df[geom_col],
-                                        df[burn_field].astype('uint8')))
-            else:
-                feature_list = list(zip(df[geom_col],
-                                        df[burn_field].astype('uint8')))
-        else:
-            feature_list = list(zip(df[geom_col], [burn_value] * len(df)))
-
-        output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
-                                        transform=affine_obj)
-
-        if out_file:
-            meta = reference_im.meta.copy()
-            meta.update(count=1)
-            if out_type == 'int':
-                meta.update(dtype='uint8')
-            with rasterio.open(out_file, 'w', **meta) as dst:
-                dst.write(output_arr, indexes=1)
-
-        return output_arr
+    return output_arr
