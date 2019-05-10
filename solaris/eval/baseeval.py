@@ -40,7 +40,12 @@ class EvalBase():
         return 'EvalBase {}'.format(os.path.split(self.ground_truth_fname)[-1])
 
     def get_iou_by_building(self):
-        return self.ground_truth_GDF
+        """Returns a copy of the ground truth table, which includes a
+        per-building IoU score column after evaluation.
+        """
+        
+        output_ground_truth_GDF = self.ground_truth_GDF.copy(deep=True)
+        return output_ground_truth_GDF
     
     def eval_iou_spacenet_csv(self, miniou=0.5, iou_field_prefix="iou_score",
                               imageIDField="ImageId", debug=False, minArea=0):
@@ -100,10 +105,6 @@ class EvalBase():
             if debug:
                 print(iou_field)
             self.ground_truth_GDF[iou_field] = 0.
-            #if iou_field not in self.ground_truth_GDF:
-            #    self.ground_truth_GDF[iou_field] = 0
-            #else:
-            #    self.ground_truth_GDF[iou_field].values[:] = 0.
             for _, pred_row in proposal_GDF_copy.iterrows():
                 if debug:
                     print(pred_row.name)
