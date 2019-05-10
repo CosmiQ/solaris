@@ -39,6 +39,9 @@ class EvalBase():
     def __repr__(self):
         return 'EvalBase {}'.format(os.path.split(self.ground_truth_fname)[-1])
 
+    def get_iou_by_building(self):
+        return self.ground_truth_GDF
+    
     def eval_iou_spacenet_csv(self, miniou=0.5, iou_field_prefix="iou_score",
                               imageIDField="ImageId", debug=False, minArea=0):
         """Evaluate IoU between the ground truth and proposals in CSVs.
@@ -96,6 +99,11 @@ class EvalBase():
                                                   > minArea]
             if debug:
                 print(iou_field)
+            self.ground_truth_GDF[iou_field] = 0.
+            #if iou_field not in self.ground_truth_GDF:
+            #    self.ground_truth_GDF[iou_field] = 0
+            #else:
+            #    self.ground_truth_GDF[iou_field].values[:] = 0.
             for _, pred_row in proposal_GDF_copy.iterrows():
                 if debug:
                     print(pred_row.name)
@@ -108,6 +116,8 @@ class EvalBase():
                         max_iou_row = iou_GDF.loc[
                             iou_GDF['iou_score'].idxmax(axis=0, skipna=True)
                             ]
+                        self.ground_truth_GDF.loc[pred_row.name, iou_field] \
+                            = max_iou_row['iou_score']
                         if max_iou_row['iou_score'] > miniou:
                             self.proposal_GDF.loc[pred_row.name, iou_field] \
                                 = max_iou_row['iou_score']
@@ -215,7 +225,7 @@ class EvalBase():
         if calculate_class_scores:
             if not ground_truth_class_field:
                 raise ValueError('Must provide ground_truth_class_field '
-                                 + 'if using calculate_class_scores.')
+                                 'if using calculate_class_scores.')
             if class_list == ['all']:
                 class_list = list(
                     self.ground_truth_GDF[ground_truth_class_field].unique())
