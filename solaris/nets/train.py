@@ -8,6 +8,7 @@ from .optimizers import get_optimizer
 from .callbacks import get_callbacks
 from .metrics import get_metrics
 from ..utils.core import get_data_paths
+from torch.optim.lr_scheduler import _LRScheduler
 
 
 class Trainer(object):
@@ -27,9 +28,27 @@ class Trainer(object):
                                                self.train_df, stage='train')
         self.epochs = self.config['training']['epochs']
         self.optimizer = get_optimizer(self.framework, self.config)
+        self.lr = self.config['training']['lr']
         self.loss = get_loss(self.framework, self.config)
         self.callbacks = get_callbacks(self.framework, self.config)
         self.metrics = get_metrics(self.framework, self.config)
+
+        self.initialize_model(self.framework)
+
+        # torch initialization
+        if self.framework == 'torch':
+            # create optimizer
+            self.optimizer = self.optimizer(
+                self.model.parameters(), lr=self.lr,
+                **self.config['training']['opt_args']
+                )
+            # wrap in lr_scheduler if one was created
+            for cb in self.callbacks:
+                if isinstance(cb, _LRScheduler):
+                    self.optimizer = cb(
+                        self.optimizer,
+                        **self.config['training']['callbacks']['lr_schedule']['schedule_dict']
+                        )
 
     def train(self):
         """Run training on the model."""
@@ -79,9 +98,3 @@ def get_train_val_dfs(config):
         train_df = train_df.drop(index=val_subset)
 
     return train_df, val_df
-
-
-def get_optimizer(framework, config):
-    """Load in the framework-specific optimizer for the model."""
-    # TODO: IMPLEMENT
-    pass
