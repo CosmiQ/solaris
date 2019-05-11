@@ -43,10 +43,10 @@ class EvalBase():
         """Returns a copy of the ground truth table, which includes a
         per-building IoU score column after eval_iou_spacenet_csv() has run.
         """
-        
+
         output_ground_truth_GDF = self.ground_truth_GDF.copy(deep=True)
         return output_ground_truth_GDF
-    
+
     def eval_iou_spacenet_csv(self, miniou=0.5, iou_field_prefix="iou_score",
                               imageIDField="ImageId", debug=False, minArea=0):
         """Evaluate IoU between the ground truth and proposals in CSVs.
@@ -119,12 +119,14 @@ class EvalBase():
                             iou_GDF['iou_score'].idxmax(axis=0, skipna=True)
                             ]
                         # Find corresponding entry in full ground truth table
-                        for truth_index, row in self.ground_truth_GDF.iterrows():
+                        for truth_index, row in self.ground_truth_GDF\
+                                                    .iterrows():
                             if row.iloc[:-1].equals(max_iou_row[:-1]):
                                 break
                         if max_iou_row[iou_field] > \
                            self.ground_truth_GDF.iloc[truth_index, iou_index]:
-                            self.ground_truth_GDF.iloc[truth_index, iou_index] \
+                            self.ground_truth_GDF.iloc[truth_index,
+                                                       iou_index] \
                                 = max_iou_row[iou_field]
                         if max_iou_row['iou_score'] > miniou:
                             self.proposal_GDF.loc[pred_row.name, iou_field] \
