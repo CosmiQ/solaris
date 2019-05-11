@@ -64,38 +64,13 @@ class TestEvalBase(object):
                          proposalCSV=True)
         eb.eval_iou_spacenet_csv(miniou=0.5, imageIDField='ImageId', minArea=20)
         output = eb.get_iou_by_building()
-        print(output)
         result_actual = pd.DataFrame(output)
         result_actual.sort_values(by=['ImageId', 'BuildingId'], inplace=True)
         ious_actual = list(result_actual['iou_score'])
         result_expected = pd.read_csv(path_ious, index_col=0)
         result_expected.sort_values(by=['ImageId', 'BuildingId'], inplace=True)
         ious_expected = list(result_expected['iou_score'])
-        print(list(output['iou_score']))
-        print(ious_actual)
-        print(ious_expected)
         maxdifference = max([abs(x-y) for x,y in zip(ious_actual,
                                                      ious_expected)])
         epsilon = 1E-9
         assert maxdifference < epsilon
-        
-        """
-        result_actual = pd.DataFrame(output)
-        result_actual.to_csv(path_temp)
-        result_actual = pd.read_csv(path_temp, index_col=0)
-        result_expected = pd.read_csv(path_ious, index_col=0)
-
-        result_actual.sort_values(by=['ImageId', 'BuildingId'], inplace=True)
-        result_expected.sort_values(by=['ImageId', 'BuildingId'], inplace=True)
-
-        print(output)
-        print()
-        print(result_actual)
-        print()
-        print(result_expected)
-        output.describe()
-        result_actual.describe()
-        result_expected.describe()
-        
-        assert result_actual.equals(result_expected)
-        """
