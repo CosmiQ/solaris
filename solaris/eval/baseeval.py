@@ -41,7 +41,7 @@ class EvalBase():
 
     def get_iou_by_building(self):
         """Returns a copy of the ground truth table, which includes a
-        per-building IoU score column after evaluation.
+        per-building IoU score column after eval_iou_spacenet_csv() has run.
         """
         
         output_ground_truth_GDF = self.ground_truth_GDF.copy(deep=True)
@@ -90,6 +90,8 @@ class EvalBase():
         imageIDList = list(set(imageIDList))
         iou_field = iou_field_prefix
         scoring_dict_list = []
+        self.ground_truth_GDF[iou_field] = 0.
+        iou_index = self.ground_truth_GDF.columns.get_loc(iou_field)
 
         for imageID in tqdm(imageIDList):
             self.ground_truth_GDF_Edit = self.ground_truth_GDF[
@@ -104,7 +106,6 @@ class EvalBase():
                                                   > minArea]
             if debug:
                 print(iou_field)
-            self.ground_truth_GDF[iou_field] = 0.
             for _, pred_row in proposal_GDF_copy.iterrows():
                 if debug:
                     print(pred_row.name)
@@ -117,8 +118,31 @@ class EvalBase():
                         max_iou_row = iou_GDF.loc[
                             iou_GDF['iou_score'].idxmax(axis=0, skipna=True)
                             ]
-                        self.ground_truth_GDF.loc[pred_row.name, iou_field] \
-                            = max_iou_row['iou_score']
+                        # Find corresponding entry in full ground truth table
+                        print()
+                        print(pred_row.name)
+                        print((max_iou_row.name, max_iou_row.ImageId, max_iou_row.BuildingId))
+                        entry_within_image = 'BuildingId'
+                        truth_rows = (
+                            self.ground_truth_GDF[imageIDField]
+                            == max_iou_row[imageIDField]
+                        ) & (
+                            self.ground_truth_GDF[entry_within_image]
+                            == max_iou_row[entry_within_image]
+                        )
+                        truth_index = self.ground_truth_GDF[truth_rows].index[0]
+                        
+                        print((truth_index, iou_index))
+                        print(max_iou_row[iou_field])
+                        print(self.ground_truth_GDF.iloc[truth_index, iou_index])
+                        if max_iou_row[iou_field] > \
+                           self.ground_truth_GDF.iloc[truth_index, iou_index]:
+                            self.ground_truth_GDF.iloc[truth_index, iou_index] \
+                                = max_iou_row[iou_field]
+                        print(self.ground_truth_GDF.iloc[truth_index, iou_index])
+                        #self.ground_truth_GDF.loc[max_iou_row.name,
+                        #                          iou_field] \
+                        #                          = max_iou_row['iou_score']
                         if max_iou_row['iou_score'] > miniou:
                             self.proposal_GDF.loc[pred_row.name, iou_field] \
                                 = max_iou_row['iou_score']
