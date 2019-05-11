@@ -53,8 +53,7 @@ class TestEvalBase(object):
 
     def test_iou_by_building(self):
         """Test output of ground truth table with per-building IoU scores"""
-        #data_folder = solaris.data.data_dir
-        data_folder = '/home/dhogan/solaris/solaris/data'
+        data_folder = solaris.data.data_dir
         path_truth = os.path.join(data_folder, 'SN2_sample_truth.csv')
         path_pred = os.path.join(data_folder, 'SN2_sample_preds.csv')
         path_ious = os.path.join(data_folder, 'SN2_sample_iou_by_building.csv')
