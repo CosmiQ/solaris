@@ -92,7 +92,8 @@ class EvalBase():
         scoring_dict_list = []
         self.ground_truth_GDF[iou_field] = 0.
         iou_index = self.ground_truth_GDF.columns.get_loc(iou_field)
-        ground_truth_noiou = self.ground_truth_GDF.iloc[:, :-1]
+        id_cols = 2
+        ground_truth_ids = self.ground_truth_GDF.iloc[:, :id_cols]
 
         for imageID in tqdm(imageIDList):
             self.ground_truth_GDF_Edit = self.ground_truth_GDF[
@@ -120,9 +121,9 @@ class EvalBase():
                             iou_GDF['iou_score'].idxmax(axis=0, skipna=True)
                             ]
                         # Find corresponding entry in full ground truth table
-                        max_iou_row_noiou = max_iou_row[:-1]
-                        match_flags = ground_truth_noiou.eq(
-                            max_iou_row_noiou, axis=1).all(1)
+                        max_iou_row_id = max_iou_row[:id_cols]
+                        match_flags = ground_truth_ids.eq(
+                            max_iou_row_id, axis=1).all(1)
                         truth_index = match_flags[match_flags].index[0]
                         if max_iou_row[iou_field] > \
                            self.ground_truth_GDF.iloc[truth_index, iou_index]:
