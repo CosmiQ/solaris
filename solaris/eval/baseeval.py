@@ -119,16 +119,9 @@ class EvalBase():
                             iou_GDF['iou_score'].idxmax(axis=0, skipna=True)
                             ]
                         # Find corresponding entry in full ground truth table
-                        self.ground_truth_GDF.iloc[:, :-1]
-                        entry_within_image = 'BuildingId'
-                        truth_rows = (
-                            self.ground_truth_GDF[imageIDField]
-                            == max_iou_row[imageIDField]
-                        ) & (
-                            self.ground_truth_GDF[entry_within_image]
-                            == max_iou_row[entry_within_image]
-                        )
-                        truth_index = self.ground_truth_GDF[truth_rows].index[0]
+                        for truth_index, row in self.ground_truth_GDF.iterrows():
+                            if row.iloc[:-1].equals(max_iou_row[:-1]):
+                                break
                         if max_iou_row[iou_field] > \
                            self.ground_truth_GDF.iloc[truth_index, iou_index]:
                             self.ground_truth_GDF.iloc[truth_index, iou_index] \
