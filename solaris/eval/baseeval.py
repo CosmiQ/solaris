@@ -120,18 +120,10 @@ class EvalBase():
                             iou_GDF['iou_score'].idxmax(axis=0, skipna=True)
                             ]
                         # Find corresponding entry in full ground truth table
-                        #for truth_index, row in self.ground_truth_GDF\
-                        #                            .iterrows():
-                        #    if row.iloc[:-1].equals(max_iou_row[:-1]):
-                        #        break
                         max_iou_row_noiou = max_iou_row[:-1]
-                        match_flags = ground_truth_noiou.eq(max_iou_row_noiou, axis=1).all(1)
+                        match_flags = ground_truth_noiou.eq(
+                            max_iou_row_noiou, axis=1).all(1)
                         truth_index = match_flags[match_flags].index[0]
-                        #truth_index = ground_truth_noiou.eq(max_iou_row_noiou, axis=1).all(1).index[0]
-                        print()
-                        print()
-                        print(truth_index)
-                        #truth_index = 0
                         if max_iou_row[iou_field] > \
                            self.ground_truth_GDF.iloc[truth_index, iou_index]:
                             self.ground_truth_GDF.iloc[truth_index,
