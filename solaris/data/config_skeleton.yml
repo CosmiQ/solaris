@@ -3,19 +3,18 @@
 ################################################################################
 
 # This skeleton lays out the required instructions for running a model using
-# cw-nets. See the full documentation at [INCLUDE DOC LINK HERE] for details on
+# solaris. See the full documentation at [INCLUDE DOC LINK HERE] for details on
 # options, required arguments, and sample usage.
 
 model_name: # include the name of the model to be used here. See the docs
             # for options.
-model_path: # leave this blank unless you're using a custom model not native
-            # to solaris. solaris will automatically find your model.
+model_src_path: # leave this blank unless you're using a custom model not
+                # native to solaris. solaris will automatically find your
+                # model.
 train: true  # set to false for inference only
 infer: true  # set to false for training only
 
 pretrained: true  # use pretrained weights associated with the model?
-model_src:  # if not using a model included with the package, you must specify
-            # a path to find the model architecture. See documentation.
 nn_framework:  # if not using a model included with the package, use this
                # argument to specify if it uses keras, pytorch, tf, etc.
 batch_size:  # size of each batch fed into nn.
@@ -91,6 +90,10 @@ training:
                          # checkpoints will be saved on those specific epochs.
                          # if not provided, only the final model is saved.
   callbacks:  # a list of callbacks to use.
+  model_dest_path:   # path to save the trained model output and checkpoint(s)
+                     # to. Should be a filename ending in .h5, .hdf5 for keras
+                     # or .pth, .pt for torch. Epoch numbers will be appended
+                     # for checkpoints.
   verbose: true  # verbose text output during training
 
 inference:

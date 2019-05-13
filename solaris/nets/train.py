@@ -1,7 +1,6 @@
 """Training code for `solaris` models."""
 
 import numpy as np
-<<<<<<< HEAD
 from .model_io import get_model, reset_weights
 from .datagen import make_data_generator
 from .losses import get_loss
@@ -11,15 +10,8 @@ from .torch_callbacks import TorchEarlyStopping, TorchTerminateOnNaN
 from .torch_callbacks import TorchModelCheckpoint
 from .metrics import get_metrics
 from ..utils.core import get_data_paths
+import torch
 from torch.optim.lr_scheduler import _LRScheduler
-=======
-from .model_io import get_model
-from .datagen import make_data_generator
-from .losses import get_loss
-from .callbacks import get_callbacks
-from .metrics import get_metrics
-from ..utils.core import get_data_paths
->>>>>>> 4cd7a9609b90be9c6e1680d50f9af51d3bd24b0f
 
 
 class Trainer(object):
@@ -27,17 +19,14 @@ class Trainer(object):
 
     def __init__(self, config):
         self.config = config
-<<<<<<< HEAD
-        self.pretrained = config['pretrained']
-        self.batch_size = config['batch_size']
-=======
->>>>>>> 4cd7a9609b90be9c6e1680d50f9af51d3bd24b0f
+        self.pretrained = self.config['pretrained']
+        self.batch_size = self.config['batch_size']
         self.framework = self.config['nn_framework']
         self.model_name = self.config['model_name']
         self.model_path = self.config['model_path']
         self.model = get_model(self.model_name, self.nn_framework,
                                self.model_path)
-        self.train_df, self.val_df = get_train_val_dfs(config)
+        self.train_df, self.val_df = get_train_val_dfs(self.config)
         self.train_datagen = make_data_generator(self.framework, self.config,
                                                  self.train_df, stage='train')
         self.val_datagen = make_data_generator(self.framework, self.config,
@@ -125,15 +114,17 @@ class Trainer(object):
                                 target) in enumerate(self.val_datagen):
                     val_output = self.model(data)
                     val_loss.append(self.loss(val_output, target))
-
+                val_loss = np.mean(val_loss)
                 if self.verbose:
                     print()
                     print('    Validation loss at epoch {}: {}'.format(
-                        epoch, np.mean(val_loss)))
+                        epoch, val_loss))
                     print()
                 check_continue = self._run_torch_callbacks(loss, val_loss)
                 if not check_continue:
                     break
+
+            self.save_model()
 
     def _run_torch_callbacks(self, loss, val_loss):
         for cb in self.callbacks:
@@ -164,9 +155,12 @@ class Trainer(object):
 
             return True
 
-    def save(self):
+    def save_model(self):
         """Save the final model output."""
-        pass  # TODO: IMPLEMENT
+        if self.framework == 'keras':
+            self.model.save(self.config['training']['model_dest_path'])
+        elif self.framework == 'torch':
+            torch.save(self.model, self.config['training']['model_dest_path'])
 
 
 def get_train_val_dfs(config):
@@ -195,7 +189,8 @@ def get_train_val_dfs(config):
     if config['data_specs']['val_holdout_frac'] is None:
         if config['validation_data_csv'] is None:
             raise ValueError(
-                "If val_holdout_frac isn't specified in config, validation_data_csv must be.")
+                "If val_holdout_frac isn't specified in config,"
+                " validation_data_csv must be.")
         val_df = get_data_paths(config['validation_data_csv'])
 
     else:
@@ -208,12 +203,3 @@ def get_train_val_dfs(config):
         train_df = train_df.drop(index=val_subset)
 
     return train_df, val_df
-<<<<<<< HEAD
-=======
-
-
-def get_optimizer(framework, config):
-    """Load in the framework-specific optimizer for the model."""
-    # TODO: IMPLEMENT
-    pass
->>>>>>> 4cd7a9609b90be9c6e1680d50f9af51d3bd24b0f
