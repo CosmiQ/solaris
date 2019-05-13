@@ -32,7 +32,7 @@ def get_optimizer(framework, config):
     ---------
     framework : str
         Name of the deep learning framework used. Current options are
-        ``['pytorch', 'torch', 'keras']``.
+        ``['torch', 'keras']``.
     config : dict
         The config dict generated from the YAML config file.
 

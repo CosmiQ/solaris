@@ -49,6 +49,11 @@ def get_callbacks(framework, config):
     return callbacks
 
 
+def get_callbacks(framework, config):
+    """Load callbacks based on a config file for a specific framework."""
+    pass  # TODO: IMPLEMENT
+
+
 def terminate_on_metric_nan(model, metric):
     """Get a terminate on metric NaN callback for `metric` in `model`.
 
