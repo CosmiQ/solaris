@@ -8,7 +8,7 @@ import skimage
 import rasterio
 from solaris.data import data_dir
 from solaris.vector.mask import footprint_mask, boundary_mask, \
-    contact_mask, df_to_px_mask, mask_to_poly_geojson
+    contact_mask, df_to_px_mask, mask_to_poly_geojson, road_mask
 
 
 class TestFootprintMask(object):
@@ -219,3 +219,26 @@ class TestMaskToGDF(object):
         truth_gdf = gpd.read_file(os.path.join(data_dir,
                                                'gdf_from_mask_2.geojson'))
         assert truth_gdf[['geometry', 'value']].equals(gdf)
+
+
+class TestRoadMask(object):
+    """Test(s) for solaris.vector.mask.road_mask."""
+
+    def test_make_mask_w_file_and_transform(self):
+        """Test creating a mask using a geojson and an affine xform."""
+        output_mask = road_mask(
+            os.path.join(data_dir, 'sample_roads_for_masking.geojson'),
+            reference_im=os.path.join(data_dir, 'road_mask_input.tif'),
+            do_transform=True,
+            out_file=os.path.join(data_dir, 'test_out.tif')
+            )
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, 'sample_road_raster_mask.tif')
+            )
+        saved_output_mask = skimage.io.imread(os.path.join(data_dir,
+                                                           'test_out.tif'))
+
+        assert np.array_equal(output_mask, truth_mask)
+        assert np.array_equal(saved_output_mask, truth_mask)
+        # clean up
+        os.remove(os.path.join(data_dir, 'test_out.tif'))

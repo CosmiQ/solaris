@@ -2,6 +2,7 @@ import os
 from solaris.eval.baseeval import EvalBase
 import solaris
 import geopandas as gpd
+import pandas as pd
 
 
 class TestEvalBase(object):
@@ -49,3 +50,26 @@ class TestEvalBase(object):
                            'F1Score': 0.2857142857142857}]
         scores = eb.eval_iou(calculate_class_scores=False)
         assert scores == expected_score
+
+    def test_iou_by_building(self):
+        """Test output of ground truth table with per-building IoU scores"""
+        data_folder = solaris.data.data_dir
+        path_truth = os.path.join(data_folder, 'SN2_sample_truth.csv')
+        path_pred = os.path.join(data_folder, 'SN2_sample_preds.csv')
+        path_ious = os.path.join(data_folder, 'SN2_sample_iou_by_building.csv')
+        path_temp = './temp.pd'
+        eb = EvalBase(path_truth)
+        eb.load_proposal(path_pred, conf_field_list=['Confidence'],
+                         proposalCSV=True)
+        eb.eval_iou_spacenet_csv(miniou=0.5, imageIDField='ImageId', minArea=20)
+        output = eb.get_iou_by_building()
+        result_actual = pd.DataFrame(output)
+        result_actual.sort_values(by=['ImageId', 'BuildingId'], inplace=True)
+        ious_actual = list(result_actual['iou_score'])
+        result_expected = pd.read_csv(path_ious, index_col=0)
+        result_expected.sort_values(by=['ImageId', 'BuildingId'], inplace=True)
+        ious_expected = list(result_expected['iou_score'])
+        maxdifference = max([abs(x-y) for x,y in zip(ious_actual,
+                                                     ious_expected)])
+        epsilon = 1E-9
+        assert maxdifference < epsilon
