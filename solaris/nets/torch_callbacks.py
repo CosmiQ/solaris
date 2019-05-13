@@ -6,7 +6,7 @@ from .metrics import metric_dict
 import torch
 
 
-class EarlyStopping(object):
+class TorchEarlyStopping(object):
     """Tracks if model training should stop based on rate of improvement.
 
     Arguments
@@ -45,7 +45,7 @@ class EarlyStopping(object):
             self.stop = True
 
 
-class TerminateOnNaN(object):
+class TorchTerminateOnNaN(object):
     """Sets a stop condition if the model loss achieves an NaN or inf value.
 
     Arguments
@@ -72,7 +72,7 @@ class TerminateOnNaN(object):
             self.counter = 0
 
 
-class TerminateOnMetricNaN(object):
+class TorchTerminateOnMetricNaN(object):
     """Sets a stop condition if a training metric achieves an NaN or inf value.
 
     Arguments
@@ -104,7 +104,7 @@ class TerminateOnMetricNaN(object):
             self.counter = 0
 
 
-class ModelCheckpoint(object):
+class TorchModelCheckpoint(object):
     """Save the model at specific points using Keras checkpointing args.
 
     Arguments

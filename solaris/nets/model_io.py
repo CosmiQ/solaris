@@ -37,3 +37,36 @@ def _load_model(path, framework):
         model = torch.load(path)
 
     return model
+
+
+def reset_weights(model, framework):
+    """Re-initialize model weights for training.
+
+    Arguments
+    ---------
+    model : :class:`tensorflow.keras.Model` or :class:`torch.nn.Module`
+        A pre-trained, compiled model with weights saved.
+    framework : str
+        The deep learning framework used. Currently valid options are
+        ``['torch', 'keras']`` .
+
+    Returns
+    -------
+    reinit_model : model object
+        The model with weights re-initialized. Note this model object will also
+        lack an optimizer, loss function, etc., which will need to be added.
+    """
+
+    if framework == 'keras':
+        model_json = model.to_json()
+        reinit_model = keras.models.model_from_json(model_json)
+    elif framework == 'torch':
+        reinit_model = model.apply(_reset_torch_weights)
+
+    return reinit_model
+
+
+def _reset_torch_weights(torch_layer):
+    if isinstance(torch_layer, torch.nn.Conv2d) or \
+            isinstance(torch_layer, torch.nn.Linear):
+        torch_layer.reset_parameters()

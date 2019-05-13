@@ -91,6 +91,7 @@ training:
                          # checkpoints will be saved on those specific epochs.
                          # if not provided, only the final model is saved.
   callbacks:  # a list of callbacks to use.
+  verbose: true  # verbose text output during training
 
 inference:
   window_step_size:  # size of each step for the sliding window for inference.
