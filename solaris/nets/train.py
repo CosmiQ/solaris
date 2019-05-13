@@ -1,6 +1,7 @@
 """Training code for `solaris` models."""
 
 import numpy as np
+<<<<<<< HEAD
 from .model_io import get_model, reset_weights
 from .datagen import make_data_generator
 from .losses import get_loss
@@ -11,6 +12,14 @@ from .torch_callbacks import TorchModelCheckpoint
 from .metrics import get_metrics
 from ..utils.core import get_data_paths
 from torch.optim.lr_scheduler import _LRScheduler
+=======
+from .model_io import get_model
+from .datagen import make_data_generator
+from .losses import get_loss
+from .callbacks import get_callbacks
+from .metrics import get_metrics
+from ..utils.core import get_data_paths
+>>>>>>> 4cd7a9609b90be9c6e1680d50f9af51d3bd24b0f
 
 
 class Trainer(object):
@@ -18,8 +27,11 @@ class Trainer(object):
 
     def __init__(self, config):
         self.config = config
+<<<<<<< HEAD
         self.pretrained = config['pretrained']
         self.batch_size = config['batch_size']
+=======
+>>>>>>> 4cd7a9609b90be9c6e1680d50f9af51d3bd24b0f
         self.framework = self.config['nn_framework']
         self.model_name = self.config['model_name']
         self.model_path = self.config['model_path']
@@ -196,3 +208,12 @@ def get_train_val_dfs(config):
         train_df = train_df.drop(index=val_subset)
 
     return train_df, val_df
+<<<<<<< HEAD
+=======
+
+
+def get_optimizer(framework, config):
+    """Load in the framework-specific optimizer for the model."""
+    # TODO: IMPLEMENT
+    pass
+>>>>>>> 4cd7a9609b90be9c6e1680d50f9af51d3bd24b0f
