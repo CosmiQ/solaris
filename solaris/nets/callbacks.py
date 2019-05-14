@@ -49,24 +49,6 @@ def get_callbacks(framework, config):
     return callbacks
 
 
-def terminate_on_metric_nan(model, metric):
-    """Get a terminate on metric NaN callback for `metric` in `model`.
-
-    Arguments:
-    ----------
-    model : Keras, PyTorch, or TensorFlow model
-        A model object to instantiate the callback for.
-    metric : str
-        Name of metric that should be tested for ``NaN`` or infinite values.
-
-    Returns:
-    A ``Callback`` or related object for the deep learning framework used to
-    produce ``model`` to be used during model training.
-    """
-    # TODO: IMPLEMENT
-    pass
-
-
 class KerasTerminateOnMetricNaN(Callback):
     """Callback to stop training if a metric has value NaN or infinity.
 
