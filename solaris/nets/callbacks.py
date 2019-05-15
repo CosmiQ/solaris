@@ -48,7 +48,7 @@ def get_callbacks(framework, config):
 
     return callbacks
 
-
+  
 class KerasTerminateOnMetricNaN(Callback):
     """Callback to stop training if a metric has value NaN or infinity.
 
