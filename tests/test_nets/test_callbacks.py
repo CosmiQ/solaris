@@ -119,7 +119,7 @@ class TestLRSchedulers(object):
     """Test LR scheduling from get_lr_scheduler()."""
 
     def test_keras_schedulers(self):
-        epsilon = 1e-8
+        epsilon = 1e-9
         framework = 'keras'
         config = {'training':
                   {'lr': 0.001,
@@ -158,3 +158,35 @@ class TestLRSchedulers(object):
                 assert np.abs(lr_scheduler.schedule(0) - 0.001) < epsilon
                 assert np.abs(lr_scheduler.schedule(10) - 0.0001) < epsilon
                 assert np.abs(lr_scheduler.schedule(20) - 0.00001) < epsilon
+
+    def test_torch_schedulers(self):
+        framework = 'torch'
+        config = {'training':
+                  {'lr': 0.001,
+                   'callbacks': {}
+                   }
+                  }
+        schedule_dicts = [
+             {'schedule_type': 'exponential',
+              'factor': 0.5,
+              'update_frequency': 1
+              },
+             {'schedule_type': 'arbitrary',
+              'schedule_dict': {
+                   10: 0.0001,
+                   20: 0.00001
+               }
+              },
+             {'schedule_type': 'linear',
+              'factor': -.01
+              }
+        ]
+        for schedule_dict in schedule_dicts:
+            config['training']['callbacks']['lr_schedule'] = schedule_dict
+            lr_scheduler = get_lr_schedule(framework, config)
+            if schedule_dict['schedule_type'] == 'exponential':
+                assert lr_scheduler == torch.optim.lr_scheduler.ExponentialLR
+            elif schedule_dict['schedule_type'] == 'linear':
+                assert lr_scheduler == torch.optim.lr_scheduler.StepLR
+            elif schedule_dict['schedule_type'] == 'arbitrary':
+                assert lr_scheduler == torch.optim.lr_scheduler.MultiStepLR
