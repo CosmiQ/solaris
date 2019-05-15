@@ -1,7 +1,8 @@
-import numpy as np
 from solaris.nets.callbacks import KerasTerminateOnMetricNaN, get_callbacks
+from solaris.nets.callbacks import get_lr_schedule
 import tensorflow as tf
 import torch
+import numpy as np
 
 
 class TestGetCallbacksFunction(object):
@@ -114,9 +115,46 @@ class TestGetCallbacksFunction(object):
         assert has_red_lr_plat
 
 
-class TestTorchCallbacks(object):
-    pass
-
-
 class TestLRSchedulers(object):
-    pass
+    """Test LR scheduling from get_lr_scheduler()."""
+
+    def test_keras_schedulers(self):
+        epsilon = 1e-8
+        framework = 'keras'
+        config = {'training':
+                  {'lr': 0.001,
+                   'callbacks': {}
+                   }
+                  }
+        schedule_dicts = [
+             {'schedule_type': 'exponential',
+              'factor': 0.5,
+              'update_frequency': 1
+              },
+             {'schedule_type': 'arbitrary',
+              'schedule_dict': {
+                   10: 0.0001,
+                   20: 0.00001
+               }
+              },
+             {'schedule_type': 'linear',
+              'factor': -.01
+              }
+        ]
+
+        for schedule_dict in schedule_dicts:
+            config['training']['callbacks']['lr_schedule'] = schedule_dict
+            lr_scheduler = get_lr_schedule(framework, config)
+            # test lr schedule function outputs to make sure they're right
+            if schedule_dict['schedule_type'] == 'exponential':
+                assert np.abs(lr_scheduler.schedule(0) - 0.001) < epsilon
+                assert np.abs(lr_scheduler.schedule(1) - 0.0005) < epsilon
+                assert np.abs(lr_scheduler.schedule(2) - 0.00025) < epsilon
+            elif schedule_dict['schedule_type'] == 'linear':
+                assert np.abs(lr_scheduler.schedule(0) - 0.001) < epsilon
+                assert np.abs(lr_scheduler.schedule(1) - 0.00099) < epsilon
+                assert np.abs(lr_scheduler.schedule(10) - 0.0009) < epsilon
+            elif schedule_dict['schedule_type'] == 'arbitrary':
+                assert np.abs(lr_scheduler.schedule(0) - 0.001) < epsilon
+                assert np.abs(lr_scheduler.schedule(10) - 0.0001) < epsilon
+                assert np.abs(lr_scheduler.schedule(20) - 0.00001) < epsilon
