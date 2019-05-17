@@ -310,20 +310,6 @@ def scale(im, scale_x, scale_y, interpolation):
                                                interpolation))
 
 
-def cutout(img, num_holes, h_size, w_size):
-    img = img.copy()
-    height, width = img.shape[:2]
-    ys = np.random.randint(0, height, num_holes)
-    xs = np.random.randint(0, width, num_holes)
-    y1s = np.clip((ys-h_size//2), 0, height)
-    y2s = np.clip((ys+h_size//2), 0, height)
-    x1s = np.clip((xs-h_size//2), 0, width)
-    x2s = np.clip((xs+h_size//2), 0, width)
-    for n in range(num_holes):
-        img[y1s[n]:y2s[n], x1s[n]:x2s[n]] = 0
-    return img
-
-
 def build_pipeline(config):
     """Create train and val augmentation pipelines from a config object.
 

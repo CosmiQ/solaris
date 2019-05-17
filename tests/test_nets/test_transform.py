@@ -1,5 +1,7 @@
 import numpy as np
-from solaris.nets.transform import Rotate, RandomScale
+from solaris.nets.transform import Rotate, RandomScale, build_pipeline
+from albumentations.core.composition import Compose, OneOf
+from albumentations.augmentations.transforms import HorizontalFlip, Normalize
 
 
 class TestRotate(object):
@@ -36,3 +38,49 @@ class TestRandomScale(object):
                                                     [2, 2, 3, 5, 8, 9],
                                                     [1, 1, 2, 4, 7, 8]],
                                                    dtype='uint8'))
+
+
+class TestBuildAugPipeline(object):
+    """Test sol.nets.transform.build_pipeline()."""
+
+    def test_build_pipeline(self):
+        config = {'training_augmentation':
+                  {'p': 0.75,
+                   'augmentations':
+                   {'oneof':
+                    {'normalize': {},
+                     'rotate':
+                     {'border_mode': 'reflect',
+                      'limit': 45}
+                     },
+                    'horizontalflip': {'p': 0.5}
+                    }
+                   },
+                  'validation_augmentation':
+                  {'augmentations':
+                   {'horizontalflip': {'p': 0.5}
+                    }
+                   }
+                  }
+        train_augs, val_augs = build_pipeline(config)
+
+        assert isinstance(train_augs.transforms[0], OneOf)
+        assert isinstance(train_augs.transforms[1], HorizontalFlip)
+        assert train_augs.p == 0.75
+        assert isinstance(train_augs.transforms[0].transforms[0], Normalize)
+        assert isinstance(train_augs.transforms[0].transforms[1], Rotate)
+        assert train_augs.transforms[0].p == 0.5
+        assert train_augs.transforms[0].transforms[0].p == 1
+        assert not train_augs.transforms[0].transforms[0].always_apply
+        assert train_augs.transforms[0].transforms[1].limit == (-45, 45)
+        assert train_augs.transforms[0].transforms[1].border_mode == 'reflect'
+        assert isinstance(val_augs, Compose)
+        assert isinstance(val_augs.transforms[0], HorizontalFlip)
+
+        # test running the pipeline
+        arr = np.array([[3, 5, 3],
+                        [5, 8, 10],
+                        [1, 3, 8]])
+        train_result = train_augs(image=arr)
+        # make sure this gave a 2D numpy array out in a dict with key 'image'
+        assert len(train_result['image'].shape) == 2
