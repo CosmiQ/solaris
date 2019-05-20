@@ -97,7 +97,7 @@ def preprocess_im_arr(im_arr, im_format):
     if im_format == 'uint8':
         return im_arr.astype('uint8')  # just to be sure
     elif im_format == 'uint16':
-        im_arr = (im_arr*255/65535.).astype('uint8')
+        im_arr = (im_arr.astype('float64')*255./65535.).astype('uint8')
     elif im_format == 'z-scored':
         im_arr = ((im_arr+1)*177.5).astype('uint8')
     elif im_format == 'zero-one normalized':
