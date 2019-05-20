@@ -46,4 +46,37 @@ class TestDataGenerator(object):
 
     def test_torch_dataset(self):
         """Test creating a torch dataset object for data generation."""
-        pass
+
+        dataset_csv = os.path.join(data_dir, 'datagen_sample', 'sample_df.csv')
+        df = pd.read_csv(dataset_csv)
+        # add the path to the directory to the values in df
+        df = df.applymap(lambda x: os.path.join(data_dir, 'datagen_sample', x))
+
+        config = {'data_specs':
+                  {'height': 30,
+                   'width': 30,
+                   'channels': 1,
+                   'label_type': 'mask',
+                   'mask_channels': 1
+                   },
+                  'batch_size': 1,
+                  'training_augmentation':
+                  {'shuffle': True,  # images all same in test, so no effect
+                   'augmentations': {}
+                   }
+                  }
+
+        torch_ds = make_data_generator('torch', config, df, stage='train')
+        sample = next(iter(torch_ds))
+
+        expected_im = skimage.io.imread(os.path.join(data_dir,
+                                                     'datagen_sample',
+                                                     'expected_im.tif'))
+        expected_mask = skimage.io.imread(os.path.join(data_dir,
+                                                       'datagen_sample',
+                                                       'sample_mask_1.tif'))
+
+        assert np.array_equal(sample['image'],
+                              expected_im[np.newaxis, :, :, np.newaxis])
+        assert np.array_equal(sample['label'],
+                              expected_mask[np.newaxis, :, :, np.newaxis])

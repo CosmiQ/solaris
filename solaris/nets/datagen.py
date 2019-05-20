@@ -42,7 +42,7 @@ def make_data_generator(framework, config, df, stage='train'):
     if framework.lower() == 'keras':
         return KerasSegmentationSequence(config, df, stage=stage)
 
-    elif framework == 'pytorch':
+    elif framework in ['torch', 'pytorch']:
         dataset = TorchDataset(config, df, stage)
         # set up workers for DataLoader for pytorch
         data_workers = config['data_specs'].get('data_workers')
@@ -50,7 +50,7 @@ def make_data_generator(framework, config, df, stage='train'):
             data_workers = 0  # for DataLoader to run in main process
         return DataLoader(dataset, batch_size=config['batch_size'],
                           shuffle=config['training_augmentation']['shuffle'],
-                          data_workers=data_workers)
+                          num_workers=data_workers)
 
 
 class KerasSegmentationSequence(keras.utils.Sequence):
@@ -177,8 +177,10 @@ class TorchDataset(Dataset):
     """
 
     def __init__(self, config, df, stage='train'):
-        super(self, TorchDataset).__init__()
+        super().__init__()
         self.df = df
+        self.config = config
+        self.batch_size = self.config['batch_size']
         self.n_batches = int(np.floor(len(self.df)/self.batch_size))
         if stage == 'train':
             self.aug = process_aug_dict(self.config['training_augmentation'])
@@ -192,8 +194,8 @@ class TorchDataset(Dataset):
         'Get one image:mask pair'
         # Generate indexes of the batch
         image = imread(self.df['image'].iloc[idx])
-        mask = imread(self.df['mask'].iloc[idx])
-        sample = {'image': image, 'mask': mask}
+        mask = imread(self.df['label'].iloc[idx])
+        sample = {'image': image, 'label': mask}
         if self.aug:
             sample = self.aug(**sample)
 
