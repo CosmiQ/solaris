@@ -48,30 +48,7 @@ def get_callbacks(framework, config):
 
     return callbacks
 
-
-def get_callbacks(framework, config):
-    """Load callbacks based on a config file for a specific framework."""
-    pass  # TODO: IMPLEMENT
-
-
-def terminate_on_metric_nan(model, metric):
-    """Get a terminate on metric NaN callback for `metric` in `model`.
-
-    Arguments:
-    ----------
-    model : Keras, PyTorch, or TensorFlow model
-        A model object to instantiate the callback for.
-    metric : str
-        Name of metric that should be tested for ``NaN`` or infinite values.
-
-    Returns:
-    A ``Callback`` or related object for the deep learning framework used to
-    produce ``model`` to be used during model training.
-    """
-    # TODO: IMPLEMENT
-    pass
-
-
+  
 class KerasTerminateOnMetricNaN(Callback):
     """Callback to stop training if a metric has value NaN or infinity.
 
@@ -174,7 +151,7 @@ def get_lr_schedule(framework, config):
                 'callbacks']['lr_schedule']['schedule_type'] == 'exponential':
             lr_scheduler = torch.optim.lr_scheduler.ExponentialLR
         elif config['training'][
-                'callbacks']['lr_schedule']['schedule_type'] == 'exponential':
+                'callbacks']['lr_schedule']['schedule_type'] == 'arbitrary':
             lr_scheduler = torch.optim.lr_scheduler.MultiStepLR
 
     return lr_scheduler
@@ -228,7 +205,7 @@ def keras_lr_schedule(schedule_type, initial_lr=0.001, update_frequency=1,
             raise ValueError('If using an arbitrary schedule, an epoch: lr '
                              'dict must be provided.')
         lookup_dict = {}
-        epoch_vals = np.array(schedule_dict.keys())
+        epoch_vals = np.array(list(schedule_dict.keys()))
         for e in range(0, epoch_vals.max() + 1):
             if e < epoch_vals.min():
                 lookup_dict[e] = schedule_dict[epoch_vals.min()]
@@ -248,7 +225,10 @@ def keras_lr_schedule(schedule_type, initial_lr=0.001, update_frequency=1,
 
     elif schedule_type == 'exponential':
         def lr_schedule(epoch):
-            return initial_lr*np.exp(factor*np.floor(epoch/update_frequency))
+            if not np.floor(epoch/update_frequency):
+                return initial_lr
+            else:
+                return initial_lr*factor/np.floor(epoch/update_frequency)
 
     elif schedule_type == 'linear':
         def lr_schedule(epoch):

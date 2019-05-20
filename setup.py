@@ -15,9 +15,9 @@ inst_reqs = ['shapely>=1.6.4',
              'scikit-image>=0.14.0',
              'tensorflow>=1.13.1',
              'torch>=1.0.1',
-             'affine>=2.2.1',
-             'albumentations>=0.2.2',
-             'rio-tiler>=1.2.4',
+             'affine>=2.2.2',
+             'albumentations>=0.2.3',
+             'rio-tiler>=1.2.7',
              'pyyaml>=5.1'
              ]
 

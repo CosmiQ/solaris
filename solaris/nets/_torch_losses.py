@@ -9,7 +9,7 @@ except ImportError:  # py3k
     from itertools import filterfalse as ifilterfalse
 
 
-class FocalLoss(nn.Module):
+class TorchFocalLoss(nn.Module):
     """Implementation of Focal Loss[1]_ modified from Catalyst [2]_ .
 
     Arguments
@@ -59,10 +59,10 @@ class FocalLoss(nn.Module):
         invprobs = F.logsigmoid(-outputs * (targets * 2.0 - 1.0))
         loss = self.alpha*(invprobs * self.gamma).exp() * loss
 
-        return loss.sum(dim=1).mean()
+        return loss.sum(dim=-1).mean()
 
 
-def lovasz_hinge(logits, labels, per_image=False, ignore=None):
+def torch_lovasz_hinge(logits, labels, per_image=False, ignore=None):
     """Lovasz Hinge Loss. Implementation edited from Maxim Berman's GitHub.
 
     References
@@ -86,6 +86,7 @@ def lovasz_hinge(logits, labels, per_image=False, ignore=None):
         Lovasz loss value for the input logits and labels. Compatible with
         ``loss.backward()`` as its a :class:`torch.Variable` .
     """
+    # TODO: Restructure into a class like TorchFocalLoss for compatibility
     if per_image:
         loss = mean(
             lovasz_hinge_flat(*flatten_binary_scores(log.unsqueeze(0),
@@ -142,9 +143,9 @@ def flatten_binary_scores(scores, labels, ignore=None):
     return vscores, vlabels
 
 
-class StableBCELoss(torch.nn.modules.Module):
+class TorchStableBCELoss(torch.nn.modules.Module):
     def __init__(self):
-        super(StableBCELoss, self).__init__()
+        super(TorchStableBCELoss, self).__init__()
 
     def forward(self, input, target):
         neg_abs = - input.abs()
@@ -160,7 +161,7 @@ def binary_xloss(logits, labels, ignore=None):
       ignore: void class id
     """
     logits, labels = flatten_binary_scores(logits, labels, ignore)
-    loss = StableBCELoss()(logits, Variable(labels.float()))
+    loss = TorchStableBCELoss()(logits, Variable(labels.float()))
     return loss
 
 
@@ -283,5 +284,7 @@ torch_losses = {
     'cosine': nn.CosineEmbeddingLoss,
     'cosineloss': nn.CosineEmbeddingLoss,
     'cosineembeddingloss': nn.CosineEmbeddingLoss,
-    'lovaszhinge': lovasz_hinge
+    'lovaszhinge': torch_lovasz_hinge,
+    'focalloss': TorchFocalLoss,
+    'focal': TorchFocalLoss
 }

@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from .transform import process_aug_dict
-from ..utils.core import get_data_paths
+from ..utils.core import get_data_paths, _check_df_load
 from ..utils.io import imread, scale_for_model
 
 
@@ -20,7 +20,7 @@ def make_data_generator(framework, config, df, stage='train'):
         learning framework used for the model to be used.
     config : dict
         The config dictionary for the entire pipeline.
-    df : :class:`pandas.DataFrame`
+    df : :class:`pandas.DataFrame` or :class:`str`
         A :class:`pandas.DataFrame` containing two columns: ``'image'``, with
         the path to images for training, and ``'label'``, with the path to the
         label file corresponding to each image.
@@ -31,25 +31,26 @@ def make_data_generator(framework, config, df, stage='train'):
     to feed data during model training or inference.
     """
 
-    if framework.lower() not in ['keras', 'pytorch',
+    if framework.lower() not in ['keras', 'pytorch', 'torch',
                                  'simrdwn', 'tf', 'tf_obj_api']:
         raise ValueError('{} is not an accepted value for `framework`'.format(
             framework))
 
-    # get list of images and masks
+    # make sure the df is loaded
+    df = _check_df_load(df)
 
     if framework.lower() == 'keras':
         return KerasSegmentationSequence(config, df, stage=stage)
 
-    elif framework == 'pytorch':
+    elif framework in ['torch', 'pytorch']:
         dataset = TorchDataset(config, df, stage)
         # set up workers for DataLoader for pytorch
-        data_workers = config['data_specs']['data_workers']
+        data_workers = config['data_specs'].get('data_workers')
         if data_workers == 1 or data_workers is None:
             data_workers = 0  # for DataLoader to run in main process
         return DataLoader(dataset, batch_size=config['batch_size'],
                           shuffle=config['training_augmentation']['shuffle'],
-                          data_workers=data_workers)
+                          num_workers=data_workers)
 
 
 class KerasSegmentationSequence(keras.utils.Sequence):
@@ -58,7 +59,7 @@ class KerasSegmentationSequence(keras.utils.Sequence):
         self.config = config
         # TODO: IMPLEMENT LOADING IN AUGMENTATION PIPELINE HERE!
         # TODO: IMPLEMENT GETTING INPUT FILE LISTS HERE!
-        self.batch_size = self.config['training']['batch_size']
+        self.batch_size = self.config['batch_size']
         self.df = df
         self.n_batches = int(np.floor(len(self.df)/self.batch_size))
         if stage == 'train':
@@ -70,7 +71,7 @@ class KerasSegmentationSequence(keras.utils.Sequence):
     def on_epoch_end(self):
         'Update indices, rotations, etc. after each epoch'
         # reorder images
-        self.image_indexes = np.arange(len(self.image_list))
+        self.image_indexes = np.arange(len(self.df))
         if self.config['training_augmentation']['shuffle']:
             np.random.shuffle(self.image_indexes)
     #     if self.crop:
@@ -132,10 +133,16 @@ class KerasSegmentationSequence(keras.utils.Sequence):
             if self.config['data_specs']['label_type'] == 'mask':
                 label = imread(self.df['label'].iloc[image_idxs[i]])
                 aug_result = self.aug(image=im, mask=label)
-                X[i, :, :, :] = scale_for_model(
+                # if image shape is 2D, convert to 3D
+                scaled_im = scale_for_model(
                     aug_result['image'],
-                    self.config['data_specs']['image_type']
+                    self.config['data_specs'].get('image_type')
                     )
+                if len(scaled_im.shape) == 2:
+                    scaled_im = scaled_im[:, :, np.newaxis]
+                X[i, :, :, :] = scaled_im
+                if len(aug_result['mask'].shape) == 2:
+                    aug_result['mask'] = aug_result['mask'][:, :, np.newaxis]
                 y[i, :, :, :] = aug_result['mask']
             else:
                 pass  # TODO: IMPLEMENT BBOX LABEL LOADING HERE!
@@ -170,8 +177,10 @@ class TorchDataset(Dataset):
     """
 
     def __init__(self, config, df, stage='train'):
-        super(self, TorchDataset).__init__()
+        super().__init__()
         self.df = df
+        self.config = config
+        self.batch_size = self.config['batch_size']
         self.n_batches = int(np.floor(len(self.df)/self.batch_size))
         if stage == 'train':
             self.aug = process_aug_dict(self.config['training_augmentation'])
@@ -185,8 +194,8 @@ class TorchDataset(Dataset):
         'Get one image:mask pair'
         # Generate indexes of the batch
         image = imread(self.df['image'].iloc[idx])
-        mask = imread(self.df['mask'].iloc[idx])
-        sample = {'image': image, 'mask': mask}
+        mask = imread(self.df['label'].iloc[idx])
+        sample = {'image': image, 'label': mask}
         if self.aug:
             sample = self.aug(**sample)
 
