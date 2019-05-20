@@ -15,5 +15,5 @@ tensorflow==1.13.1
 torch==1.1.0
 affine==2.2.2
 albumentations==0.2.3
-rio-tiler==1.2.5
+rio-tiler==1.2.6
 pyyaml==5.1
