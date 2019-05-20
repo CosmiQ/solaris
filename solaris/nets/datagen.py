@@ -132,6 +132,8 @@ class KerasSegmentationSequence(keras.utils.Sequence):
             im = imread(self.df['image'].iloc[image_idxs[i]])
             if self.config['data_specs']['label_type'] == 'mask':
                 label = imread(self.df['label'].iloc[image_idxs[i]])
+                if not self.config['data_specs']['is_categorical']:
+                    label[label != 0] = 1
                 aug_result = self.aug(image=im, mask=label)
                 # if image shape is 2D, convert to 3D
                 scaled_im = scale_for_model(
@@ -195,6 +197,8 @@ class TorchDataset(Dataset):
         # Generate indexes of the batch
         image = imread(self.df['image'].iloc[idx])
         mask = imread(self.df['label'].iloc[idx])
+        if not self.config['data_specs']['is_categorical']:
+            mask[mask != 0] = 1
         sample = {'image': image, 'label': mask}
         if self.aug:
             sample = self.aug(**sample)
