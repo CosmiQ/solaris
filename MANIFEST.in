@@ -5,3 +5,5 @@ include *.csv
 include *.pkl
 include *.tif
 include *.txt
+
+graft solaris/data

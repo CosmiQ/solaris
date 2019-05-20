@@ -42,7 +42,7 @@ def precision(y_true, y_pred):
     truth = K.round(K.clip(y_true, K.epsilon(), 1))
     pred_pos = K.round(K.clip(y_pred, K.epsilon(), 1))
     true_pos = K.sum(K.cast(K.all(K.stack([truth, pred_pos], axis=2), axis=2),
-                            dtype='float32'))
+                            dtype='float64'))
     pred_pos_ct = K.sum(pred_pos) + K.epsilon()
     precision = true_pos/pred_pos_ct
 
@@ -59,7 +59,7 @@ def recall(y_true, y_pred):
     truth = K.round(K.clip(y_true, K.epsilon(), 1))
     pred_pos = K.round(K.clip(y_pred, K.epsilon(), 1))
     true_pos = K.sum(K.cast(K.all(K.stack([truth, pred_pos], axis=2), axis=2),
-                            dtype='float32'))
+                            dtype='float64'))
     truth_ct = K.sum(K.round(K.clip(y_true, K.epsilon(), 1)))
     if truth_ct == 0:
         return 0

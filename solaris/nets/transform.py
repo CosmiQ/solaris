@@ -54,9 +54,9 @@ from albumentations.augmentations.functional import preserve_channel_dim
 from albumentations.core.transforms_interface import DualTransform, to_tuple, \
     ImageOnlyTransform, NoOp
 from albumentations.augmentations.transforms import Crop, VerticalFlip,       \
-    HorizontalFlip, Flip, Transpose, Resize, CenterCrop, RandomCrop,          \
+    HorizontalFlip, Flip, Transpose, Resize, CenterCrop, RandomCrop, Cutout,  \
     RandomSizedCrop, OpticalDistortion, GridDistortion, ElasticTransform,     \
-    Normalize, HueSaturationValue, RGBShift, RandomBrightnessContrast,\
+    Normalize, HueSaturationValue, RGBShift, RandomBrightnessContrast,        \
     Blur, MotionBlur, MedianBlur, GaussNoise, CLAHE, RandomGamma, ToFloat
 from albumentations.core.composition import Compose, OneOf, OneOrOther
 
@@ -103,8 +103,8 @@ class Rotate(DualTransform):
         self.cval = cval
 
     def apply(self, im_arr, angle=0, border_mode='reflect', cval=0, **params):
-        return ndi.interpolation.rotate(im_arr, angle, self.border_mode,
-                                        self.cval)
+        return ndi.interpolation.rotate(im_arr, angle=angle,
+                                        mode=self.border_mode, cval=self.cval)
 
     def get_params(self):
         return {'angle': np.random.randint(self.limit[0], self.limit[1])}
@@ -154,7 +154,8 @@ class RandomScale(DualTransform):
         # post-processing to fix values if only a single number was passed
         self.axis = axis
         if self.scale_limit[0] == -self.scale_limit[1]:
-            self.scale_limit = [self.scale_limit[0]+1, self.scale_limit[1]+1]
+            self.scale_limit = tuple([self.scale_limit[0]+1,
+                                      self.scale_limit[1]+1])
         if interpolation == 'bicubic':
             self.interpolation = BICUBIC
         elif interpolation == 'bilinear':
@@ -191,39 +192,6 @@ class RandomScale(DualTransform):
 
     def apply_to_keypoint(self, keypoint):
         raise NotImplementedError
-
-
-class Cutout(ImageOnlyTransform):
-    """CoarseDropout of the square regions in the image.
-
-    This is a slightly optimized version of the albumentations implementation.
-
-    Arguments
-    ---------
-    num_holes : int
-        number of regions to zero out
-    h_size : int
-        height of the hole
-    w_size : int
-        width of the hole
-
-    Targets:
-        image
-
-    Image types:
-        uint8, float32
-    """
-
-    def __init__(self, num_holes=8, max_h_size=8, max_w_size=8,
-                 always_apply=False, p=0.5):
-        super(Cutout, self).__init__(always_apply, p)
-        self.num_holes = num_holes
-        self.max_h_size = max_h_size
-        self.max_w_size = max_w_size
-
-    def apply(self, image, **params):
-        return F.cutout(image, self.num_holes,
-                        self.max_h_size, self.max_w_size)
 
 
 # NOTE ON THE ShiftScaleRotate CLASS BELOW:
@@ -338,22 +306,8 @@ def scale(im, scale_x, scale_y, interpolation):
     im_shape = im.shape
     y_size = int(scale_y*im_shape[0])
     x_size = int(scale_x*im_shape[1])
-    return np.array(Image.fromarray(im).resize((x_size, y_size),
+    return np.array(Image.fromarray(im.astype('uint8')).resize((x_size, y_size),
                                                interpolation))
-
-
-def cutout(img, num_holes, h_size, w_size):
-    img = img.copy()
-    height, width = img.shape[:2]
-    ys = np.random.randint(0, height, num_holes)
-    xs = np.random.randint(0, width, num_holes)
-    y1s = np.clip((ys-h_size//2), 0, height)
-    y2s = np.clip((ys+h_size//2), 0, height)
-    x1s = np.clip((xs-h_size//2), 0, width)
-    x2s = np.clip((xs+h_size//2), 0, width)
-    for n in range(num_holes):
-        img[y1s[n]:y2s[n], x1s[n]:x2s[n]] = 0
-    return img
 
 
 def build_pipeline(config):
@@ -405,7 +359,7 @@ def process_aug_dict(pipeline_dict, meta_augs_list=['oneof', 'oneorother']):
     """
     p = pipeline_dict.get('p', 1.0)  # probability of applying augs in pipeline
     xforms = pipeline_dict['augmentations']
-    composer_list = get_augs(xforms)
+    composer_list = get_augs(xforms, meta_augs_list)
     return Compose(composer_list, p=p)
 
 
