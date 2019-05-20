@@ -25,4 +25,4 @@ dependencies:
   - pip:
     - affine==2.2.2
     - albumentations==0.2.3
-    - rio-tiler==1.2.6
+    - rio-tiler==1.2.7
