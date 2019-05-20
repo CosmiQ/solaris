@@ -22,7 +22,8 @@ class TestDataGenerator(object):
                    'width': 30,
                    'channels': 1,
                    'label_type': 'mask',
-                   'mask_channels': 1
+                   'mask_channels': 1,
+                   'is_categorical': False
                    },
                   'batch_size': 1,
                   'training_augmentation':
@@ -39,6 +40,7 @@ class TestDataGenerator(object):
         expected_mask = skimage.io.imread(os.path.join(data_dir,
                                                        'datagen_sample',
                                                        'sample_mask_1.tif'))
+        expected_mask[expected_mask != 0] = 1  # this should be binary
 
         assert np.array_equal(im, expected_im[np.newaxis, :, :, np.newaxis])
         assert np.array_equal(mask,
@@ -57,7 +59,8 @@ class TestDataGenerator(object):
                    'width': 30,
                    'channels': 1,
                    'label_type': 'mask',
-                   'mask_channels': 1
+                   'mask_channels': 1,
+                   'is_categorical': False
                    },
                   'batch_size': 1,
                   'training_augmentation':
@@ -75,6 +78,7 @@ class TestDataGenerator(object):
         expected_mask = skimage.io.imread(os.path.join(data_dir,
                                                        'datagen_sample',
                                                        'sample_mask_1.tif'))
+        expected_mask[expected_mask != 0] = 1  # this should be binary
 
         assert np.array_equal(sample['image'],
                               expected_im[np.newaxis, :, :, np.newaxis])
