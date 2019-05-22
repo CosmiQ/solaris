@@ -20,12 +20,16 @@ class Inferer(object):
         self.model = get_model(self.model_name, self.nn_framework,
                                self.model_path)
         self.infer_df = get_infer_df(self.config)
-#        self.infer_datagen = make_data_generator(self.framework, self.config,
-#                                                 self.infer_df, stage='infer')
+        self.window_step_x = self.config['inference'].get('window_step_size_x')
+        self.window_step_y = self.config['inference'].get('window_step_size_y')
+        if self.window_step_x is None:
+            self.window_step_x = self.config['data_specs']['width']
+        if self.window_step_y is None:
+            self.window_step_y = self.config['data_specs']['height']
 
 
 def get_infer_df(config):
-    """Get the inference df based on the contents of ``config``.
+    """Get the inference df based on the contents of ``config`` .
 
     This function uses the logic described in the documentation for the config
     file to determine where to find images to be used for inference.
