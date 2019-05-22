@@ -111,7 +111,11 @@ training:
   verbose: true  # verbose text output during training
 
 inference:
-  window_step_size:  # size of each step for the sliding window for inference.
-                     # set to the same size as the input image size for zero
-                     # overlap; to average predictions across multiple images,
-                     # use a smaller step size.
+  window_step_size_x:  # size of each step for the sliding window for inference.
+                       # set to the same size as the input image size for zero
+                       # overlap; to average predictions across multiple images,
+                       # use a smaller step size.
+  window_step_size_y:  # size of each step for the sliding window for inference.
+                       # set to the same size as the input image size for zero
+                       # overlap; to average predictions across multiple images,
+                       # use a smaller step size.

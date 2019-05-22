@@ -1,5 +1,5 @@
 import os
-from solaris.nets.datagen import make_data_generator
+from solaris.nets.datagen import make_data_generator, InferenceTiler
 from solaris.data import data_dir
 import pandas as pd
 import numpy as np
@@ -84,3 +84,30 @@ class TestDataGenerator(object):
                               expected_im[np.newaxis, :, :, np.newaxis])
         assert np.array_equal(sample['label'],
                               expected_mask[np.newaxis, :, :, np.newaxis])
+
+
+class TestInferenceTiler(object):
+    """Test image tiling using sol.nets.datagen.InferenceTiler."""
+
+    def test_simple_geotiff_tile(self):
+        """Test tiling a geotiff without overlap."""
+        inf_tiler = InferenceTiler(250, 250)
+        tiles, tile_inds = inf_tiler(os.path.join(data_dir,
+                                                  'sample_geotiff.tif'))
+
+        expected_tiles = np.load(
+            os.path.join(data_dir, 'inference_tiler_test_output.npy')
+            )
+
+        expected_tile_inds = [(0, 0),
+                              (0, 250),
+                              (0, 500),
+                              (250, 0),
+                              (250, 250),
+                              (250, 500),
+                              (500, 0),
+                              (500, 250),
+                              (500, 500)]
+
+        assert np.array_equal(expected_tiles, tiles)
+        assert expected_tile_inds == tile_inds
