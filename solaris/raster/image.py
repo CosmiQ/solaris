@@ -46,6 +46,9 @@ def stitch_images(im_arr, idx_refs=None, out_width=None,
         A list of ``(Y, X)`` indices for each sub-array to define the location
         of the first corner in the final output. Used for stitching together
         non-overlapping or partially overlapping tiles into a single output.
+        Note that the index reference output of
+        :class:`solaris.nets.datagen.InferenceTiler` provides the required
+        reference system for stitching here.
     out_width : int, optional
         The width of the output array in pixels. If not provided, it is assumed
         that the width is the same as the width of ``im_arr`` .
@@ -92,6 +95,7 @@ def stitch_images(im_arr, idx_refs=None, out_width=None,
         else:
             stitching_arr = np.empty(shape=(im_arr.shape[0],
                                             out_height, out_width))
+        stitching_arr[:] = np.nan
         for idx in range(len(idx_refs)):
             if has_channels:
                 stitching_arr[
@@ -110,11 +114,26 @@ def stitch_images(im_arr, idx_refs=None, out_width=None,
 
     if method == 'average':
         output_arr = np.nanmean(stitching_arr, axis=0)
+
     elif method == 'first':
-        desired_inds = np.isnan(stitching_arr).argmax(axis=0)
-        output_arr = stitching_arr.take(desired_inds, axis=0)
+        # get index along 1st axis of the first non-NaN value
+        first_non_nan = np.invert(np.isnan(stitching_arr)).argmax(axis=0)
+        # subset along 1st axis for only the first non-NaN value
+        output_arr = np.take_along_axis(stitching_arr,
+                                        np.expand_dims(first_non_nan, axis=0),
+                                        axis=0)[0, :, :, :]  # drop extra axis
+
     elif method == 'confidence':
-        max_conf = np.abs(stitching_arr - 0.5).argmax(axis=0)
-        output_arr = stitching_arr.take(max_conf, axis=0)
+        # convert from 0-1 to 0-0.5, values originally 0.5 become 0
+        conf_scale = np.abs(stitching_arr - 0.5)
+        # set NaN values to -1 so they're never selected
+        conf_scale[np.isnan(conf_scale)] = -1
+        # get highest conf slice at each [Y, X, C] position
+        max_conf_ind = conf_scale.argmax(axis=0)
+        # subset to take only the highest-conf value
+        output_arr = np.take_along_axis(stitching_arr,
+                                        np.expand_dims(max_conf_ind, axis=0),
+                                        axis=0)[0, :, :, :]  # drop extra axis
+    output_arr = output_arr.astype(im_arr.dtype)
 
     return output_arr

@@ -251,9 +251,9 @@ class InferenceTiler(object):
         # determine how many samples will be generated with the sliding window
         src_im_height = im.shape[0]
         src_im_width = im.shape[1]
-        y_steps = int(np.ceil((src_im_height-self.height)/self.y_step))
-        x_steps = int(np.ceil((src_im_width-self.width)/self.x_step))
-        n_chips = ((1+y_steps)*(1+x_steps))
+        y_steps = int(1+np.ceil((src_im_height-self.height)/self.y_step))
+        x_steps = int(1+np.ceil((src_im_width-self.width)/self.x_step))
+        n_chips = ((y_steps)*(x_steps))
         if len(im.shape) == 2:  # if there's no channel axis
             im = im[:, :, np.newaxis]  # create one - will be needed for model
         output_arr = np.empty(shape=(n_chips,

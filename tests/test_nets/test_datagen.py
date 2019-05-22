@@ -102,12 +102,19 @@ class TestInferenceTiler(object):
         expected_tile_inds = [(0, 0),
                               (0, 250),
                               (0, 500),
+                              (0, 650),
                               (250, 0),
                               (250, 250),
                               (250, 500),
+                              (250, 650),
                               (500, 0),
                               (500, 250),
-                              (500, 500)]
+                              (500, 500),
+                              (500, 650),
+                              (650, 0),
+                              (650, 250),
+                              (650, 500),
+                              (650, 650)]
 
         assert np.array_equal(expected_tiles, tiles)
         assert expected_tile_inds == tile_inds
