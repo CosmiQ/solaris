@@ -204,3 +204,80 @@ class TorchDataset(Dataset):
             sample = self.aug(**sample)
 
         return sample
+
+
+class InferenceTiler(object):
+    """An object to tile fragments of images for inference."""
+
+    def __init__(self, width, height, x_step=None, y_step=None,
+                 augmentations=None):
+        """Create the tiler instance."""
+        self.width = width
+        self.height = height
+        if x_step is None:
+            self.x_step = self.width
+        else:
+            self.x_step = x_step
+        if y_step is None:
+            self.y_step = self.height
+        else:
+            self.y_step = y_step
+        self.aug = augmentations
+
+    def __call__(self, im):
+        """Create an inference array along with an indexing reference list.
+
+        Arguments
+        ---------
+        im : :class:`str` or :class:`numpy.array`
+            An image to perform inference on.
+
+        Returns
+        -------
+        output_arr, top_left_corner_idxs
+            output_arr : ``[N, Y, X, C]`` :class:`numpy.array`
+                A :class:`numpy.array` for use in model inferencing. Each
+                item along the first axis corresponds to a single sample for
+                the model.
+            top_left_corner_idxs : :class:`list` of :class:`tuple` s of :class:`int` s
+                A :class:`list` of ``(top, left)`` tuples corresponding to the
+                top left corner indices of each sample along the first axis of
+                ``inference_arr`` . These values can be used to stitch the
+                inferencing result back together.
+        """
+        # read in the image if it's a path
+        if isinstance(im, str):
+            im = imread(im)
+        # determine how many samples will be generated with the sliding window
+        src_im_height = im.shape[0]
+        src_im_width = im.shape[1]
+        y_steps = int(1+np.ceil((src_im_height-self.height)/self.y_step))
+        x_steps = int(1+np.ceil((src_im_width-self.width)/self.x_step))
+        n_chips = ((y_steps)*(x_steps))
+        if len(im.shape) == 2:  # if there's no channel axis
+            im = im[:, :, np.newaxis]  # create one - will be needed for model
+        output_arr = np.empty(shape=(n_chips,
+                                     self.height, self.width,
+                                     im.shape[2]), dtype=im.dtype)
+        top_left_corner_idxs = []
+        for y in range(y_steps):
+            if self.y_step*y + self.height > im.shape[0]:
+                y_min = im.shape[0] - self.height
+            else:
+                y_min = self.y_step*y
+
+            for x in range(x_steps):
+                if self.x_step*x + self.width > im.shape[1]:
+                    x_min = im.shape[1] - self.width
+                else:
+                    x_min = self.x_step*x
+
+                subarr = im[y_min:y_min + self.height,
+                            x_min:x_min + self.width,
+                            :]
+                if self.aug is not None:
+                    subarr = self.aug(image=subarr)
+                output_arr[len(top_left_corner_idxs), :, :, :] = subarr
+                top_left_corner_idxs.append((y_min, x_min))
+
+        return output_arr, top_left_corner_idxs
