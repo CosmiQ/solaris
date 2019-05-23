@@ -275,5 +275,5 @@ class InferenceTiler(object):
                     subarr = self.aug(image=subarr)
                 output_arr[len(top_left_corner_idxs), :, :, :] = subarr
                 top_left_corner_idxs.append((y_min, x_min))
-
+                
         return output_arr, top_left_corner_idxs, (src_im_height, src_im_width)
