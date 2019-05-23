@@ -1,12 +1,8 @@
-import tensorflow as tf
 from tensorflow import keras
-import cv2
 import numpy as np
-import os
-import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from .transform import process_aug_dict
-from ..utils.core import get_data_paths, _check_df_load
+from ..utils.core import _check_df_load
 from ..utils.io import imread, scale_for_model
 
 
@@ -279,5 +275,5 @@ class InferenceTiler(object):
                     subarr = self.aug(image=subarr)
                 output_arr[len(top_left_corner_idxs), :, :, :] = subarr
                 top_left_corner_idxs.append((y_min, x_min))
-
-        return output_arr, top_left_corner_idxs
+                
+        return output_arr, top_left_corner_idxs, (src_im_height, src_im_width)
