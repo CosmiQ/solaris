@@ -31,7 +31,7 @@ def _load_model(path, framework):
         except OSError:
             raise FileNotFoundError("{} doesn't exist.".format(path))
 
-    elif framework.lower() == 'pytorch':
+    elif framework.lower() in ['torch', 'pytorch']:
         # pytorch already throws the right error on failed load, so no need
         # to fix exception
         model = torch.load(path)
