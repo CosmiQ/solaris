@@ -205,9 +205,10 @@ class TorchDataset(Dataset):
 class InferenceTiler(object):
     """An object to tile fragments of images for inference."""
 
-    def __init__(self, width, height, x_step=None, y_step=None,
+    def __init__(self, framework, width, height, x_step=None, y_step=None,
                  augmentations=None):
         """Create the tiler instance."""
+        self.framework = framework
         self.width = width
         self.height = height
         if x_step is None:
@@ -275,5 +276,6 @@ class InferenceTiler(object):
                     subarr = self.aug(image=subarr)
                 output_arr[len(top_left_corner_idxs), :, :, :] = subarr
                 top_left_corner_idxs.append((y_min, x_min))
-                
+        if self.framework in ['torch', 'pytorch']:
+            output_arr = np.moveaxis(output_arr, 3, 1)
         return output_arr, top_left_corner_idxs, (src_im_height, src_im_width)

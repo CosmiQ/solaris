@@ -46,6 +46,7 @@ class Inferer(object):
 
         """
         inf_tiler = InferenceTiler(
+            self.framework,
             width=self.config['data_specs']['width'],
             height=self.config['data_specs']['height'],
             x_step=self.window_step_x,
