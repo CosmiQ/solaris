@@ -1,5 +1,6 @@
 import os
 import skimage
+import torch
 from .model_io import get_model
 from .transform import process_aug_dict
 from .datagen import InferenceTiler
@@ -61,10 +62,15 @@ class Inferer(object):
                                                   batch_size=self.batch_size)
 
             elif self.framework in ['torch', 'pytorch']:
-                self.model.eval()
+                if torch.cuda.is_available():
+                    device = torch.device('cuda')
+                    self.model = self.model.cuda()
+                else:
+                    device = torch.device('cpu')
+                inf_input = torch.from_numpy(inf_input).to(device)
                 subarr_preds = self.model(inf_input)
 
-            stitched_result = stitch_images(subarr_preds,
+            stitched_result = stitch_images(subarr_preds.data.numpy(),
                                             idx_refs=idx_refs,
                                             out_width=src_im_width,
                                             out_height=src_im_height,
