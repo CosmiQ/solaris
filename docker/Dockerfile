@@ -61,8 +61,8 @@ RUN conda update conda && \
 # get dev version of solaris and create conda environment based on its env file
 WORKDIR /tmp/
 RUN git clone https://github.com/cosmiq/solaris.git && \
-    git checkout ${solaris_branch} && \
     cd solaris && \
+    git checkout ${solaris_branch} && \
     conda env create -f environment.yml
 ENV PATH /opt/conda/envs/solaris/bin:$PATH
 
