@@ -69,7 +69,8 @@ class Inferer(object):
                 else:
                     device = torch.device('cpu')
                 inf_input = torch.from_numpy(inf_input).float().to(device)
-                subarr_preds = self.model(inf_input).cpu().data.numpy()
+                subarr_preds = self.model(inf_input)
+                subarr_preds = subarr_preds.cpu().data.numpy()
             stitched_result = stitch_images(subarr_preds,
                                             idx_refs=idx_refs,
                                             out_width=src_im_width,
