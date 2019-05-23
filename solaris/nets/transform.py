@@ -357,6 +357,8 @@ def process_aug_dict(pipeline_dict, meta_augs_list=['oneof', 'oneorother']):
     ``Compose`` instance
         The composed augmentation pipeline.
     """
+    if pipeline_dict is None:
+        return None
     p = pipeline_dict.get('p', 1.0)  # probability of applying augs in pipeline
     xforms = pipeline_dict['augmentations']
     composer_list = get_augs(xforms, meta_augs_list)
