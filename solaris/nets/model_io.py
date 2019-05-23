@@ -1,40 +1,44 @@
 import os
 from tensorflow import keras
 import torch
+from .zoo import model_dict
 
 
 # below dictionary lists models compatible with solaris. alternatively, your
 # own model can be used by using the path to the model as the value for
 # model_name in the config file.
 
-model_dict = {'placeholder': 'model_path.hdf5'}
 
-
-def get_model(model_name, framework, model_path=None):
+def get_model(model_name, framework, model_path=None, pretrained=False):
     """Load a model from a file based on its name."""
-    if model_path is None:
-        model_path = model_dict.get(model_name, None)
-    try:
-        model = _load_model(model_path, framework)
-    except (OSError, FileNotFoundError):
-        pass  # TODO: IMPLEMENT MODEL DOWNLOAD FROM STORAGE HERE
+
+    md = model_dict.get(model_name)
+    if md is not None:  # if the model's in the dict
+        if model_path is None:
+            model_path = md.get('weight_path')
+        model = md.get('arch')()
+    if model is not None and pretrained:
+        try:
+            model = _load_model_weights(model, model_path, framework)
+        except (OSError, FileNotFoundError):
+            pass  # TODO: IMPLEMENT MODEL DOWNLOAD FROM STORAGE HERE
 
     return model
 
 
-def _load_model(path, framework):
+def _load_model_weights(model, path, framework):
     """Backend for loading the model."""
 
     if framework.lower() == 'keras':
         try:
-            model = keras.models.load_model(path)
+            model.load_weights(path)
         except OSError:
             raise FileNotFoundError("{} doesn't exist.".format(path))
 
     elif framework.lower() in ['torch', 'pytorch']:
         # pytorch already throws the right error on failed load, so no need
         # to fix exception
-        model = torch.load(path)
+        model.load_state_dict(path)
 
     return model
 
