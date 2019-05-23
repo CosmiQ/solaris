@@ -68,7 +68,7 @@ class Inferer(object):
                     self.model = self.model.cuda()
                 else:
                     device = torch.device('cpu')
-                inf_input = torch.from_numpy(inf_input).to(device)
+                inf_input = torch.from_numpy(inf_input).float().to(device)
                 subarr_preds = self.model(inf_input)
 
             stitched_result = stitch_images(subarr_preds.data.numpy(),
