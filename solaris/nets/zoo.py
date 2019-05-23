@@ -80,4 +80,5 @@ class XDXD_SN4_DecoderBlock(nn.Module):
 
 
 model_dict = {'xdxd_spacenet4': {'weight_path': None,
-                                 'model_arch': XDXD_SpaceNet4_UNetVGG16}
+                                 'arch': XDXD_SpaceNet4_UNetVGG16}
+              }
