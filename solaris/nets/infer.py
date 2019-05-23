@@ -21,7 +21,7 @@ class Inferer(object):
             self.model_path = self.config['training']['model_dest_path']
         else:
             self.model_path = self.config['model_path']
-        self.model = get_model(self.model_name, self.nn_framework,
+        self.model = get_model(self.model_name, self.framework,
                                self.model_path)
         self.window_step_x = self.config['inference'].get('window_step_size_x')
         self.window_step_y = self.config['inference'].get('window_step_size_y')
