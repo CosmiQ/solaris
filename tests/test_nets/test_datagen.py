@@ -92,7 +92,7 @@ class TestInferenceTiler(object):
     def test_simple_geotiff_tile(self):
         """Test tiling a geotiff without overlap."""
         inf_tiler = InferenceTiler(250, 250)
-        tiles, tile_inds = inf_tiler(os.path.join(data_dir,
+        tiles, tile_inds, _ = inf_tiler(os.path.join(data_dir,
                                                   'sample_geotiff.tif'))
 
         expected_tiles = np.load(
