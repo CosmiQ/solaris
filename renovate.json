@@ -1,0 +1,13 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "setup.py": {
+    "enabled": true
+  },
+  "assignees": "nrweir",
+  "baseBranches": "dev",
+  "ignoreDeps": "GDAL",
+  "labels": "dependencies",
+  "reviewers": "nrweir"
+}
