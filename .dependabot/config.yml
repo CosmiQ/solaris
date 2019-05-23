@@ -1,0 +1,14 @@
+version: 1
+update_configs:
+  # Update your Gemfile (& lockfiles) as soon as
+  # new versions are published to the RubyGems registry
+  - package_manager: "python"
+    directory: "/"
+    update_schedule: "weekly"
+    target_branch: "dev"
+    # Apply default reviewer and label to created
+    # pull requests
+    default_reviewers:
+      - "nrweir"
+    default_labels:
+      - "dependencies"
