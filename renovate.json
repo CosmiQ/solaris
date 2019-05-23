@@ -2,12 +2,12 @@
   "extends": [
     "config:base"
   ],
-  "setup.py": {
+  "pip_setup": {
     "enabled": true
   },
-  "assignees": "nrweir",
-  "baseBranches": "dev",
-  "ignoreDeps": "GDAL",
-  "labels": "dependencies",
-  "reviewers": "nrweir"
+  "assignees": ["nrweir"],
+  "baseBranches": ["dev"],
+  "ignoreDeps": ["GDAL"],
+  "labels": ["dependencies"],
+  "reviewers": ["nrweir"]
 }
