@@ -52,7 +52,6 @@ class Inferer(object):
             augmentations=process_aug_dict(
                 self.config['inference']['inference_augmentation'])
             )
-        infer_df = get_infer_df(self.config)
         for im_path in infer_df['image']:
             inf_input, idx_refs, (
                 src_im_height, src_im_width) = inf_tiler(im_path)
