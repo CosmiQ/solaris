@@ -40,14 +40,14 @@ def reorder_axes(arr, target='tensorflow'):
     elif isinstance(arr, np.ndarray):
         if len(axes) == 3:
             if target == 'tensorflow' and axes[0] < axes[1]:
-                arr = np.moveaxes(arr, 0, -1)
+                arr = np.moveaxis(arr, 0, -1)
             elif target == 'torch' and axes[2] < axes[1]:
-                arr = np.moveaxes(arr, 2, 0)
-        elif len(axes == 4):
+                arr = np.moveaxis(arr, 2, 0)
+        elif len(axes) == 4:
             if target == 'tensorflow' and axes[1] < axes[2]:
-                arr = np.moveaxes(arr, 1, -1)
+                arr = np.moveaxis(arr, 1, -1)
             elif target == 'torch' and axes[3] < axes[2]:
-                arr = np.moveaxes(arr, 3, 1)
+                arr = np.moveaxis(arr, 3, 1)
 
     elif isinstance(arr, tf.Tensor):
         # permutation is obnoxious in tensorflow; convert to numpy, permute,
