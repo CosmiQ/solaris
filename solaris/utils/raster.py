@@ -20,7 +20,7 @@ def reorder_axes(arr, target='tensorflow'):
     order.
     """
 
-    if isinstance(arr, torch.Tensor) or isinstance(arr, np.array):
+    if isinstance(arr, torch.Tensor) or isinstance(arr, np.ndarray):
         axes = list(arr.shape)
     elif isinstance(arr, tf.Tensor):
         axes = arr.get_shape().as_list()
@@ -37,7 +37,7 @@ def reorder_axes(arr, target='tensorflow'):
             elif target == 'torch' and axes[3] < axes[2]:
                 arr = arr.permute(0, 3, 1, 2)
 
-    elif isinstance(arr, np.array):
+    elif isinstance(arr, np.ndarray):
         if len(axes) == 3:
             if target == 'tensorflow' and axes[0] < axes[1]:
                 arr = np.moveaxes(arr, 0, -1)
