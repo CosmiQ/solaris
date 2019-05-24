@@ -2,6 +2,7 @@ from osgeo import gdal
 import rasterio
 from affine import Affine
 import numpy as np
+from ..utils.raster import reorder_axes
 
 
 def get_geo_transform(raster_src):
@@ -32,16 +33,16 @@ def get_geo_transform(raster_src):
 
 
 def stitch_images(im_arr, idx_refs=None, out_width=None,
-                  out_height=None, method='average'):
+                  out_height=None, method='average', use_GPU=True):
     """Stitch together images into a single 2- or 3-channel array.
 
     Arguments
     ---------
     im_arr : :class:`numpy.array` or :class:`list` of :class:`numpy.array` s
-        A 3- or 4-D array with shape ``[N, Y, X(, C)]`` or a list of length N
-        made up of 2- or 3-D arrays with shape ``[Y, X(, C)]`` . These array(s)
-        will be stitched together to produce a single output of shape
-        ``[Y, X(, C)]`` .
+        A 3- or 4-D :class:`numpy.array` with shape ``[N, Y, X(, C)]`` or a
+        list of length N made up of 2- or 3-D tensors with shape
+        ``[Y, X(, C)]``. These array(s) will be stitched together to produce a
+        single output of shape ``[Y, X(, C)]`` .
     idx_refs : list, optional
         A list of ``(Y, X)`` indices for each sub-array to define the location
         of the first corner in the final output. Used for stitching together
@@ -66,6 +67,10 @@ def stitch_images(im_arr, idx_refs=None, out_width=None,
         probabilities in ``[0, 1]`` . In this case, for a given ``[Y, X, C]``
         location, the pixel with the greatest distance from ``0.5`` will be
         selected (being the value with the highest confidence).
+    use_GPU : bool, optional
+        Should processing be performed on the GPU if a GPU is available?
+        Defaults to yes (``True``). If a GPU isn't available, this argument is
+        ignored. ``False`` will force CPU-located processing.
 
     Returns
     -------
@@ -74,6 +79,8 @@ def stitch_images(im_arr, idx_refs=None, out_width=None,
     # determine what shape the input is and stitch together accordingly
     if isinstance(im_arr, list):
         im_arr = np.stack(im_arr)  # stack along a new 1st axis
+
+    im_arr = reorder_axes(im_arr, 'tensorflow')
 
     if idx_refs is not None:
         if len(idx_refs) != im_arr.shape[0]:
