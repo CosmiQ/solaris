@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-#
 # Configuration file for the Sphinx documentation builder.
 #
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
+# This file only contains a selection of the most common options. For a full
+# list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
@@ -12,29 +10,23 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-sys.path.insert(0, os.path.abspath('..'))
+# import os
+# import sys
+# sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'cw-eval'
-copyright = '2018, CosmiQ Works'
-author = 'David Lindenbaum and Nick Weir'
+project = 'solaris'
+copyright = '2019, CosmiQ Works'
+author = 'CosmiQ Works'
 license = 'Apache 2.0'
 
-# The short X.Y version
-version = '1.0'
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = '0.0.1'
 
 
 # -- General configuration ---------------------------------------------------
-
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -50,6 +42,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'nbsphinx'
+
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -74,7 +67,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -86,12 +79,6 @@ pygments_style = None
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
-
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
-# html_theme_options = {}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -112,36 +99,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'cw-evaldoc'
-
-
-# -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
-}
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'cw-eval.tex', 'cw-eval Documentation',
-     'David Lindenbaum and Nick Weir', 'manual'),
-]
+htmlhelp_basename = 'solarisdoc'
 
 
 # -- Options for manual page output ------------------------------------------
@@ -149,7 +107,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'cw-eval', 'cw-eval Documentation',
+    (master_doc, 'solaris', 'solaris Documentation',
      [author], 1)
 ]
 
@@ -160,10 +118,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'cw-eval', 'cw-eval Documentation',
-     author, 'cw-eval',
-     'CosmiQ Works evaluation package for SpaceNet Challenges.',
-     'Miscellaneous'),
+    (master_doc, 'solaris', 'solaris Documentation',
+     author, 'solaris'),
 ]
 
 
@@ -196,10 +152,8 @@ intersphinx_mapping = {
     "pandas": ('http://pandas.pydata.org/pandas-docs/stable/', None),
     "geopandas": ('http://geopandas.org/', None),
     "rtree": ('http://toblerity.org/rtree/', None),
-    "shapely": ('https://shapely.readthedocs.io/en/stable/', None)
+    "shapely": ('https://shapely.readthedocs.io/en/stable/', None),
+    "numpy": ('http://docs.scipy.org/doc/numpy/', None),
+    "scipy": ('http://docs.scipy.org/doc/scipy/reference', None),
+    'PyTorch': ('http://pytorch.org/docs/master/', None)
     }
-
-# -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True

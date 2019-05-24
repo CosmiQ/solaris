@@ -1,22 +1,19 @@
-CosmiQ Works Evaluation (`cw-eval <https://github.com/cosmiq/cw-eval>`__) Documentation
-=============================================================================================
-:Author: `CosmiQ Works <https://www.cosmiqworks.org>`__
-:Release: |release|
-:Copyright: 2018, CosmiQ Works
-:License: This work is licensed under an `Apache 2.0 License`__.
+.. solaris documentation master file, created by
+   sphinx-quickstart on Fri May 24 13:24:17 2019.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-.. __: https://www.apache.org/licenses/LICENSE-2.0
+Welcome to solaris's documentation!
+===================================
 
 .. toctree::
-   :name: mastertoc
-   :maxdepth: 3
-   :glob:
+   :maxdepth: 2
+   :caption: Contents:
 
-   api
-   cookbook/index
+
 
 Indices and tables
-------------------
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`
