@@ -8,7 +8,7 @@ dependencies:
   - geopandas
   - opencv
   - numpy
-  - gdal=2.4.1
+  - gdal
   - tqdm=
   - rtree
   - networkx
@@ -20,6 +20,6 @@ dependencies:
   - torchvision
   - pyyaml
   - pip:
-    - affine==2.2.2
-    - albumentations==0.2.3
-    - rio-tiler==1.2.7
+    - affine
+    - albumentations
+    - rio-tiler
