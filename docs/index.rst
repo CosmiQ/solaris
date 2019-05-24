@@ -1,20 +1,26 @@
-.. solaris documentation master file, created by
-   sphinx-quickstart on Fri May 24 13:24:17 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Solaris (`solaris <https://github.com/cosmiq/solaris>`__) Documentation
+=============================================================================================
+:Author: `CosmiQ Works <https://www.cosmiqworks.org>`__
+:Release: |release|
+:Copyright: 2019, CosmiQ Works
+:License: This work is licensed under an `Apache 2.0 License`__.
 
-Welcome to solaris's documentation!
-===================================
+.. __: https://www.apache.org/licenses/LICENSE-2.0
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :name: mastertoc
+   :maxdepth: 3
+   :glob:
 
-
+   api/index
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Getting started guide
+---------------------
+*Coming soon!*

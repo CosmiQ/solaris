@@ -2,7 +2,6 @@ from __future__ import print_function, with_statement, division
 
 import pandas as pd
 from .. import baseeval as bF
-import re
 
 # Note, for mac osx compatability import something from shapely.geometry before
 # importing fiona or geopandas

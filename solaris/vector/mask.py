@@ -468,10 +468,12 @@ def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
 
     return polygon_gdf
 
+
 def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
-              do_transform=False, affine_obj=None, shape=(900, 900), buffer_in_m=2,
-              out_type='int', burn_value=255, burn_field=None):
+              do_transform=False, affine_obj=None, shape=(900, 900),
+              buffer_in_m=2, out_type='int', burn_value=255, burn_field=None):
     """Convert a dataframe of geometries to a pixel mask.
+
     Arguments
     ---------
     df : :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame`
@@ -515,6 +517,7 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     burn_field : str, optional
         Name of a column in `df` that provides values for `burn_value` for each
         independent object. If provided, `burn_value` is ignored.
+
     Returns
     -------
     mask : :class:`numpy.array`
@@ -529,11 +532,14 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     df = _check_df_load(df)
     df[geom_col] = df[geom_col].apply(_check_wkt_load)
 
-    # Check if dataframe is in the appropriate units (meters, and reproject if not)
+    # Check if dataframe is in appropriate units (meters, and reproject if not)
     unit = vector_gdf_get_projection_unit(df)
     if unit != "meter":
         # Pick UTM zone
-        coords = [df[geom_col].bounds['minx'].min(), df[geom_col].bounds['miny'].min(), df[geom_col].bounds['maxx'].max(), df[geom_col].bounds['maxy'].max()]
+        coords = [df[geom_col].bounds['minx'].min(),
+                  df[geom_col].bounds['miny'].min(),
+                  df[geom_col].bounds['maxx'].max(),
+                  df[geom_col].bounds['maxy'].max()]
         crs = calculate_UTM_crs(coords)
         # REPROJECT
         orig_crs = df.crs
