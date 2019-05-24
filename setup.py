@@ -14,11 +14,12 @@ inst_reqs = ['shapely>=1.6.4',
              'scipy>=1.2.0',
              'scikit-image>=0.14.0',
              'tensorflow>=1.13.1',
-             'torch>=1.0.1',
+             'torch>=1.1.0',
              'affine>=2.2.2',
              'albumentations>=0.2.3',
              'rio-tiler>=1.2.7',
-             'pyyaml>=5.1'
+             'pyyaml>=5.1',
+             'torchvision>=0.3.0'
              ]
 
 version = '0.0.1'

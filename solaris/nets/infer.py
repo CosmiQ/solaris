@@ -1,5 +1,6 @@
 import os
 import skimage
+import torch
 from .model_io import get_model
 from .transform import process_aug_dict
 from .datagen import InferenceTiler
@@ -21,7 +22,7 @@ class Inferer(object):
             self.model_path = self.config['training']['model_dest_path']
         else:
             self.model_path = self.config['model_path']
-        self.model = get_model(self.model_name, self.nn_framework,
+        self.model = get_model(self.model_name, self.framework,
                                self.model_path)
         self.window_step_x = self.config['inference'].get('window_step_size_x')
         self.window_step_y = self.config['inference'].get('window_step_size_y')
@@ -45,6 +46,7 @@ class Inferer(object):
 
         """
         inf_tiler = InferenceTiler(
+            self.framework,
             width=self.config['data_specs']['width'],
             height=self.config['data_specs']['height'],
             x_step=self.window_step_x,
@@ -61,9 +63,14 @@ class Inferer(object):
                                                   batch_size=self.batch_size)
 
             elif self.framework in ['torch', 'pytorch']:
-                self.model.eval()
+                if torch.cuda.is_available():
+                    device = torch.device('cuda')
+                    self.model = self.model.cuda()
+                else:
+                    device = torch.device('cpu')
+                inf_input = torch.from_numpy(inf_input).float().to(device)
                 subarr_preds = self.model(inf_input)
-
+                subarr_preds = subarr_preds.cpu().data.numpy()
             stitched_result = stitch_images(subarr_preds,
                                             idx_refs=idx_refs,
                                             out_width=src_im_width,
