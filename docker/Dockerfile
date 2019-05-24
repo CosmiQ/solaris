@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.0-devel-ubuntu16.04
+FROM nvidia/cuda:9.2-devel-ubuntu16.04
 LABEL maintainer="nweir <nweir@iqt.org>"
 
 ENV CUDNN_VERSION 7.3.0.29
