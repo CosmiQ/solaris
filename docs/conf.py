@@ -33,7 +33,6 @@ release = '0.0.1'
 # ones.
 extensions = [
     'sphinx.ext.napoleon',
-    'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -42,9 +41,16 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'nbsphinx'
-
+    'autoapi.extension'
 ]
+
+autoapi_type = 'python'
+autoapi_dirs = ['../solaris']
+autoapi_options = ['members', 'undoc-members', 'special-members']
+autoapi_ignore = ['*data*',
+                  '*bin*',
+                  '*migrations*']
+autoapi_root = 'api'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
