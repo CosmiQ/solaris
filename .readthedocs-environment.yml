@@ -2,4 +2,5 @@ name: solaris
 dependencies:
   - python
   - pip
-  - sphinx-autoapi
+  - pip:
+    - sphinx-autoapi
