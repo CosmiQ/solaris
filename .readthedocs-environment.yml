@@ -2,24 +2,4 @@ name: solaris
 dependencies:
   - python
   - pip
-  - shapely
-  - fiona
-  - pandas
-  - geopandas
-  - opencv
-  - numpy
-  - gdal
-  - tqdm=
-  - rtree
-  - networkx
-  - rasterio
-  - scipy=
-  - scikit-image
-  - tensorflow
-  - pytorch
-  - torchvision
-  - pyyaml
-  - pip:
-    - affine
-    - albumentations
-    - rio-tiler
+  - sphinx-autoapi
