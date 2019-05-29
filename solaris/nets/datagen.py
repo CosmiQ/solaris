@@ -1,13 +1,12 @@
-import keras
-import cv2
+from tensorflow import keras
 import numpy as np
-import os
-import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-from skimage import io
+from .transform import process_aug_dict
+from ..utils.core import _check_df_load
+from ..utils.io import imread, scale_for_model
 
 
-def DataGenerator(framework, image_path, mask_path, **kwargs):
+def make_data_generator(framework, config, df, stage='train'):
     """Create an appropriate data generator based on the framework used.
 
     Arguments
@@ -15,14 +14,12 @@ def DataGenerator(framework, image_path, mask_path, **kwargs):
     framework : str
         One of ['keras', 'pytorch', 'simrdwn', 'tf', 'tf_obj_api'], the deep
         learning framework used for the model to be used.
-    image_path : str
-        Path to the images to feed to the deep learning model.
-    mask_path : str
-        Path to the masks to feed to the deep learning model.
-    **kwargs
-        Additional arguments passed to framework-specific generators. See the
-        arguments to the framework-specific datasets and data generators for
-        details.
+    config : dict
+        The config dictionary for the entire pipeline.
+    df : :class:`pandas.DataFrame` or :class:`str`
+        A :class:`pandas.DataFrame` containing two columns: ``'image'``, with
+        the path to images for training, and ``'label'``, with the path to the
+        label file corresponding to each image.
 
     Returns
     -------
@@ -30,187 +27,124 @@ def DataGenerator(framework, image_path, mask_path, **kwargs):
     to feed data during model training or inference.
     """
 
-    if framework not in ['keras', 'pytorch', 'simrdwn', 'tf', 'tf_obj_api']:
+    if framework.lower() not in ['keras', 'pytorch', 'torch',
+                                 'simrdwn', 'tf', 'tf_obj_api']:
         raise ValueError('{} is not an accepted value for `framework`'.format(
             framework))
-    if framework == 'keras':
-        if 'image_shape' not in kwargs:
-            raise ValueError('`image_shape` must be provided as an argument ' +
-                             'when using Keras.')
-        return FileDataGenerator(image_path, mask_path, **kwargs)
+
+    # make sure the df is loaded
+    df = _check_df_load(df)
+
+    if framework.lower() == 'keras':
+        return KerasSegmentationSequence(config, df, stage=stage)
+
+    elif framework in ['torch', 'pytorch']:
+        dataset = TorchDataset(config, df, stage)
+        # set up workers for DataLoader for pytorch
+        data_workers = config['data_specs'].get('data_workers')
+        if data_workers == 1 or data_workers is None:
+            data_workers = 0  # for DataLoader to run in main process
+        return DataLoader(dataset, batch_size=config['batch_size'],
+                          shuffle=config['training_augmentation']['shuffle'],
+                          num_workers=data_workers)
 
 
-class FileDataGenerator(keras.utils.Sequence):
+class KerasSegmentationSequence(keras.utils.Sequence):
     # TODO: DOCUMENT!
-    def __init__(self, image_paths, mask_path, image_shape,
-                 traverse_subdirs=False, chip_subset=[], batch_size=32,
-                 crop=False, output_x=256, output_y=256, shuffle=True,
-                 flip_x=False, flip_y=False, zoom_range=None,
-                 rotate=False, rescale_brightness=None, output_dir=''):
-        self.traverse_subdirs = traverse_subdirs
-        self.mask_path = mask_path
-        self.mask_list = [f for f in os.listdir(mask_path)
-                          if f.endswith('.tif')]
-        self.image_list = image_paths
-        if chip_subset:
-            # subset the raw mask and image lists based on a list of chips
-            # provided as chip_subset
-            self.image_list = [f for f in self.image_list if any(
-                chip in f for chip in chip_subset
-                )]
-            self.mask_list = [os.path.join(self.mask_path, f)
-                              for f in self.mask_list if any(
-                                  chip in f for chip in chip_subset
-                                  )]
-        self.image_shape = image_shape
-        self.batch_size = batch_size
-        self.n_batches = int(np.floor(len(self.image_list) /
-                                      self.batch_size))
-        self.output_x = output_x
-        self.output_y = output_y
-        self.crop = crop
-        self.shuffle = shuffle
-        self.flip_x = flip_x
-        self.flip_y = flip_y
-        self.rotate = rotate
-        self.zoom_range = zoom_range
-        self.output_dir = output_dir
-        self.output_ctr = 0
-        self.rescale_brightness = rescale_brightness
+    def __init__(self, config, df, stage='train'):
+        self.config = config
+        # TODO: IMPLEMENT LOADING IN AUGMENTATION PIPELINE HERE!
+        # TODO: IMPLEMENT GETTING INPUT FILE LISTS HERE!
+        self.batch_size = self.config['batch_size']
+        self.df = df
+        self.n_batches = int(np.floor(len(self.df)/self.batch_size))
+        if stage == 'train':
+            self.aug = process_aug_dict(self.config['training_augmentation'])
+        elif stage == 'validate':
+            self.aug = process_aug_dict(self.config['validation_augmentation'])
         self.on_epoch_end()
 
     def on_epoch_end(self):
         'Update indices, rotations, etc. after each epoch'
         # reorder images
-        self.image_indexes = np.arange(len(self.image_list))
-        if self.shuffle:
+        self.image_indexes = np.arange(len(self.df))
+        if self.config['training_augmentation']['shuffle']:
             np.random.shuffle(self.image_indexes)
-        if self.crop:
-            self.x_mins = np.random.randint(
-                0, self.image_shape[1]-self.output_x, size=self.batch_size
-            )
-            self.y_mins = np.random.randint(
-                0, self.image_shape[0] - self.output_y, size=self.batch_size
-            )
-        if self.flip_x:
-            self.x_flips = np.random.choice(
-                [False, True], size=self.batch_size
-            )
-        if self.flip_y:
-            self.y_flips = np.random.choice(
-                [False, True], size=self.batch_size
-            )
-        if self.rotate:
-            self.n_rotations = np.random.choice(
-                [0, 1, 2, 3], size=self.batch_size
-            )
-        if self.rescale_brightness is not None:
-            self.amt_to_scale = np.random.uniform(
-                low=self.rescale_brightness[0],
-                high=self.rescale_brightness[1],
-                size=self.batch_size
-            )
-        if self.zoom_range is not None:
-            if (1-self.zoom_range)*self.image_shape[0] < self.output_y:
-                self.zoom_range = self.output_y/self.image_shape[0]
-            if (1-self.zoom_range)*self.image_shape[1] < self.output_x:
-                self.zoom_range = self.output_x/self.image_shape[1]
-            self.zoom_amt_y = np.random.uniform(
-                low=1-self.zoom_range,
-                high=1+self.zoom_range,
-                size=self.batch_size
-            )
-            self.zoom_amt_x = np.random.uniform(
-                low=1-self.zoom_range,
-                high=1+self.zoom_range,
-                size=self.batch_size
-            )
+    #     if self.crop:
+    #         self.x_mins = np.random.randint(
+    #             0, self.image_shape[1]-self.output_x, size=self.batch_size
+    #         )
+    #         self.y_mins = np.random.randint(
+    #             0, self.image_shape[0] - self.output_y, size=self.batch_size
+    #         )
+    #     if self.flip_x:
+    #         self.x_flips = np.random.choice(
+    #             [False, True], size=self.batch_size
+    #         )
+    #     if self.flip_y:
+    #         self.y_flips = np.random.choice(
+    #             [False, True], size=self.batch_size
+    #         )
+    #     if self.rotate:
+    #         self.n_rotations = np.random.choice(
+    #             [0, 1, 2, 3], size=self.batch_size
+    #         )
+    #     if self.rescale_brightness is not None:
+    #         self.amt_to_scale = np.random.uniform(
+    #             low=self.rescale_brightness[0],
+    #             high=self.rescale_brightness[1],
+    #             size=self.batch_size
+    #         )
+    #     if self.zoom_range is not None:
+    #         if (1-self.zoom_range)*self.image_shape[0] < self.output_y:
+    #             self.zoom_range = self.output_y/self.image_shape[0]
+    #         if (1-self.zoom_range)*self.image_shape[1] < self.output_x:
+    #             self.zoom_range = self.output_x/self.image_shape[1]
+    #         self.zoom_amt_y = np.random.uniform(
+    #             low=1-self.zoom_range,
+    #             high=1+self.zoom_range,
+    #             size=self.batch_size
+    #         )
+    #         self.zoom_amt_x = np.random.uniform(
+    #             low=1-self.zoom_range,
+    #             high=1+self.zoom_range,
+    #             size=self.batch_size
+    #         )
 
     def _data_generation(self, image_idxs):
-        # initialize
-        X = np.empty((self.batch_size, self.output_y, self.output_x,
-                      self.image_shape[2]))
-        # TODO: IMPLEMENT MULTI-CHANNEL MASK FUNCTIONALITY
-        y = np.empty((self.batch_size, self.output_y, self.output_x, 1))
+        # initialize the output array
+        X = np.empty((self.batch_size,
+                      self.config['data_specs']['height'],
+                      self.config['data_specs']['width'],
+                      self.config['data_specs']['channels']))
+        if self.config['data_specs']['label_type'] == 'mask':
+            y = np.empty((self.batch_size,
+                          self.config['data_specs']['height'],
+                          self.config['data_specs']['width'],
+                          self.config['data_specs']['mask_channels']))
+        else:
+            pass  # TODO: IMPLEMENT BBOX LABEL SETUP HERE!
         for i in range(self.batch_size):
-            im_path = self.image_list[image_idxs[i]]
-            # TODO: IMPLEMENT BETTER REGEX-BASED CHIP ID SEARCHING
-            if im_path.endswith('_image.tif'):
-                chip_id = '_'.join(im_path.rstrip('_image.tif').split('_')[-2:])
+            im = imread(self.df['image'].iloc[image_idxs[i]])
+            if self.config['data_specs']['label_type'] == 'mask':
+                label = imread(self.df['label'].iloc[image_idxs[i]])
+                if not self.config['data_specs']['is_categorical']:
+                    label[label != 0] = 1
+                aug_result = self.aug(image=im, mask=label)
+                # if image shape is 2D, convert to 3D
+                scaled_im = scale_for_model(
+                    aug_result['image'],
+                    self.config['data_specs'].get('image_type')
+                    )
+                if len(scaled_im.shape) == 2:
+                    scaled_im = scaled_im[:, :, np.newaxis]
+                X[i, :, :, :] = scaled_im
+                if len(aug_result['mask'].shape) == 2:
+                    aug_result['mask'] = aug_result['mask'][:, :, np.newaxis]
+                y[i, :, :, :] = aug_result['mask']
             else:
-                chip_id = '_'.join(im_path.rstrip('.tif').split('_')[-2:])
-            mask_path = [f for f in self.mask_list if chip_id in f][0]
-            im_arr = cv2.imread(im_path, cv2.IMREAD_COLOR)
-            mask_arr = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-            mask_arr = mask_arr[:, :, np.newaxis] > 0
-            if self.zoom_range is not None:
-                im_arr = cv2.resize(
-                    im_arr,
-                    (int(im_arr.shape[1]*self.zoom_amt_x[i]),
-                     int(im_arr.shape[0]*self.zoom_amt_y[i])))
-                mask_arr = cv2.resize(
-                    mask_arr.astype('uint8'),
-                    (int(mask_arr.shape[1]*self.zoom_amt_x[i]),
-                     int(mask_arr.shape[0]*self.zoom_amt_y[i])))
-                if len(mask_arr.shape) < 3:  # add third axis if absent
-                    mask_arr = mask_arr[:, :, np.newaxis]
-                mask_arr = mask_arr > 0
-                pad_amt = [0, 0]
-                if self.zoom_amt_y[i] < 1:
-                    pad_amt[0] = int(self.image_shape[0] *
-                                     self.zoom_amt_y[i]*0.5)
-                if self.zoom_amt_x[i] < 1:
-                    pad_amt[1] = int(self.image_shape[1] *
-                                     self.zoom_amt_x[i]*0.5)
-                if pad_amt != [0, 0]:
-                    mask_arr = np.pad(
-                        mask_arr,
-                        pad_width=((pad_amt[0], pad_amt[0]),
-                                   (pad_amt[1], pad_amt[1]),
-                                   (0, 0)),
-                        mode='reflect')
-                    im_arr = np.pad(
-                        im_arr,
-                        pad_width=((pad_amt[0], pad_amt[0]),
-                                   (pad_amt[1], pad_amt[1]),
-                                   (0, 0)),
-                        mode='reflect')
-            if self.crop:
-                im_arr = im_arr[self.y_mins[i]:self.y_mins[i]+self.output_y,
-                                self.x_mins[i]:self.x_mins[i]+self.output_x,
-                                :]
-                mask_arr = mask_arr[
-                    self.y_mins[i]:self.y_mins[i]+self.output_y,
-                    self.x_mins[i]:self.x_mins[i]+self.output_x,
-                    :]
-            else:
-                im_arr = cv2.resize(im_arr, (self.output_y, self.output_x,
-                                             self.image_shape[2]))
-                mask_arr = cv2.resize(im_arr, (self.output_y, self.output_x,
-                                               1))
-            if self.flip_x:
-                if self.x_flips[i]:
-                    im_arr = np.flip(im_arr, axis=0)
-                    mask_arr = np.flip(mask_arr, axis=0)
-            if self.flip_y:
-                if self.y_flips[i]:
-                    im_arr = np.flip(im_arr, axis=1)
-                    mask_arr = np.flip(mask_arr, axis=1)
-            if self.rotate:
-                to_go = 0
-                while to_go < self.n_rotations[i]:
-                    im_arr = np.rot90(im_arr)
-                    mask_arr = np.rot90(mask_arr)
-                    to_go += 1
-            if self.rescale_brightness is not None:
-                hsv = cv2.cvtColor(im_arr, cv2.COLOR_BGR2HSV)
-                v = hsv[:, :, 2]*self.amt_to_scale[i]
-                v = np.clip(v, 0, 255).astype('uint8')
-                hsv[:, :, 2] = v
-                im_arr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-            X[i, :, :, :] = im_arr
-            y[i, :, :, :] = mask_arr
-        X = X/255.
+                pass  # TODO: IMPLEMENT BBOX LABEL LOADING HERE!
+
         return X, y
 
     def __len__(self):
@@ -225,14 +159,6 @@ class FileDataGenerator(keras.utils.Sequence):
 
         # Generate data
         X, y = self._data_generation(image_idxs=im_inds)
-        if self.output_dir:
-            np.save(os.path.join(
-                self.output_dir, 'images_{}.npy'.format(self.output_ctr)),
-                    X)
-            np.save(os.path.join(
-                self.output_dir, 'masks_{}.npy'.format(self.output_ctr)),
-                    y)
-            self.output_ctr += 1
         return X, y
 
 
@@ -241,53 +167,115 @@ class TorchDataset(Dataset):
 
     Arguments
     ---------
-    reference_csv : str
-        Path to a csv file with at least two columns: ``'image_path'``
-        that denotes the paths to the source imagery and ``'label_path'``
-        that denotes the paths to their corresponding labels.
-    aug_pipeline : :py:class:`torchvision.transforms` or :py:class:`albumentations.core.transforms_interface.Compose`
-        An augmentation pipeline object compatible with PyTorch. Not required
-         if not performing any augmentation or post-processing on the image.
+    config : dict
+        The configuration dictionary for the model run.
+    stage : str
+        The stage of model training/inference the `TorchDataset` will be used
+        for. Options are ``['train', 'validate', 'infer']``.
     """
-    def __init__(self, reference_csv, aug_pipeline=None):
-        super(self, TorchDataset).__init__()
-        self.dataset_ref = pd.read_csv(reference_csv)
-        self.aug_pipeline = aug_pipeline
+
+    def __init__(self, config, df, stage='train'):
+        super().__init__()
+        self.df = df
+        self.config = config
+        self.batch_size = self.config['batch_size']
+        self.n_batches = int(np.floor(len(self.df)/self.batch_size))
+        if stage == 'train':
+            self.aug = process_aug_dict(self.config['training_augmentation'])
+        elif stage == 'validate':
+            self.aug = process_aug_dict(self.config['validation_augmentation'])
 
     def __len__(self):
-        return len(self.dataset_ref)
+        return len(self.df)
 
     def __getitem__(self, idx):
-        img_fname = self.dataset_ref['image_path'].iloc[idx]
-        label_fname = self.dataset_ref['label_path'].iloc[idx]
-        image = io.imread(img_fname)
-        if os.path.splitext(label_fname)[1].lower() in ['gif', 'tiff', 'tif',
-                                                        'geotiff' 'png',
-                                                        'jpg']:
-            label = io.imread(label_fname)
-        else:
-            raise NotImplementedError(
-                'Non-image labels are not currently implemented.')
-        sample = {'image': image, 'label': label}
-
-        if self.transform:
-            sample = self.transform(sample)
+        'Get one image:mask pair'
+        # Generate indexes of the batch
+        image = imread(self.df['image'].iloc[idx])
+        mask = imread(self.df['label'].iloc[idx])
+        if not self.config['data_specs']['is_categorical']:
+            mask[mask != 0] = 1
+        sample = {'image': image, 'label': mask}
+        if self.aug:
+            sample = self.aug(**sample)
 
         return sample
 
 
-def get_files_recursively(image_path, traverse_subdirs=False):
-    """Get files from subdirs of `path`, joining them to the dir."""
-    if traverse_subdirs:
-        walker = os.walk(image_path)
-        im_path_list = []
-        for step in walker:
-            if not step[2]:  # if there are no files in the current dir
-                continue
-            im_path_list += [os.path.join(step[0], fname)
-                             for fname in step[2] if
-                             fname.endswith('.tif')]
-        return im_path_list
-    else:
-        return [f for f in os.listdir(image_path)
-                if f.endswith('.tif')]
+class InferenceTiler(object):
+    """An object to tile fragments of images for inference."""
+
+    def __init__(self, framework, width, height, x_step=None, y_step=None,
+                 augmentations=None):
+        """Create the tiler instance."""
+        self.framework = framework
+        self.width = width
+        self.height = height
+        if x_step is None:
+            self.x_step = self.width
+        else:
+            self.x_step = x_step
+        if y_step is None:
+            self.y_step = self.height
+        else:
+            self.y_step = y_step
+        self.aug = augmentations
+
+    def __call__(self, im):
+        """Create an inference array along with an indexing reference list.
+
+        Arguments
+        ---------
+        im : :class:`str` or :class:`numpy.array`
+            An image to perform inference on.
+
+        Returns
+        -------
+        output_arr, top_left_corner_idxs
+            output_arr : ``[N, Y, X, C]`` :class:`numpy.array`
+                A :class:`numpy.array` for use in model inferencing. Each
+                item along the first axis corresponds to a single sample for
+                the model.
+            top_left_corner_idxs : :class:`list` of :class:`tuple` s of :class:`int` s
+                A :class:`list` of ``(top, left)`` tuples corresponding to the
+                top left corner indices of each sample along the first axis of
+                ``inference_arr`` . These values can be used to stitch the
+                inferencing result back together.
+        """
+        # read in the image if it's a path
+        if isinstance(im, str):
+            im = imread(im)
+        # determine how many samples will be generated with the sliding window
+        src_im_height = im.shape[0]
+        src_im_width = im.shape[1]
+        y_steps = int(1+np.ceil((src_im_height-self.height)/self.y_step))
+        x_steps = int(1+np.ceil((src_im_width-self.width)/self.x_step))
+        n_chips = ((y_steps)*(x_steps))
+        if len(im.shape) == 2:  # if there's no channel axis
+            im = im[:, :, np.newaxis]  # create one - will be needed for model
+        output_arr = np.empty(shape=(n_chips,
+                                     self.height, self.width,
+                                     im.shape[2]), dtype=im.dtype)
+        top_left_corner_idxs = []
+        for y in range(y_steps):
+            if self.y_step*y + self.height > im.shape[0]:
+                y_min = im.shape[0] - self.height
+            else:
+                y_min = self.y_step*y
+
+            for x in range(x_steps):
+                if self.x_step*x + self.width > im.shape[1]:
+                    x_min = im.shape[1] - self.width
+                else:
+                    x_min = self.x_step*x
+
+                subarr = im[y_min:y_min + self.height,
+                            x_min:x_min + self.width,
+                            :]
+                if self.aug is not None:
+                    subarr = self.aug(image=subarr)
+                output_arr[len(top_left_corner_idxs), :, :, :] = subarr
+                top_left_corner_idxs.append((y_min, x_min))
+        if self.framework in ['torch', 'pytorch']:
+            output_arr = np.moveaxis(output_arr, 3, 1)
+        return output_arr, top_left_corner_idxs, (src_im_height, src_im_width)

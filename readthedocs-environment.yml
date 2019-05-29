@@ -17,6 +17,7 @@ dependencies:
   - scikit-image=0.15.dev0
   - tensorflow=1.13.1
   - pytorch=1.0.1
+  - pyyaml=5.1
   - pip:
     - affine=2.2.1
     - albumentations=0.2.2

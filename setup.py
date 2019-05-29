@@ -3,6 +3,20 @@ import sys
 import subprocess
 import logging
 from setuptools import setup, find_packages
+import re
+import os
+
+
+def get_version():
+    VERSIONFILE = os.path.join('solaris', '__init__.py')
+    initfile_lines = open(VERSIONFILE, 'rt').readlines()
+    VSRE = r'^__version__ = [\"\']*([\d.]+)[\"\']'
+    for line in initfile_lines:
+        mo = re.search(VSRE, line, re.M)
+        if mo:
+            return mo.group(1)
+    raise RuntimeError('Unable to find version string in %s.' % (VERSIONFILE,))
+
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 log = logging.getLogger()
@@ -57,19 +71,21 @@ inst_reqs = ['shapely>=1.6.4',
              'scipy>=1.2.0',
              'scikit-image>=0.14.0',
              'tensorflow>=1.13.1',
-             'torch>=1.0.1',
-             'affine>=2.2.1',
-             'albumentations>=0.2.2',
-             'rio-tiler>=1.2.4'
+             'torch>=1.1.0',
+             'affine>=2.2.2',
+             'albumentations>=0.2.3',
+             'rio-tiler>=1.2.7',
+             'pyyaml>=5.1',
+             'torchvision>=0.3.0'
              ]
 
-version = '0.0.1'
 
 extra_reqs = {
     'test': ['mock', 'pytest', 'pytest-cov', 'codecov']}
 
+project_name = 'solaris'
 setup(name='solaris',
-      version=version,
+      version=get_version(),
       description="CosmiQ Works Geospatial Machine Learning Analysis Toolkit",
       classifiers=[
           'Intended Audience :: Information Technology',

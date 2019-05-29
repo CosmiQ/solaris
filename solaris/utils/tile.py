@@ -1,3 +1,6 @@
+from rasterio import Affine
+from rasterio import features
+import geopandas as gpd
 import numpy as np
 from shapely.geometry import box
 import rasterio
@@ -7,6 +10,9 @@ from rasterio.io import DatasetReader
 from rasterio.warp import transform_bounds
 from rio_tiler.errors import RioTilerError
 from rasterio import transform
+import osr
+from solaris.utils.core import _check_gdf_load
+from solaris.utils.core import _check_rasterio_im_load
 
 
 def utm_getZone(longitude):
@@ -335,12 +341,7 @@ def get_utm_bounds(source, utm_EPSG):
                                   densify_pts=21)
     return utm_bounds
 
-from shapely import geometry
-from shapely.geometry import box
-import geopandas as gpd
-from rasterio import features
-from rasterio import Affine
-import numpy as np
+
 # Note, for mac osx compatability import something from shapely.geometry before
 # importing fiona or geopandas: https://github.com/Toblerity/Shapely/issues/553
 
@@ -435,7 +436,7 @@ def search_gdf_polygon(gdf, tile_polygon):
     possible_matches = gdf.iloc[possible_matches_index]
     precise_matches = possible_matches[
         possible_matches.intersects(tile_polygon)
-        ]
+    ]
     if precise_matches.empty:
         precise_matches = gpd.GeoDataFrame(geometry=[])
     return precise_matches
@@ -477,7 +478,7 @@ def vector_tile_utm(gdf, tile_bounds, min_partial_perc=0.1,
 
 def getCenterOfGeoFile(gdf, estimate=True):
 
-    #TODO implement calculate UTM from gdf  see osmnx implementation
+    # TODO implement calculate UTM from gdf  see osmnx implementation
 
     pass
 
@@ -600,8 +601,54 @@ def rasterize_gdf(gdf, src_shape, burn_value=1,
             ((geom, burn_value) for geom in gdf.geometry),
             out_shape=src_shape,
             transform=src_transform
-            )
+        )
     else:
         img = np.zeros(src_shape).astype(np.uint8)
 
     return img
+
+
+def vector_gdf_get_projection_unit(vector_file):
+    """Get the projection unit for a vector_file or gdf.
+
+    Arguments
+    ---------
+    vector_file : :py:class:`geopandas.GeoDataFrame` or geojson/shapefile
+        A vector file or gdf with georeferencing
+
+    Returns
+    -------
+    unit : String
+        The unit i.e. meters or degrees, of the projection
+    """
+    c = _check_gdf_load(vector_file)
+    crs = c.crs
+    srs = osr.SpatialReference()
+    x = (crs['init']).split(":")[1]
+    srs.ImportFromEPSG(int(x))
+    WKT = srs.ExportToWkt()
+    unit = WKT.split("UNIT[")[1].split(",")[0]
+    return unit
+
+
+def raster_get_projection_unit(image):
+    """Get the projection unit for a vector_file.
+
+    Arguments
+    ---------
+    image : raster image, GeoTIFF or other format
+        A raster file with georeferencing
+
+    Returns
+    -------
+    unit : String
+        The unit i.e. meters or degrees, of the projection
+    """
+    c = _check_rasterio_im_load(image)
+    crs = c.crs
+    srs = osr.SpatialReference()
+    x = (crs['init']).split(":")[1]
+    srs.ImportFromEPSG(int(x))
+    WKT = srs.ExportToWkt()
+    unit = WKT.split("UNIT[")[1].split(",")[0]
+    return unit

@@ -30,7 +30,7 @@ This repository provides the source code for the CosmiQ Works `solaris` project,
 We recommend creating a `conda` environment with the dependencies defined in [environment.yml](./environment.yml) before installing `solaris`. After cloning the repository:
 ```
 cd solaris
-conda create -n solaris -f environment.yml
+conda env create -n solaris -f environment.yml
 conda activate solaris
 pip install .
 ```
@@ -40,7 +40,7 @@ pip install .
 The package also exists on[ PyPI](https://pypi.org), but note that some of the dependencies, specifically [rtree](https://github.com/Toblerity/) and [gdal](https://www.gdal.org), are challenging to install without anaconda. We therefore recommend installing at least those dependency using `conda` before installing from PyPI.
 
 ```
-conda install -c conda-forge rtree gdal
+conda install -c conda-forge rtree gdal=2.4.1
 ```
 If you don't want to use `conda`, you can [install libspatialindex](https://libspatialindex.org), then `pip install rtree`. Installing GDAL without conda can be very difficult and approaches vary dramatically depending upon the build environment and version, but online resources may help with specific use cases.
 
