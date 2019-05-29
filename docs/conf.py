@@ -49,6 +49,7 @@ extensions = [
 ]
 
 autoapi_type = 'python'
+autoapi_template_dir = '_templates/'
 autoapi_dirs = ['../solaris']
 autoapi_options = ['members', 'undoc-members', 'special-members']
 autoapi_ignore = ['*data*',
