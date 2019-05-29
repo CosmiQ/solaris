@@ -22,7 +22,11 @@ class EvalBase():
         labels.
     ground_truth_GDF_Edit : :class:`geopandas.GeoDataFrame`
         A copy of ``ground_truth_GDF`` which will be manipulated during
-        processing
+        processing.
+    proposal_GDF : :class:`geopandas.GeoDataFrame`
+        The proposal :class:`geopandas.GeoDataFrame`, added using
+        ``load_proposal()``.
+
     Arguments
     ---------
     ground_truth_vector_file : str
