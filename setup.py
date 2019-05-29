@@ -1,4 +1,48 @@
+import os
+import sys
+import subprocess
+import logging
 from setuptools import setup, find_packages
+
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+log = logging.getLogger()
+
+
+def check_output(cmd):
+    # since subprocess.check_output doesn't exist in 2.6
+    # we wrap it here.
+    try:
+        out = subprocess.check_output(cmd)
+        return out.decode('utf')
+    except AttributeError:
+        # For some reasone check_output doesn't exist
+        # So fall back on Popen
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        return out
+
+
+# check GDAL install
+include_dirs = []
+library_dirs = []
+libraries = []
+extra_link_args = []
+gdal2plus = False
+gdal_output = [None] * 4
+gdalversion = None
+
+try:
+    gdal_version = subprocess.check_output(
+        ['gdal-config', '--version']).decode('utf')
+    gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
+
+except Exception:
+    sys.exit("GDAL must be installed to use `solaris`. See the documentation "
+             "for more info. We recommend installing GDAL within a conda "
+             "environment first, then installing solaris there.")
+
+
+
 
 inst_reqs = ['shapely>=1.6.4',
              'fiona>=1.8.6',
@@ -7,7 +51,6 @@ inst_reqs = ['shapely>=1.6.4',
              'opencv-python==4.1.0.25',
              'numpy>=1.15.4',
              'tqdm>=4.28.1',
-             'GDAL>=2.4.0',
              'rtree>=0.8.3',
              'networkx>=2.2',
              'rasterio>=1.0.18',
