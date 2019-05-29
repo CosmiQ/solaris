@@ -5,6 +5,7 @@ from ..utils.geo import get_subgraph
 import shapely
 from shapely.geometry import Point, LineString
 import networkx as nx
+import rasterio as rio
 import fiona
 import pickle
 from multiprocessing import Pool
@@ -449,10 +450,10 @@ def linestring_to_edges(linestring, node_gdf):
     return edges
 
 
-def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False):
+def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False,
+                     verbose=False):
     """
     Save graph to two geojsons: one containing nodes, the other edges.
-
     Arguments
     ---------
     G : :class:`networkx.MultiDiGraph`
@@ -466,31 +467,47 @@ def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False):
     overwrite : bool, optional
         Should files at ``output_path`` be overwritten? Defaults to no
         (``False``).
+    verbose : bool, optional
+        Switch to print relevant values.  Defaults to no (``False``).
 
     Notes
     -----
     This function is based on ``osmnx.save_load.save_graph_shapefile``, with
     tweaks to make it work with our graph objects. It will save two geojsons:
     a file containing all of the nodes and a file containing all of the edges.
+    When writing to geojson, must convert the coordinate reference system
+    (crs) to string if it's a dict, otherwise no crs will be appended to the
+    geojson.
 
     Returns
     -------
     None
-
     """
+
     # convert directed graph G to an undirected graph for saving as a shapefile
     G_to_save = G.copy().to_undirected()
     # create GeoDataFrame containing all of the nodes
-    gdf_nodes = gpd.GeoDataFrame(
-        {node: data for node, data in G_to_save.nodes(data=True)}
-        )
+    nodes, data = zip(*G_to_save.nodes(data=True))
+    gdf_nodes = gpd.GeoDataFrame(list(data), index=nodes)
 
-    gdf_nodes.crs = G_to_save.graph['crs']
+    # get coordinate reference system
+    g_crs = G_to_save.graph['crs']
+    if type(g_crs) == dict:
+        # convert from dict
+        g_crs = rio.crs.CRS.from_dict(g_crs)
+    gdf_nodes.crs = g_crs
+    if verbose:
+        print("crs:", g_crs)
+
     gdf_nodes['geometry'] = gdf_nodes.apply(
         lambda row: Point(row['x'], row['y']), axis=1
         )
-    gdf_nodes = gdf_nodes.drop(columns=['x', 'y'])
-    gdf_nodes['node_idx'] = gdf_nodes['node_idx'].astype(np.int32)
+    gdf_nodes = gdf_nodes.drop(['x', 'y'], axis=1)
+    # gdf_nodes['node_idx'] = gdf_nodes['node_idx'].astype(np.int32)
+
+    # # make everything but geometry column a string
+    # for col in [c for c in gdf_nodes.columns if not c == 'geometry']:
+    #    gdf_nodes[col] = gdf_nodes[col].fillna('').map(make_str)
 
     # create GeoDataFrame containing all of the edges
     edges = []
@@ -505,7 +522,7 @@ def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False):
         edges.append(edge)
 
     gdf_edges = gpd.GeoDataFrame(edges)
-    gdf_edges.crs = G_to_save.graph['crs']
+    gdf_edges.crs = g_crs
 
     for col in [c for c in gdf_nodes.columns if c != 'geometry']:
         gdf_nodes[col] = gdf_nodes[col].fillna('').apply(str)
@@ -523,6 +540,7 @@ def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False):
             os.remove(edges_path)
         if os.path.exists(nodes_path):
             os.remove(nodes_path)
+
     gdf_edges.to_file(edges_path, encoding=encoding, driver='GeoJSON')
     gdf_nodes.to_file(nodes_path, encoding=encoding, driver='GeoJSON')
 
