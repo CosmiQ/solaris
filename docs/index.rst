@@ -1,18 +1,26 @@
-Solaris (`solaris <https://github.com/cosmiq/solaris>`__) Documentation
-=============================================================================================
-:Author: `CosmiQ Works <https://www.cosmiqworks.org>`__
-:Release: |release|
-:Copyright: 2019, CosmiQ Works
-:License: This work is licensed under an `Apache 2.0 License`__.
 
-.. __: https://www.apache.org/licenses/LICENSE-2.0
+#######################################################################
+`solaris <https://github.com/cosmiq/solaris>`__ |release|
+#######################################################################
+
+*************************************************************************
+An open source project by `CosmiQ Works <https://www.cosmiqworks.org>`__.
+*************************************************************************
+
+
+.. __: https://github.com/CosmiQ/solaris/blob/master/LICENSE.txt
+
+Documentation
+=============
+Getting started guide
+---------------------
 
 .. toctree::
    :name: mastertoc
    :maxdepth: 3
    :glob:
 
-   api/index
+   api/solaris/index
 
 Indices and tables
 ------------------
@@ -21,6 +29,7 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-Getting started guide
----------------------
-*Coming soon!*
+
+**License:** `Apache 2.0`__.
+
+*Copyright 2019, CosmiQ Works*

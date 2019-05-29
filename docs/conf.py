@@ -13,17 +13,21 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import solaris
 
-
+import sphinx_bootstrap_theme
 # -- Project information -----------------------------------------------------
 
 project = 'solaris'
 copyright = '2019, CosmiQ Works'
 author = 'CosmiQ Works'
 license = 'Apache 2.0'
+import time
+copyright = u'2018-{}, CosmiQ Works: an IQT Lab'.format(time.strftime("%Y"))
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = solaris.__version__
+version = solaris.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -85,12 +89,25 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'bootstrap'
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+
+html_theme_options = {
+    'source_link_position': "footer",
+    'bootswatch_theme': "spacelab",
+    'bootstrap_version': "3",
+    'navbar_links': [
+                     ("Getting Started", "getting_started"),
+                     ("API", "api/solaris/index")
+                     ],
+
+    }
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ['_build/_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -160,7 +177,7 @@ intersphinx_mapping = {
     "geopandas": ('http://geopandas.org/', None),
     "rtree": ('http://toblerity.org/rtree/', None),
     "shapely": ('https://shapely.readthedocs.io/en/stable/', None),
-    "numpy": ('http://docs.scipy.org/doc/numpy/', None),
-    "scipy": ('http://docs.scipy.org/doc/scipy/reference', None),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     'PyTorch': ('http://pytorch.org/docs/master/', None)
     }
