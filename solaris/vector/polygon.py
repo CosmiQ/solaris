@@ -10,6 +10,7 @@ from shapely.geometry import box, Polygon
 import pandas as pd
 import geopandas as gpd
 from rtree.core import RTreeError
+import shutil
 
 
 def convert_poly_coords(geom, raster_src=None, affine_obj=None, inverse=False,
@@ -68,8 +69,8 @@ def convert_poly_coords(geom, raster_src=None, affine_obj=None, inverse=False,
     elif isinstance(geom, shapely.geometry.base.BaseGeometry):
         g = geom
     else:
-        raise TypeError('The provided geometry is not an accepted format. ' +
-                        'This function can only accept WKT strings and ' +
+        raise TypeError('The provided geometry is not an accepted format. '
+                        'This function can only accept WKT strings and '
                         'shapely geometries.')
 
     xformed_g = shapely.affinity.affine_transform(g, [affine_xform.a,
@@ -301,3 +302,85 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
         intersectors = []
 
     return gdf.iloc[intersectors, :]
+
+
+def gdf_to_yolo(geodataframe, image, output_dir, column='single_id', im_size=(0, 0), min_overlap=0.66, remove_no_labels=1):
+    """Convert a geodataframe containing polygons to yolo/yolt readable format (.txt files).
+    Arguments
+    ---------
+    geodataframe : str
+        Path to a :class:`geopandas.GeoDataFrame` with a
+        column named ``'geometry'``.  Can be created from a geojson with labels for unique objects.
+        Can be converted to this format with geodataframe=gpd.read_file("./xView_30.geojson")
+    im_path : str
+        Path to a georeferenced image (ie a GeoTIFF or png created with GDAL) that geolocates to the
+        same geography as the `geojson`(s). If a directory, the bounds of each
+        GeoTIFF will be loaded in and all overlapping geometries will be
+        transformed. This function will also accept a
+        :class:`osgeo.gdal.Dataset` or :class:`rasterio.DatasetReader` with
+        georeferencing information in this argument.
+    output_dir : str
+        Path to an output directory where all of the yolo readable text files will be placed.
+    column : str
+        The column name that contians an unique integer id for each of object class.
+    im_size : tuple
+        A tuple specifying the x and y heighth of a an image.  If specified as (0,0) this is automatically
+        extracted from the image.
+    min_overlap : float
+        A float value ranging from 0 to +1.  This is a percantge.  If a polygon does not overlap the image
+        by at least min_overlap, the polygon is discarded.  i.e. 0.66 = 66%, at least 66% of the polygon must
+        intersect with the image or else it is discarded. Default value of 0.66.
+    remove_no_labels : int
+        An int value of 0 or 1.  If 1, any image not containing any objects will be moved to a directory in the same root
+        path as your input image.  If 0, no images will be moved. Default value of 1.
+    Returns
+    -------
+    gdf : :class:`geopandas.GeoDataFrame`.  The txt file will be written to the output_dir, however the the output gdf itself
+    can be returned from this function if required.
+    """
+    if im_size == (0, 0):
+        imsize_extract = rasterio.open(image).read()
+        if len(imsize_extract.shape) == 3:
+            im_size = (imsize_extract.shape[1], imsize_extract.shape[2])
+        else:
+            im_size = (imsize_extract.shape[0], imsize_extract.shape[1])
+    [x0, y0, x1, y1] = [0, 0, im_size[0], im_size[1]]
+    out_coords = [[x0, y0], [x0, y1], [x1, y1], [x1, y0]]
+    points = [shapely.geometry.Point(coord) for coord in out_coords]
+    pix_poly = shapely.geometry.Polygon([[p.x, p.y] for p in points])
+    dw = 1. / im_size[0]
+    dh = 1. / im_size[1]
+    header = [column, "x", "y", "w", "h"]
+    if os.path.isdir(output_dir) is False:
+        os.mkdir(output_dir)
+    output = os.path.join(output_dir, image.split('.png')[0] + ".txt")
+    gdf = geojson_to_px_gdf(geodataframe, image, precision=None)
+    gdf['area'] = gdf['geometry'].area
+    gdf['intersection'] = (
+        gdf['geometry'].intersection(pix_poly).area / gdf['area'])
+    gdf = gdf[gdf['area'] != 0]
+    gdf = gdf[gdf['intersection'] >= min_overlap]
+    if not gdf.empty:
+        boxy = gdf['geometry'].bounds
+        boxy['xmid'] = (boxy['minx'] + boxy['maxx']) / 2.0
+        boxy['ymid'] = (boxy['miny'] + boxy['maxy']) / 2.0
+        boxy['w0'] = (boxy['maxx'] - boxy['minx'])
+        boxy['h0'] = (boxy['maxy'] - boxy['miny'])
+        boxy['x'] = boxy['xmid'] * dw
+        boxy['y'] = boxy['ymid'] * dh
+        boxy['w'] = boxy['w0'] * dw
+        boxy['h'] = boxy['h0'] * dh
+        if not boxy.empty:
+            gdf = gdf.join(boxy)
+            gdf.to_csv(path_or_buf=output, sep=' ',
+                       columns=header, index=False, header=False)
+
+    if remove_no_labels == 1:
+        remove_no_labels_dir = os.path.join(
+            os.path.dirname(os.path.abspath(image)), "No_Labels")
+        if os.path.isdir(remove_no_labels_dir) is False:
+            os.mkdir(remove_no_labels_dir)
+        if gdf.empty or boxy.empty:
+            shutil.move(image, remove_no_labels_dir)
+
+    return gdf

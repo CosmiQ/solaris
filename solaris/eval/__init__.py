@@ -1,4 +1,1 @@
-
-"""cw_eval"""
-
-__version__ = '0.3.1'
+from . import baseeval, evalfunctions
