@@ -6,7 +6,7 @@ import os
 def get_version():
     VERSIONFILE = os.path.join('solaris', '__init__.py')
     initfile_lines = open(VERSIONFILE, 'rt').readlines()
-    VSRE = r'^__version__ = "*([\d.]+)"'
+    VSRE = r'^__version__ = [\"\']*([\d.]+)[\"\']'
     for line in initfile_lines:
         mo = re.search(VSRE, line, re.M)
         if mo:
