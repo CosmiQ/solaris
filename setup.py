@@ -1,4 +1,18 @@
 from setuptools import setup, find_packages
+import re
+import os
+
+
+def get_version():
+    VERSIONFILE = os.path.join('solaris', '__init__.py')
+    initfile_lines = open(VERSIONFILE, 'rt').readlines()
+    VSRE = r'^__version__ = "*([\d.]+)"'
+    for line in initfile_lines:
+        mo = re.search(VSRE, line, re.M)
+        if mo:
+            return mo.group(1)
+    raise RuntimeError('Unable to find version string in %s.' % (VERSIONFILE,))
+
 
 inst_reqs = ['shapely>=1.6.4',
              'fiona>=1.8.6',
@@ -22,13 +36,13 @@ inst_reqs = ['shapely>=1.6.4',
              'torchvision>=0.3.0'
              ]
 
-version = '0.0.1'
 
 extra_reqs = {
     'test': ['mock', 'pytest', 'pytest-cov', 'codecov']}
 
+project_name = 'solaris'
 setup(name='solaris',
-      version=version,
+      version=get_version(),
       description="CosmiQ Works Geospatial Machine Learning Analysis Toolkit",
       classifiers=[
           'Intended Audience :: Information Technology',
