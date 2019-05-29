@@ -45,7 +45,8 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'autoapi.extension'
+    'autoapi.extension',
+    'sphinx.ext.autosectionlabel'
 ]
 
 autoapi_type = 'python'
