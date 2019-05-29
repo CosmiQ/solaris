@@ -7,13 +7,13 @@
 An open source project by `CosmiQ Works <https://www.cosmiqworks.org>`__.
 *************************************************************************
 
-.. __: https://github.com/CosmiQ/solaris/blob/master/LICENSE.txt
-
-User Guide
 ==========
 * `What is solaris? <intro.html>`_
 * `Installation <installation.html>`_
 * `Tutorials and recipes <tutorials.html>`_
+=======
+
+.. __: https://github.com/CosmiQ/solaris/blob/master/LICENSE.txt
 
 Documentation
 =============
@@ -21,6 +21,7 @@ Getting started guide
 ---------------------
 
 
+   api/solaris/index
 
 Indices and tables
 ------------------
