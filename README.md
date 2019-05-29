@@ -30,7 +30,7 @@ This repository provides the source code for the CosmiQ Works `solaris` project,
 We recommend creating a `conda` environment with the dependencies defined in [environment.yml](./environment.yml) before installing `solaris`. After cloning the repository:
 ```
 cd solaris
-conda create -n solaris -f environment.yml
+conda env create -n solaris -f environment.yml
 conda activate solaris
 pip install .
 ```
