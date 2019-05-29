@@ -13,6 +13,16 @@ from fiona._err import CPLE_OpenFailedError
 class EvalBase():
     """Object to test IoU for predictions and ground truth polygons.
 
+    Attributes
+    ----------
+    ground_truth_fname : str
+        The filename for the ground truth CSV or JSON.
+    ground_truth_GDF : :class:`geopandas.GeoDataFrame`
+        A :class:`geopandas.GeoDataFrame` containing the ground truth vector
+        labels.
+    ground_truth_GDF_Edit : :class:`geopandas.GeoDataFrame`
+        A copy of ``ground_truth_GDF`` which will be manipulated during
+        processing
     Arguments
     ---------
     ground_truth_vector_file : str
