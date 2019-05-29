@@ -26,8 +26,8 @@ import time
 copyright = u'2018-{}, CosmiQ Works: an IQT Lab'.format(time.strftime("%Y"))
 
 # The full version, including alpha/beta/rc tags
-release = solaris.__version__
-version = solaris.__version__
+release = '0.0.3'
+version = '0.0.3'
 
 
 # -- General configuration ---------------------------------------------------
