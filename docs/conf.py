@@ -13,7 +13,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+import solaris
 import sphinx_bootstrap_theme
 # -- Project information -----------------------------------------------------
 
@@ -61,7 +61,7 @@ autodoc_mock_imports = ['shapely', 'fiona', 'pandas', 'geopandas', 'cv2',
                         'numpy', 'gdal', 'tqdm', 'rtree', 'networkx',
                         'rasterio', 'scipy', 'skimage', 'tensorflow', 'torch',
                         'torchvision', 'yaml', 'affine', 'albumentations',
-                        'rio-tiler']
+                        'rio_tiler']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

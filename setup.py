@@ -17,7 +17,7 @@ def get_version():
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
 if on_rtd:
-    inst_reqs = []
+    inst_reqs = ['sphinx_bootstrap_theme']
 else:
     inst_reqs = ['shapely>=1.6.4',
                  'fiona>=1.8.6',
