@@ -117,19 +117,16 @@ class EvalBase():
                                                self.ground_truth_GDF_Edit)
                     # Get max iou
                     if not iou_GDF.empty:
-                        max_iou_row = iou_GDF.loc[
-                            iou_GDF['iou_score'].idxmax(axis=0, skipna=True)
-                            ]
-                        # Find corresponding entry in full ground truth table
-                        max_iou_row_id = max_iou_row[:id_cols]
-                        match_flags = ground_truth_ids.eq(
-                            max_iou_row_id, axis=1).all(1)
-                        truth_index = match_flags[match_flags].index[0]
-                        if max_iou_row[iou_field] > \
-                           self.ground_truth_GDF.iloc[truth_index, iou_index]:
-                            self.ground_truth_GDF.iloc[truth_index,
-                                                       iou_index] \
-                                = max_iou_row[iou_field]
+                        max_index = iou_GDF['iou_score'].idxmax(axis=0,
+                                                                skipna=True)
+                        max_iou_row = iou_GDF.loc[max_index]
+                        # Update entry in full ground truth table
+                        previous_iou = self.ground_truth_GDF.iloc[
+                            max_index, iou_index]
+                        new_iou = max_iou_row[iou_field]
+                        if new_iou > previous_iou:
+                            self.ground_truth_GDF.iloc[max_index, iou_index] \
+                                = new_iou
                         if max_iou_row['iou_score'] > miniou:
                             self.proposal_GDF.loc[pred_row.name, iou_field] \
                                 = max_iou_row['iou_score']
