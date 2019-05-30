@@ -4,7 +4,12 @@ Solaris API summary
 
 Complete submodule documentation
 ================================
-(include links here)
+* `solaris.tile <api/solaris/tile/index.html>`_: Tiling functionality for imagery and vector labels
+* `solaris.raster <api/solaris/raster/index.html>`_: Raster (imagery) coordinate management and formatting
+* `solaris.vector <api/solaris/vector/index.html>`_: Vector (label) management and format interconversion
+* `solaris.nets <api/solaris/nets/index.html>`_: Deep learning model ingestion, creation, training, and inference
+* `solaris.eval <api/solaris/eval/index.html>`_: Deep learning model performance evaluation
+* `solaris.utils <api/solaris/utils/index.html>`_: Utility functions for the above toolsets
 
 
 Submodule summaries
@@ -29,16 +34,16 @@ Submodule summaries
   solaris.tile.vector_utils.clip_gdf
 
 
-* `solaris.raster <api/solaris/raster/index.html>`_: Raster (imagery) coordinate management and formatting
-----------------------------------------------------------------------------------------------------------
+`solaris.raster <api/solaris/raster/index.html>`_: Raster (imagery) coordinate management and formatting
+--------------------------------------------------------------------------------------------------------
 
 .. autosummary::
 
   solaris.raster.image.get_geo_transform
   solaris.raster.image.stitch_images
 
-* `solaris.vector <api/solaris/vector/index.html>`_: Vector (label) management:
--------------------------------------------------------------------------------
+`solaris.vector <api/solaris/vector/index.html>`_: Vector (label) management
+----------------------------------------------------------------------------
 
 .. autosummary::
 
@@ -63,8 +68,8 @@ Submodule summaries
   solaris.vector.polygon.get_overlapping_subset
   solaris.vector.polygon.gdf_to_yolo
 
-* `solaris.nets <api/solaris/nets/index.html>`_: Deep learning model creation, training, and inference
-------------------------------------------------------------------------------------------------------
+`solaris.nets <api/solaris/nets/index.html>`_: Deep learning model creation, training, and inference
+----------------------------------------------------------------------------------------------------
 
 .. autosummary::
 
@@ -101,8 +106,8 @@ Submodule summaries
   solaris.nets.transform.get_augs
   solaris.nets.zoo.XDXD_SpaceNet4_UNetVGG16
 
-* `solaris.eval <api/solaris/eval/index.html>`_: Deep learning model performance evaluation
--------------------------------------------------------------------------------------------
+`solaris.eval <api/solaris/eval/index.html>`_: Deep learning model performance evaluation
+-----------------------------------------------------------------------------------------
 
 .. autosummary::
 
@@ -113,8 +118,8 @@ Submodule summaries
   solaris.eval.challenges.off_nadir_dataset.get_aoi
   solaris.eval.challenges.spacenet_buildings2_dataset.eval_spacenet_buildings2
 
-* `solaris.utils <api/solaris/utils/index.html>`_: Utility functions for the above toolsets
--------------------------------------------------------------------------------------------
+`solaris.utils <api/solaris/utils/index.html>`_: Utility functions for the above toolsets
+-----------------------------------------------------------------------------------------
 
 .. autosummary::
 
@@ -148,5 +153,5 @@ Submodule summaries
   solaris.utils.tile.raster_get_projection_unit
 
 CLI commands
-------------
+============
 Documentation coming soon!

@@ -14,7 +14,7 @@ User Guide
 ==========
 * `What is solaris? <intro.html>`_
 * `Installation <installation.html>`_
-* `Tutorials and recipes <tutorials.html>`_
+* `Tutorials and recipes <tutorials/index.html>`_
 
 Reference
 =========

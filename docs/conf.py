@@ -28,7 +28,6 @@ copyright = u'2018-{}, CosmiQ Works: an IQT Lab'.format(time.strftime("%Y"))
 release = '0.0.3'
 version = '0.0.3'
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -95,7 +94,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 html_theme_options = {
     'source_link_position': "footer",
-    'bootswatch_theme': "spacelab",
+    'bootswatch_theme': "paper",
     'bootstrap_version': "3",
     'navbar_links': [
                      ("Getting Started", "getting_started"),
@@ -108,7 +107,11 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_build/_static']
+html_static_path = ['_static']
+
+
+def setup(app):
+    app.add_stylesheet("custom_styles.css")
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
