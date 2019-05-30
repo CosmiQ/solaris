@@ -103,8 +103,8 @@ html_theme_options = {
     'bootswatch_theme': "paper",
     'bootstrap_version': "3",
     'navbar_links': [
-                     ("Getting Started", "getting_started"),
-                     ("API", "api/solaris/index")
+                     ("Tutorials", "tutorials/index"),
+                     ("API", "api/index")
                      ],
 
     }
