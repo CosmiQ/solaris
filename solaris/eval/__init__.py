@@ -1,1 +1,1 @@
-from . import baseeval, evalfunctions
+from . import baseeval, evalfunctions, challenges

@@ -1,0 +1,1 @@
+{% extends "dotnet/base_detail.rst" %}

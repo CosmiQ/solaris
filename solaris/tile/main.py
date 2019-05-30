@@ -372,29 +372,3 @@ def calculate_analysis_grid(utm_bounds, stride_size_meters=300,
     cells_list_dict = calculate_cells(anchor_point_list_dict, cell_size_meters,
                                       utm_bounds=utm_bounds)
     return cells_list_dict
-
-
-if __name__ == '__main__':
-    utmX, utmY = 658029, 4006947
-    cll_x = utmX
-    cur_x = utmX + 500
-    cll_y = utmY
-    cur_y = utmY + 500
-    stride_size_meters = 300
-    cell_size_meters = 400
-    ctile_size_pixels = 1600
-    spacenetPath = "s3://spacenet-dataset/AOI_2_Vegas/srcData/rasterData/AOI_2_Vegas_MUL-PanSharpen_Cloud.tif"
-    address = spacenetPath
-
-    with rasterio.open(address) as src:
-        cwgs_bounds = utils.get_wgs84_bounds(src)
-        cutm_crs = utils.calculate_UTM_crs(cwgs_bounds)
-        cutm_bounds = utils.get_utm_bounds(src, cutm_crs)
-
-        #ccells_list = calculate_analysis_grid(cutm_bounds, stride_size_meters=stride_size_meters,
-        #                                     cell_size_meters=cell_size_meters)
-
-        #random_cell = random.choice(ccells_list)
-        #cll_x, cll_y, cur_x, cur_y = random_cell
-        tile, mask, window, window_transform = tile_utm(src, cll_x, cll_y, cur_x, cur_y, indexes=None, tilesize=ctile_size_pixels, nodata=None, alpha=None,
-                        dst_crs=cutm_crs)

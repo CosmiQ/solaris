@@ -14,27 +14,31 @@ def get_version():
     raise RuntimeError('Unable to find version string in %s.' % (VERSIONFILE,))
 
 
-inst_reqs = ['shapely>=1.6.4',
-             'fiona>=1.8.6',
-             'pandas>=0.23.4',
-             'geopandas>=0.4.0',
-             'opencv-python==4.1.0.25',
-             'numpy>=1.15.4',
-             'tqdm>=4.28.1',
-             'GDAL>=2.4.0',
-             'rtree>=0.8.3',
-             'networkx>=2.2',
-             'rasterio>=1.0.18',
-             'scipy>=1.2.0',
-             'scikit-image>=0.14.0',
-             'tensorflow>=1.13.1',
-             'torch>=1.1.0',
-             'affine>=2.2.2',
-             'albumentations>=0.2.3',
-             'rio-tiler>=1.2.7',
-             'pyyaml>=5.1',
-             'torchvision>=0.3.0'
-             ]
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
+if on_rtd:
+    inst_reqs = ['sphinx_bootstrap_theme']
+else:
+    inst_reqs = ['shapely>=1.6.4',
+                 'fiona>=1.8.6',
+                 'pandas>=0.23.4',
+                 'geopandas>=0.4.0',
+                 'opencv-python==4.1.0.25',
+                 'numpy>=1.15.4',
+                 'tqdm>=4.28.1',
+                 'GDAL>=2.4.0',
+                 'rtree>=0.8.3',
+                 'networkx>=2.2',
+                 'rasterio>=1.0.18',
+                 'scipy>=1.2.0',
+                 'scikit-image>=0.14.0',
+                 'tensorflow>=1.13.1',
+                 'torch>=1.1.0',
+                 'affine>=2.2.2',
+                 'albumentations>=0.2.3',
+                 'rio-tiler>=1.2.7',
+                 'pyyaml>=5.1',
+                 'torchvision>=0.3.0']
 
 
 extra_reqs = {
