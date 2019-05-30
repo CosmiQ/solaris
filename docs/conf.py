@@ -34,6 +34,7 @@ version = '0.0.3'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
@@ -43,18 +44,24 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'autoapi.extension',
+    # 'autoapi.extension',
     'sphinx.ext.autosectionlabel'
 ]
 
-autoapi_type = 'python'
-autoapi_template_dir = '_templates/'
-autoapi_dirs = ['../solaris']
-autoapi_options = ['members', 'undoc-members', 'special-members']
-autoapi_ignore = ['*data*',
-                  '*bin*',
-                  '*migrations*']
-autoapi_root = 'api'
+# autoapi_type = 'python'
+# autoapi_template_dir = '_templates/'
+# autoapi_dirs = ['../solaris']
+# autoapi_options = ['members', 'undoc-members', 'special-members']
+# autoapi_ignore = ['*data*',
+#                   '*bin*',
+#                   '*migrations*']
+# autoapi_root = 'api'
+
+autodoc_mock_imports = ['shapely', 'fiona', 'pandas', 'geopandas', 'cv2',
+                        'numpy', 'gdal', 'tqdm', 'rtree', 'networkx',
+                        'rasterio', 'scipy', 'skimage', 'tensorflow', 'torch',
+                        'torchvision', 'yaml', 'affine', 'albumentations',
+                        'rio-tiler']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

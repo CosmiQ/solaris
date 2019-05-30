@@ -3,5 +3,4 @@ dependencies:
   - python
   - pip
   - pip:
-    - sphinx-autoapi
     - sphinx_bootstrap_theme

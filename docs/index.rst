@@ -18,7 +18,7 @@ User Guide
 
 Reference
 =========
-* `API reference <api.html>`_
+* `API reference <old_api/index.html>`_
 
 Index
 =====
