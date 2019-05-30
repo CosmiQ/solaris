@@ -10,10 +10,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-import solaris
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
 import sphinx_bootstrap_theme
 # -- Project information -----------------------------------------------------
 
@@ -61,7 +60,7 @@ autodoc_mock_imports = ['shapely', 'fiona', 'pandas', 'geopandas', 'cv2',
                         'numpy', 'gdal', 'tqdm', 'rtree', 'networkx',
                         'rasterio', 'scipy', 'skimage', 'tensorflow', 'torch',
                         'torchvision', 'yaml', 'affine', 'albumentations',
-                        'rio_tiler']
+                        'rio_tiler', 'PIL']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
