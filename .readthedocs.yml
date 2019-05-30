@@ -5,9 +5,7 @@ formats:
 python:
   version: 3.6
   install:
-    - method: pip
-      path: .
-      requirements: .rtfd-requirements.txt
+    - requirements: .rtfd-requirements.txt
 
 conda:
   environment: .readthedocs-environment.yml
