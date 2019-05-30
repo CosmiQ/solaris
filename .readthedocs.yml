@@ -4,7 +4,10 @@ formats:
 
 python:
   version: 3.6
-  setup_py_install: true
+  install:
+    - method: pip
+      path: .
+    - requirements: .rtfd-requirements.txt
 
 
 conda:
