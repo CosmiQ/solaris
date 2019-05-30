@@ -69,7 +69,7 @@ class TestEvalBase(object):
         result_expected = pd.read_csv(path_ious, index_col=0)
         result_expected.sort_values(by=['ImageId', 'BuildingId'], inplace=True)
         ious_expected = list(result_expected['iou_score'])
-        maxdifference = max([abs(x-y) for x,y in zip(ious_actual,
-                                                     ious_expected)])
+        maxdifference = max([abs(x-y) for x, y in zip(ious_actual,
+                                                      ious_expected)])
         epsilon = 1E-9
         assert maxdifference < epsilon
