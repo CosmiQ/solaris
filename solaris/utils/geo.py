@@ -1,14 +1,241 @@
-from .core import _check_gdf_load
+from .core import _check_gdf_load, _check_rasterio_im_load
 import numpy as np
 import pandas as pd
 from affine import Affine
 import geopandas as gpd
 import rasterio
+from rasterio.vrt import WarpedVRT
+from rasterio.enums import Resampling
 from shapely.errors import WKTReadingError
 from shapely.wkt import loads
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
 from shapely.ops import cascaded_union
+import osr
 from warnings import warn
+
+
+def transform_to_utm(gdf, utm_crs, estimate=True, calculate_sindex=True):
+    """Transform GeoDataFrame to UTM coordinate reference system.
+
+    Arguments
+    ---------
+    gdf : :py:class:`geopandas.GeoDataFrame`
+        :py:class:`geopandas.GeoDataFrame` to transform.
+    utm_crs : str
+        :py:class:`rasterio.crs.CRS` string for destination UTM CRS.
+    estimate : bool, optional
+        .. deprecated:: 0.2.0
+            This argument is no longer used.
+    calculate_sindex : bool, optional
+        .. deprecated:: 0.2.0
+            This argument is no longer used.
+
+    Returns
+    -------
+    gdf : :py:class:`geopandas.GeoDataFrame`
+        The input :py:class:`geopandas.GeoDataFrame` converted to
+        `utm_crs` coordinate reference system.
+
+    """
+
+    gdf = gdf.to_crs(utm_crs)
+    return gdf
+
+
+def utm_get_zone(longitude):
+    """Calculate UTM Zone from Longitude.
+
+    Arguments
+    ---------
+    longitude: float
+        longitude coordinate (Degrees.decimal degrees)
+
+    Returns
+    -------
+    out: int
+        UTM Zone number.
+
+    """
+
+    return (int(1+(longitude+180.0)/6.0))
+
+
+def utm_is_northern(latitude):
+    """Determine if a latitude coordinate is in the northern hemisphere.
+
+    Arguments
+    ---------
+    latitude: float
+        latitude coordinate (Deg.decimal degrees)
+
+    Returns
+    -------
+    out: bool
+        ``True`` if `latitude` is in the northern hemisphere, ``False``
+        otherwise.
+
+    """
+
+    return (latitude > 0.0)
+
+
+def calculate_utm_crs(coords):
+    """Calculate UTM Projection String.
+
+    Arguments
+    ---------
+    coords: list
+        ``[longitude, latitude]`` or
+        ``[min_longitude, min_latitude, max_longitude, max_latitude]`` .
+
+    Returns
+    -------
+    out: str
+        `proj4 projection string <https://proj4.org/usage/quickstart.html>`__
+
+    """
+    if len(coords) == 2:
+        longitude, latitude = coords
+    elif len(coords) == 4:
+        longitude = np.mean([coords[0], coords[2]])
+        latitude = np.mean([coords[1], coords[3]])
+
+    utm_zone = utm_get_zone(longitude)
+
+    if utm_is_northern(latitude):
+        direction_indicator = "+north"
+    else:
+        direction_indicator = "+south"
+
+    utm_crs = "+proj=utm +zone={} {} +ellps=WGS84 +datum=WGS84 +units=m +no_defs".format(utm_zone,
+                                                                                         direction_indicator)
+    return utm_crs
+
+
+def gdf_get_projection_unit(vector_file):
+    """Get the projection unit for a vector_file or gdf.
+
+    Arguments
+    ---------
+    vector_file : :py:class:`geopandas.GeoDataFrame` or geojson/shapefile
+        A vector file or gdf with georeferencing
+
+    Returns
+    -------
+    unit : String
+        The unit i.e. meters or degrees, of the projection
+    """
+    c = _check_gdf_load(vector_file)
+    crs = c.crs
+    srs = osr.SpatialReference()
+    x = (crs['init']).split(":")[1]
+    srs.ImportFromEPSG(int(x))
+    WKT = srs.ExportToWkt()
+    unit = WKT.split("UNIT[")[1].split(",")[0]
+    return unit
+
+
+def raster_get_projection_unit(image):
+    """Get the projection unit for a vector_file.
+
+    Arguments
+    ---------
+    image : raster image, GeoTIFF or other format
+        A raster file with georeferencing
+
+    Returns
+    -------
+    unit : String
+        The unit i.e. meters or degrees, of the projection
+    """
+    c = _check_rasterio_im_load(image)
+    crs = c.crs
+    srs = osr.SpatialReference()
+    x = (crs['init']).split(":")[1]
+    srs.ImportFromEPSG(int(x))
+    WKT = srs.ExportToWkt()
+    unit = WKT.split("UNIT[")[1].split(",")[0]
+    return unit
+
+
+def get_utm_vrt(source, crs='EPSG:3857', resampling=Resampling.bilinear,
+                src_nodata=None, dst_nodata=None):
+    """Get a :py:class:`rasterio.vrt.WarpedVRT` projection of a dataset.
+
+    Arguments
+    ---------
+    source : :py:class:`rasterio.io.DatasetReader`
+        The dataset to virtually warp using :py:class:`rasterio.vrt.WarpedVRT`.
+    crs : :py:class:`rasterio.crs.CRS`, optional
+        Coordinate reference system for the VRT. Defaults to 'EPSG:3857'
+        (Web Mercator).
+    resampling : :py:class:`rasterio.enums.Resampling` method, optional
+        Resampling method to use. Defaults to
+        :py:func:`rasterio.enums.Resampling.bilinear`. Alternatives include
+        :py:func:`rasterio.enums.Resampling.average`,
+        :py:func:`rasterio.enums.Resampling.cubic`, and others. See docs for
+        :py:class:`rasterio.enums.Resampling` for more information.
+    src_nodata : int or float, optional
+        Source nodata value which will be ignored for interpolation. Defaults
+        to ``None`` (all data used in interpolation).
+    dst_nodata : int or float, optional
+        Destination nodata value which will be ignored for interpolation.
+        Defaults to ``None``, in which case the value of `src_nodata` will be
+        used if provided, or ``0`` otherwise.
+
+    Returns
+    -------
+    A :py:class:`rasterio.vrt.WarpedVRT` instance with the transformation.
+
+    """
+
+    vrt_params = dict(
+        crs=crs,
+        resampling=Resampling.bilinear,
+        src_nodata=src_nodata,
+        dst_nodata=dst_nodata)
+
+    return WarpedVRT(source, **vrt_params)
+
+
+def get_utm_vrt_profile(source, crs='EPSG:3857',
+                        resampling=Resampling.bilinear,
+                        src_nodata=None, dst_nodata=None):
+    """Get a :py:class:`rasterio.profiles.Profile` for projection of a VRT.
+
+    Arguments
+    ---------
+    source : :py:class:`rasterio.io.DatasetReader`
+        The dataset to virtually warp using :py:class:`rasterio.vrt.WarpedVRT`.
+    crs : :py:class:`rasterio.crs.CRS`, optional
+        Coordinate reference system for the VRT. Defaults to ``"EPSG:3857"``
+        (Web Mercator).
+    resampling : :py:class:`rasterio.enums.Resampling` method, optional
+        Resampling method to use. Defaults to
+        ``rasterio.enums.Resampling.bilinear``. Alternatives include
+        ``rasterio.enums.Resampling.average``,
+        ``rasterio.enums.Resampling.cubic``, and others. See docs for
+        :py:class:`rasterio.enums.Resampling` for more information.
+    src_nodata : int or float, optional
+        Source nodata value which will be ignored for interpolation. Defaults
+        to ``None`` (all data used in interpolation).
+    dst_nodata : int or float, optional
+        Destination nodata value which will be ignored for interpolation.
+        Defaults to ``None``, in which case the value of `src_nodata`
+        will be used if provided, or ``0`` otherwise.
+
+    Returns
+    -------
+    A :py:class:`rasterio.profiles.Profile` instance with the transformation
+    applied.
+
+    """
+
+    with get_utm_vrt(source, crs=crs, resampling=resampling,
+                     src_nodata=src_nodata, dst_nodata=dst_nodata) as vrt:
+        vrt_profile = vrt.profile
+
+    return vrt_profile
 
 
 def list_to_affine(xform_mat):

@@ -1,50 +1,5 @@
 from shapely.geometry import box
 import geopandas as gpd
-from rasterio import features
-from rasterio import Affine
-import numpy as np
-
-
-def read_vector_file(geoFileName):
-    """Read Fiona-Supported Files into GeoPandas GeoDataFrame.
-
-    Warning
-    ----
-    This will raise an exception for empty GeoJSON files, which GDAL and Fiona
-    cannot read. ``try/except`` the :py:exc:`Fiona.errors.DriverError` or
-    :py:exc:`Fiona._err.CPLE_OpenFailedError` if you must use this.
-
-    """
-
-    return gpd.read_file(geoFileName)
-
-
-def transformToUTM(gdf, utm_crs, estimate=True, calculate_sindex=True):
-    """Transform GeoDataFrame to UTM coordinate reference system.
-
-    Arguments
-    ---------
-    gdf : :py:class:`geopandas.GeoDataFrame`
-        :py:class:`geopandas.GeoDataFrame` to transform.
-    utm_crs : str
-        :py:class:`rasterio.crs.CRS` string for destination UTM CRS.
-    estimate : bool, optional
-        .. deprecated:: 0.2.0
-            This argument is no longer used.
-    calculate_sindex : bool, optional
-        .. deprecated:: 0.2.0
-            This argument is no longer used.
-
-    Returns
-    -------
-    gdf : :py:class:`geopandas.GeoDataFrame`
-        The input :py:class:`geopandas.GeoDataFrame` converted to
-        `utm_crs` coordinate reference system.
-
-    """
-
-    gdf = gdf.to_crs(utm_crs)
-    return gdf
 
 
 def search_gdf_bounds(gdf, tile_bounds):
@@ -103,7 +58,7 @@ def search_gdf_polygon(gdf, tile_polygon):
 
 def vector_tile_utm(gdf, tile_bounds, min_partial_perc=0.1,
                     geom_type="Polygon", use_sindex=True):
-    """Wrapper for :func:`clip_gdf` that converts `tile_bounds` to a polygon.
+    """Wrapper for :func:`clip_gdf` that clips `tile_bounds` to a polygon.
 
     Arguments
     ---------
@@ -135,34 +90,25 @@ def vector_tile_utm(gdf, tile_bounds, min_partial_perc=0.1,
     return small_gdf
 
 
-def getCenterOfGeoFile(gdf, estimate=True):
-
-    #TODO implement calculate UTM from gdf  see osmnx implementation
-
-    pass
-
-
 def clip_gdf(gdf, poly_to_cut, min_partial_perc=0.0, geom_type="Polygon",
              use_sindex=True):
     """Clip GDF to a provided polygon.
 
-    Note
-    ----
     Clips objects within `gdf` to the region defined by
-    `poly_to_cut`. Also adds several columns to the output:
+    `poly_to_cut`. Also adds several columns to the output::
 
-    `origarea`
-        The original area of the polygons (only used if `geom_type` ==
-        ``"Polygon"``).
-    `origlen`
-        The original length of the objects (only used if `geom_type` ==
-        ``"LineString"``).
-    `partialDec`
-        The fraction of the object that remains after clipping
-        (fraction of area for Polygons, fraction of length for
-        LineStrings.) Can filter based on this by using `min_partial_perc`.
-    `truncated`
-        Boolean indicator of whether or not an object was clipped.
+        `origarea`
+            The original area of the polygons (only used if `geom_type` ==
+            ``"Polygon"``).
+        `origlen`
+            The original length of the objects (only used if `geom_type` ==
+            ``"LineString"``).
+        `partialDec`
+            The fraction of the object that remains after clipping
+            (fraction of area for Polygons, fraction of length for
+            LineStrings.) Can filter based on this by using `min_partial_perc`.
+        `truncated`
+            Boolean indicator of whether or not an object was clipped.
 
     Arguments
     ---------
