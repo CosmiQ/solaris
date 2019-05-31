@@ -120,10 +120,16 @@ def gdf_get_projection_unit(vector_file):
     vector_file : :py:class:`geopandas.GeoDataFrame` or geojson/shapefile
         A vector file or gdf with georeferencing
 
+    Notes
+    -----
+    If vector file is already in UTM coords, the projection WKT is complex:
+        https://www.spatialreference.org/ref/epsg/wgs-84-utm-zone-11n/html/
+    In this case, return the second instance of 'UNIT'.
+
     Returns
     -------
     unit : String
-        The unit i.e. meters or degrees, of the projection
+        The unit i.e. meter, metre, or degree, of the projection
     """
     c = _check_gdf_load(vector_file)
     crs = c.crs
@@ -131,7 +137,17 @@ def gdf_get_projection_unit(vector_file):
     x = (crs['init']).split(":")[1]
     srs.ImportFromEPSG(int(x))
     WKT = srs.ExportToWkt()
-    unit = WKT.split("UNIT[")[1].split(",")[0]
+    # get count of 'UNIT'
+    if WKT.count('UNIT') == 1:
+        # simple geo format
+        unit = WKT.split("UNIT[")[1].split(",")[0]
+    elif WKT.count('UNIT') == 2:
+        # complex geo format, return the second instance of 'UNIT'
+        unit = WKT.split("UNIT[")[2].split(",")[0]
+    else:
+        print("Unknown units in {}".format(vector_file))
+        return
+
     return unit
 
 
@@ -142,6 +158,12 @@ def raster_get_projection_unit(image):
     ---------
     image : raster image, GeoTIFF or other format
         A raster file with georeferencing
+
+    Notes
+    -----
+    If raster is already in UTM coords, the projection WKT is complex:
+        https://www.spatialreference.org/ref/epsg/wgs-84-utm-zone-11n/html/
+    In this case, return the second instance of 'UNIT'.
 
     Returns
     -------
@@ -154,7 +176,16 @@ def raster_get_projection_unit(image):
     x = (crs['init']).split(":")[1]
     srs.ImportFromEPSG(int(x))
     WKT = srs.ExportToWkt()
-    unit = WKT.split("UNIT[")[1].split(",")[0]
+    # get count of 'UNIT'
+    if WKT.count('UNIT') == 1:
+        # simple geo format
+        unit = WKT.split("UNIT[")[1].split(",")[0]
+    elif WKT.count('UNIT') == 2:
+        # complex geo format, return the second instance of 'UNIT'
+        unit = WKT.split("UNIT[")[2].split(",")[0]
+    else:
+        print("Unknown units in {}".format(image))
+        return
     return unit
 
 
