@@ -5,7 +5,7 @@ class TestImports(object):
         from solaris.utils import core, geo, config, tile, cli
         from solaris import data
         from solaris.vector import polygon, graph, mask
-        from solaris.tile import main, vector_tile
+        from solaris.tile import raster_tile, vector_tile
         from solaris.raster import image
         from solaris.nets import callbacks, datagen, infer, model_io, losses
         from solaris.nets import train, transform, zoo
