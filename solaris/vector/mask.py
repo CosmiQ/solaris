@@ -471,7 +471,8 @@ def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
 
 def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
               do_transform=False, affine_obj=None, shape=(900, 900),
-              buffer_in_m=2, out_type='int', burn_value=255, burn_field=None):
+              buffer_in_m=2, out_type='int', burn_value=255, burn_field=None,
+              verbose=False):
     """Convert a dataframe of geometries to a pixel mask.
 
     Arguments
@@ -517,6 +518,8 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     burn_field : str, optional
         Name of a column in `df` that provides values for `burn_value` for each
         independent object. If provided, `burn_value` is ignored.
+    verbose : str, optional
+        Switch to print relevant values. Defaults to ``False``.
 
     Returns
     -------
@@ -532,9 +535,13 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     df = _check_df_load(df)
     df[geom_col] = df[geom_col].apply(_check_wkt_load)
 
-    # Check if dataframe is in the appropriate units (meters, and reproject if not)
-    unit = gdf_get_projection_unit(df)
-    if unit != "meter":
+    # Check if dataframe is in the appropriate units (meters, metres
+    # and reproject if not)
+    unit = str(gdf_get_projection_unit(df)).strip()
+    if verbose:
+        print("unit:", unit)
+    if unit not in ['"meter"', '"metre"', "'meter'", "'meter'",
+                    'meter', 'metre']:
         # Pick UTM zone
         coords = [df[geom_col].bounds['minx'].min(),
                   df[geom_col].bounds['miny'].min(),
