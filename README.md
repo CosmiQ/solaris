@@ -3,7 +3,6 @@
 </p>
 <h2 align="center">CosmiQ Works Machine Learning Pipeline for Overhead Imagery</h2>
 <p align="center">
-<br>
 <img align="center" src="https://img.shields.io/pypi/pyversions/solaris.svg" alt="PyPI python version" href="https://pypi.org/project/solaris/">
 <img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI" href="https://pypi.org/project/solaris/">
 <!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge"> -->
