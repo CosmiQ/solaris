@@ -1,7 +1,8 @@
-<h1 align="center">Solaris</h1>
-<h2 align="center">CosmiQ Works Machine Learning Pipeline for Overhead Imagery</h2>
 <p align="center">
 <a href="http://www.cosmiqworks.org"><img src="https://github.com/CosmiQ/solaris/raw/master/static/sol_logo.png" width="350" alt="Solaris"></a>
+</p>
+<h2 align="center">CosmiQ Works Machine Learning Pipeline for Overhead Imagery</h2>
+<p align="center">
 <br>
 <img align="center" src="https://img.shields.io/pypi/pyversions/solaris.svg" alt="PyPI python version" href="https://pypi.org/project/solaris/">
 <img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI" href="https://pypi.org/project/solaris/">
