@@ -1,5 +1,5 @@
-from ..utils.core import _check_df_load, _check_rasterio_im_load
-from ..utils.core import _check_skimage_im_load
+from ..utils.core import _check_df_load, _check_gdf_load
+from ..utils.core import _check_skimage_im_load, _check_rasterio_im_load
 from ..utils.geo import gdf_get_projection_unit, calculate_utm_crs
 from ..utils.geo import geometries_internal_intersection, _check_wkt_load
 import numpy as np
@@ -13,7 +13,7 @@ from skimage.morphology import square, erosion, dilation
 
 
 def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
-                  geom_col='geometry', do_transform=False, affine_obj=None,
+                  geom_col='geometry', do_transform=None, affine_obj=None,
                   shape=(900, 900), out_type='int', burn_value=255, **kwargs):
     """Convert a dataframe of geometries to a pixel mask.
 
@@ -50,7 +50,9 @@ def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
         The column containing geometries in `df`. Defaults to ``"geometry"``.
     do_transform : bool, optional
         Should the values in `df` be transformed from geospatial coordinates
-        to pixel coordinates? Defaults to no (``False``). If ``True``, either
+        to pixel coordinates? Defaults to ``None``, in which case the function
+        attempts to infer whether or not a transformation is required based on
+        the presence or absence of a CRS in `df`. If ``True``, either
         `reference_im` or `affine_obj` must be provided as a source for the
         the required affine transformation matrix.
     affine_obj : `list` or :class:`affine.Affine`, optional
@@ -126,7 +128,7 @@ def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
 
 
 def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
-                   do_transform=False, affine_obj=None, shape=(900, 900),
+                   do_transform=None, affine_obj=None, shape=(900, 900),
                    out_type='int', burn_value=255, burn_field=None):
     """Convert a dataframe of geometries to a pixel mask.
 
@@ -149,7 +151,9 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         The column containing geometries in `df`. Defaults to ``"geometry"``.
     do_transform : bool, optional
         Should the values in `df` be transformed from geospatial coordinates
-        to pixel coordinates? Defaults to no (``False``). If ``True``, either
+        to pixel coordinates? Defaults to ``None``, in which case the function
+        attempts to infer whether or not a transformation is required based on
+        the presence or absence of a CRS in `df`. If ``True``, either
         `reference_im` or `affine_obj` must be provided as a source for the
         the required affine transformation matrix.
     affine_obj : `list` or :class:`affine.Affine`, optional
@@ -157,7 +161,7 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         space. Only provide this argument if `df` is a
         :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
         coordinate space. Ignored if `reference_im` is provided or if
-        ``do_transform=False``.
+        ``do_transform=None``.
     shape : tuple, optional
         An ``(x_size, y_size)`` tuple defining the pixel extent of the output
         mask. Ignored if `reference_im` is provided.
@@ -183,6 +187,11 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         raise ValueError(
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
+
+    if do_transform is None:
+        # determine whether or not transform should be done
+        do_transform = _check_do_transform(df, reference_im, affine_obj)
+
     df[geom_col] = df[geom_col].apply(_check_wkt_load)  # load in geoms if wkt
     if not do_transform:
         affine_obj = Affine(1, 0, 0, 0, 1, 0)  # identity transform
@@ -222,12 +231,15 @@ def boundary_mask(footprint_msk=None, out_file=None, reference_im=None,
                   **kwargs):
     """Convert a dataframe of geometries to a pixel mask.
 
-    Notes
-    -----
+    Note
+    ----
     This function requires creation of a footprint mask before it can operate;
     therefore, if there is no footprint mask already present, it will create
     one. In that case, additional arguments for :func:`footprint_mask` (e.g.
     ``df``) must be passed.
+
+    By default, this function draws boundaries *within* the edges of objects.
+    To change this behavior, use the `boundary_type` argument.
 
     Arguments
     ---------
@@ -263,8 +275,6 @@ def boundary_mask(footprint_msk=None, out_file=None, reference_im=None,
         A pixel mask with 0s for non-object pixels and the same value as the
         footprint mask `burn_value` for the boundaries of each object.
 
-    Note: This function draws the boundaries within the edge of the object.
-
     """
     if out_file and not reference_im:
         raise ValueError(
@@ -299,7 +309,7 @@ def boundary_mask(footprint_msk=None, out_file=None, reference_im=None,
 
 
 def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
-                 do_transform=False, affine_obj=None, shape=(900, 900),
+                 do_transform=None, affine_obj=None, shape=(900, 900),
                  out_type='int', contact_spacing=10, burn_value=255):
     """Create a pixel mask labeling closely juxtaposed objects.
 
@@ -327,7 +337,9 @@ def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         The column containing geometries in `df`. Defaults to ``"geometry"``.
     do_transform : bool, optional
         Should the values in `df` be transformed from geospatial coordinates
-        to pixel coordinates? Defaults to no (``False``). If ``True``, either
+        to pixel coordinates? Defaults to ``None``, in which case the function
+        attempts to infer whether or not a transformation is required based on
+        the presence or absence of a CRS in `df`. If ``True``, either
         `reference_im` or `affine_obj` must be provided as a source for the
         the required affine transformation matrix.
     affine_obj : `list` or :class:`affine.Affine`, optional
@@ -348,11 +360,20 @@ def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         max value for ``uint8`` arrays). The mask array will be set to the same
         dtype as `burn_value`.
 
+    Returns
+    -------
+    output_arr : :class:`numpy.array`
+        A pixel mask with `burn_value` at contact points between polygons.
     """
     if out_file and not reference_im:
         raise ValueError(
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
+
+    if do_transform is None:
+        # determine whether or not transform should be done
+        do_transform = _check_do_transform(df, reference_im, affine_obj)
+
     df[geom_col] = df[geom_col].apply(_check_wkt_load)  # load in geoms if wkt
     if reference_im:
         reference_im = _check_rasterio_im_load(reference_im)
@@ -391,7 +412,7 @@ def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
 
 def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
                          output_type='csv', min_area=40, bg_value=0,
-                         do_transform=False, simplify=False,
+                         do_transform=None, simplify=False,
                          tolerance=0.5, **kwargs):
     """Get polygons from an image mask.
 
@@ -470,7 +491,7 @@ def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
 
 
 def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
-              do_transform=False, affine_obj=None, shape=(900, 900),
+              do_transform=None, affine_obj=None, shape=(900, 900),
               buffer_in_m=2, out_type='int', burn_value=255, burn_field=None):
     """Convert a dataframe of geometries to a pixel mask.
 
@@ -493,7 +514,9 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         The column containing geometries in `df`. Defaults to ``"geometry"``.
     do_transform : bool, optional
         Should the values in `df` be transformed from geospatial coordinates
-        to pixel coordinates? Defaults to no (``False``). If ``True``, either
+        to pixel coordinates? Defaults to ``None``, in which case the function
+        attempts to infer whether or not a transformation is required based on
+        the presence or absence of a CRS in `df`. If ``True``, either
         `reference_im` or `affine_obj` must be provided as a source for the
         the required affine transformation matrix.
     affine_obj : `list` or :class:`affine.Affine`, optional
@@ -501,7 +524,7 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         space. Only provide this argument if `df` is a
         :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
         coordinate space. Ignored if `reference_im` is provided or if
-        ``do_transform=False``.
+        ``do_transform=None``.
     shape : tuple, optional
         An ``(x_size, y_size)`` tuple defining the pixel extent of the output
         mask. Ignored if `reference_im` is provided.
@@ -531,6 +554,10 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
     df[geom_col] = df[geom_col].apply(_check_wkt_load)
+
+    if do_transform is None:
+        # determine whether or not transform should be done
+        do_transform = _check_do_transform(df, reference_im, affine_obj)
 
     # Check if dataframe is in the appropriate units (meters, and reproject if not)
     unit = gdf_get_projection_unit(df)
@@ -584,3 +611,17 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             dst.write(output_arr, indexes=1)
 
     return output_arr
+
+
+def _check_do_transform(df, reference_im, affine_obj):
+    """Check whether or not a transformation should be performed."""
+    try:
+        crs = getattr(df, 'crs')
+    except AttributeError:
+        return False  # if it doesn't have a CRS attribute
+
+    if not crs:
+        return False  # return False for do_transform if crs is falsey
+    elif crs and (reference_im is not None or affine_obj is not None):
+        # if the input has a CRS and another obj was provided for xforming
+        return True
