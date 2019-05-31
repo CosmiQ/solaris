@@ -492,7 +492,8 @@ def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
 
 def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
               do_transform=None, affine_obj=None, shape=(900, 900),
-              buffer_in_m=2, out_type='int', burn_value=255, burn_field=None):
+              buffer_in_m=2, out_type='int', burn_value=255, burn_field=None,
+              verbose=False):
     """Convert a dataframe of geometries to a pixel mask.
 
     Arguments
@@ -560,7 +561,7 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     if do_transform is None:
         # determine whether or not transform should be done
         do_transform = _check_do_transform(df, reference_im, affine_obj)
-        
+
     # Check if dataframe is in the appropriate units (meters, metres
     # and reproject if not)
     unit = str(gdf_get_projection_unit(df)).strip()
