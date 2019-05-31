@@ -4,7 +4,7 @@ from rasterio.warp import transform_bounds
 from rasterio.io import DatasetReader
 import math
 from rio_tiler.errors import TileOutsideBounds
-from ..utils import tile
+from ..utils.tile import tile_read_utm, tile_exists_utm
 import numpy as np
 
 
@@ -63,12 +63,12 @@ def tile_utm_source(src, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
 
     indexes = indexes if indexes is not None else src.indexes
     tile_bounds = (ll_x, ll_y, ur_x, ur_y)
-    if not utils.tile_exists_utm(wgs_bounds, tile_bounds):
+    if not tile_exists_utm(wgs_bounds, tile_bounds):
         raise TileOutsideBounds(
             'Tile {}/{}/{}/{} is outside image bounds'.format(tile_bounds))
 
-    return utils.tile_read_utm(src, tile_bounds, tilesize, indexes=indexes,
-                               nodata=nodata, alpha=alpha, dst_crs=dst_crs)
+    return tile_read_utm(src, tile_bounds, tilesize, indexes=indexes,
+                         nodata=nodata, alpha=alpha, dst_crs=dst_crs)
 
 
 def tile_utm(source, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
@@ -113,8 +113,8 @@ def tile_utm(source, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
             channels, ``(Y, X)`` otherwise.
         mask : :class:`numpy.ndarray`
             int mask indicating which pixels contain information and which are
-            `nodata`. Pixels containing data have value ``255``, `nodata` pixels
-            have value ``0``.
+            `nodata`. Pixels containing data have value ``255``, `nodata`
+            pixels have value ``0``.
         window : :py:class:`rasterio.windows.Window`
             :py:class:`rasterio.windows.Window` object indicating the raster
             location of the dataset subregion being returned in `data`.
@@ -161,7 +161,7 @@ def get_chip(source, ll_x, ll_y, gsd,
         UTM coordinate reference system string for the imagery. If not
         provided, this is calculated using
         :func:`cw_tiler.utils.get_wgs84_bounds` and
-        :func:`cw_tiler.utils.calculate_UTM_crs` .
+        :func:`cw_tiler.utils.calculate_utm_crs` .
     indexes : tuple of 3 ints, optional
         Band indexes for the output. By default, extracts all of the
         indexes from `source`.
@@ -201,7 +201,7 @@ def get_chip(source, ll_x, ll_y, gsd,
 
     if not utm_crs:
         wgs_bounds = utils.get_wgs84_bounds(src)
-        utm_crs = utils.calculate_UTM_crs(wgs_bounds)
+        utm_crs = utils.calculate_utm_crs(wgs_bounds)
 
     return tile_utm(source, ll_x, ll_y, ur_x, ur_y, indexes=indexes,
                     tilesize=tilesize, nodata=nodata, alpha=alpha,
@@ -372,29 +372,3 @@ def calculate_analysis_grid(utm_bounds, stride_size_meters=300,
     cells_list_dict = calculate_cells(anchor_point_list_dict, cell_size_meters,
                                       utm_bounds=utm_bounds)
     return cells_list_dict
-
-
-if __name__ == '__main__':
-    utmX, utmY = 658029, 4006947
-    cll_x = utmX
-    cur_x = utmX + 500
-    cll_y = utmY
-    cur_y = utmY + 500
-    stride_size_meters = 300
-    cell_size_meters = 400
-    ctile_size_pixels = 1600
-    spacenetPath = "s3://spacenet-dataset/AOI_2_Vegas/srcData/rasterData/AOI_2_Vegas_MUL-PanSharpen_Cloud.tif"
-    address = spacenetPath
-
-    with rasterio.open(address) as src:
-        cwgs_bounds = utils.get_wgs84_bounds(src)
-        cutm_crs = utils.calculate_UTM_crs(cwgs_bounds)
-        cutm_bounds = utils.get_utm_bounds(src, cutm_crs)
-
-        #ccells_list = calculate_analysis_grid(cutm_bounds, stride_size_meters=stride_size_meters,
-        #                                     cell_size_meters=cell_size_meters)
-
-        #random_cell = random.choice(ccells_list)
-        #cll_x, cll_y, cur_x, cur_y = random_cell
-        tile, mask, window, window_transform = tile_utm(src, cll_x, cll_y, cur_x, cur_y, indexes=None, tilesize=ctile_size_pixels, nodata=None, alpha=None,
-                        dst_crs=cutm_crs)

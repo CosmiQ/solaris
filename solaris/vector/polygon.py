@@ -304,39 +304,47 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
     return gdf.iloc[intersectors, :]
 
 
-def gdf_to_yolo(geodataframe, image, output_dir, column='single_id', im_size=(0, 0), min_overlap=0.66, remove_no_labels=1):
-    """Convert a geodataframe containing polygons to yolo/yolt readable format (.txt files).
+def gdf_to_yolo(geodataframe, image, output_dir, column='single_id',
+                im_size=(0, 0), min_overlap=0.66, remove_no_labels=1):
+    """Convert a geodataframe containing polygons to yolo/yolt format.
+
     Arguments
     ---------
     geodataframe : str
-        Path to a :class:`geopandas.GeoDataFrame` with a
-        column named ``'geometry'``.  Can be created from a geojson with labels for unique objects.
-        Can be converted to this format with geodataframe=gpd.read_file("./xView_30.geojson")
+        Path to a :class:`geopandas.GeoDataFrame` with a column named
+        ``'geometry'``.  Can be created from a geojson with labels for unique
+        objects. Can be converted to this format with
+        ``geodataframe=gpd.read_file("./xView_30.geojson")``.
     im_path : str
-        Path to a georeferenced image (ie a GeoTIFF or png created with GDAL) that geolocates to the
-        same geography as the `geojson`(s). If a directory, the bounds of each
-        GeoTIFF will be loaded in and all overlapping geometries will be
-        transformed. This function will also accept a
-        :class:`osgeo.gdal.Dataset` or :class:`rasterio.DatasetReader` with
-        georeferencing information in this argument.
+        Path to a georeferenced image (ie a GeoTIFF or png created with GDAL)
+        that geolocates to the same geography as the `geojson`(s). If a
+        directory, the bounds of each GeoTIFF will be loaded in and all
+        overlapping geometries will be transformed. This function will also
+        accept a :class:`osgeo.gdal.Dataset` or :class:`rasterio.DatasetReader`
+        with georeferencing information in this argument.
     output_dir : str
-        Path to an output directory where all of the yolo readable text files will be placed.
-    column : str
-        The column name that contians an unique integer id for each of object class.
-    im_size : tuple
-        A tuple specifying the x and y heighth of a an image.  If specified as (0,0) this is automatically
-        extracted from the image.
-    min_overlap : float
-        A float value ranging from 0 to +1.  This is a percantge.  If a polygon does not overlap the image
-        by at least min_overlap, the polygon is discarded.  i.e. 0.66 = 66%, at least 66% of the polygon must
-        intersect with the image or else it is discarded. Default value of 0.66.
-    remove_no_labels : int
-        An int value of 0 or 1.  If 1, any image not containing any objects will be moved to a directory in the same root
-        path as your input image.  If 0, no images will be moved. Default value of 1.
+        Path to an output directory where all of the yolo readable text files
+        will be placed.
+    column : str, optional
+        The column name that contians an unique integer id for each of object
+        class.
+    im_size : tuple, optional
+        A tuple specifying the x and y heighth of a an image.  If specified as
+        ``(0,0)`` (the default,) then the size is determined automatically.
+    min_overlap : float, optional
+        A float value ranging from 0 to 1.  This is a percantage.  If a polygon
+        does not overlap the image by at least min_overlap, the polygon is
+        discarded.  i.e. 0.66 = 66%. Default value of 0.66.
+    remove_no_labels : int, optional
+        An int value of 0 or 1.  If 1, any image not containing any objects
+        will be moved to a directory in the same root path as your input image.
+        If 0, no images will be moved. Default value of 1.
+
     Returns
     -------
-    gdf : :class:`geopandas.GeoDataFrame`.  The txt file will be written to the output_dir, however the the output gdf itself
-    can be returned from this function if required.
+    gdf : :class:`geopandas.GeoDataFrame`.
+        The txt file will be written to the output_dir, however the the output
+        gdf itself is returned.
     """
     if im_size == (0, 0):
         imsize_extract = rasterio.open(image).read()

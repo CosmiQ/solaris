@@ -1,6 +1,6 @@
 from ..utils.core import _check_df_load, _check_rasterio_im_load
 from ..utils.core import _check_skimage_im_load
-from ..utils.tile import vector_gdf_get_projection_unit, calculate_UTM_crs
+from ..utils.geo import gdf_get_projection_unit, calculate_utm_crs
 from ..utils.geo import geometries_internal_intersection, _check_wkt_load
 import numpy as np
 from shapely.geometry import shape
@@ -530,11 +530,11 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     df[geom_col] = df[geom_col].apply(_check_wkt_load)
 
     # Check if dataframe is in the appropriate units (meters, and reproject if not)
-    unit = vector_gdf_get_projection_unit(df)
+    unit = gdf_get_projection_unit(df)
     if unit != "meter":
         # Pick UTM zone
         coords = [df[geom_col].bounds['minx'].min(), df[geom_col].bounds['miny'].min(), df[geom_col].bounds['maxx'].max(), df[geom_col].bounds['maxy'].max()]
-        crs = calculate_UTM_crs(coords)
+        crs = calculate_utm_crs(coords)
         # REPROJECT
         orig_crs = df.crs
         df = df.to_crs(crs)
