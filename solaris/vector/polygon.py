@@ -346,6 +346,7 @@ def gdf_to_yolo(geodataframe, image, output_dir, column='single_id',
         The txt file will be written to the output_dir, however the the output
         gdf itself is returned.
     """
+
     if im_size == (0, 0):
         imsize_extract = rasterio.open(image).read()
         if len(imsize_extract.shape) == 3:
