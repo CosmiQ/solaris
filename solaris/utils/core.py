@@ -79,7 +79,6 @@ def get_data_paths(path, infer=False):
         case only the `image` column is returned.)
 
     """
-
     df = pd.read_csv(path)
     if infer:
         return df[['image']]  # no labels in those files

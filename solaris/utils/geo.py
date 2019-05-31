@@ -1,17 +1,162 @@
-from .core import _check_gdf_load, _check_rasterio_im_load
+from .core import _check_df_load, _check_gdf_load, _check_rasterio_im_load
 import numpy as np
 import pandas as pd
-from affine import Affine
 import geopandas as gpd
+from affine import Affine
 import rasterio
+from rasterio.crs import CRS
 from rasterio.vrt import WarpedVRT
-from rasterio.enums import Resampling
+from rasterio.warp import calculate_default_transform, Resampling
 from shapely.errors import WKTReadingError
 from shapely.wkt import loads
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
 from shapely.ops import cascaded_union
 import osr
+import gdal
 from warnings import warn
+
+
+def reproject(input_object, input_crs=None,
+              target_crs=None, target_object=None, dest_path=None,
+              resampling_method='bicubic'):
+    """Reproject a dataset (df, gdf, or image) to a new coordinate system.
+
+    This function takes a georegistered image or a dataset of vector geometries
+    and converts them to a new coordinate reference system. If no target CRS
+    is provided, the data will be converted to the appropriate UTM zone by
+    default. To convert a pixel-coordinate dataset to geographic coordinates or
+    vice versa, use :func:`solaris.vector.polygon.georegister_px_df` or
+    :func:`solaris.vector.polygon.geojson_to_px_gdf` instead.
+
+    Arguments
+    ---------
+    input : `str` or :class:`rasterio.DatasetReader` or :class:`geopandas.GeoDataFrame`
+        An object to transform to a new CRS. If a string, it must be a path
+        to a georegistered image or vector dataset (e.g. a .GeoJSON). If the
+        object itself does not contain georeferencing information, the
+        coordinate reference system can be provided with `input_crs`.
+    """
+    input_data, input_type = _parse_reproject_data(input_object)
+    if input_crs is None:
+        input_crs = get_crs(input_data)
+    if target_object is not None:
+        target_data, _ = _parse_reproject_data(target_object)
+    else:
+        target_data = None
+    if target_crs is None and target_data is None:
+        output = reproject_to_utm(input_data, input_type, input_crs,
+                                  dest_path, resampling_method)
+    elif target_crs is None:
+        target_crs = get_crs(target_data)
+    output = _reproject(input_data, input_type, input_crs, target_crs,
+                        dest_path, resampling_method)
+
+    return output
+
+
+def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
+               resampling_method='bicubic'):
+
+    if input_type == 'vector':
+        output = input_data.to_crs(epsg=target_crs)
+
+    elif input_type == 'raster':
+
+        if isinstance(input_data, rasterio.DatasetReader):
+            transform, width, height = calculate_default_transform(
+                input_crs, CRS.from_epsg(target_crs),
+                input_data.width, input_data.height, *input_data.bounds
+                )
+            kwargs = input_data.meta.copy()
+            kwargs.update({'crs': target_crs,
+                           'transform': transform,
+                           'width': width,
+                           'height': height})
+
+            if dest_path is not None:
+                with rasterio.open(dest_path, 'w', **kwargs) as dst:
+                    for band_idx in range(1, input_data.count + 1):
+                        rasterio.warp.reproject(
+                            source=rasterio.band(input_data, band_idx),
+                            destination=rasterio.band(dst, band_idx),
+                            src_transform=input_data.transform,
+                            src_crs=input_data.crs,
+                            dst_transform=transform,
+                            dst_crs=CRS.from_epsg(target_crs),
+                            resampling=getattr(Resampling, resampling_method)
+                        )
+                output = rasterio.open(dest_path)
+
+            else:
+                output = np.zeros(shape=(height, width, input_data.count))
+                for band_idx in range(1, input_data.count + 1):
+                    rasterio.warp.reproject(
+                        source=rasterio.band(input_data, band_idx),
+                        destination=output[:, :, band_idx-1],
+                        src_transform=input_data.transform,
+                        src_crs=input_data.crs,
+                        dst_transform=transform,
+                        dst_crs=CRS.from_epsg(target_crs),
+                        resampling=getattr(Resampling, resampling_method)
+                    )
+
+        elif isinstance(input_data, gdal.Dataset):
+            if dest_path is not None:
+                gdal.Warp(dest_path, input_data,
+                          dstSRS='EPSG:' + str(target_crs))
+                output = gdal.Open(dest_path)
+            else:
+                raise ValueError('An output path must be provided for '
+                                 'reprojecting GDAL datasets.')
+    return output
+
+
+def reproject_to_utm(input_data, input_crs=None, dest_path=None,
+                     resampling_method='bicubic'):
+
+
+def get_crs(obj):
+    """Get a coordinate reference system from any georegistered object."""
+    if isinstance(obj, gpd.GeoDataFrame):
+        return int(obj.crs['init'].lstrip('epsg:'))
+    elif isinstance(obj, rasterio.DatasetReader):
+        return int(obj.crs['init'].lstrip('epsg:'))
+    elif isinstance(obj, gdal.Dataset):
+        # rawr
+        return int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
+            'AUTHORITY', 1))
+    else:
+        raise TypeError("solaris doesn't know how to extract a crs from an "
+                        "object of type {}".format(type(obj)))
+
+
+def _parse_reproject_data(input):
+    if isinstance(input, str):
+        if input.lower().endswith('json') or input.lower().endswith('csv'):
+            input_type = 'vector'
+            input_data = _check_df_load(input)
+        elif input.lower().endswith('tif') or input.lower().endswith('tiff'):
+            input_type = 'raster'
+            input_data = _check_rasterio_im_load(input)
+    else:
+        input_data = input
+        if isinstance(input_data, pd.DataFrame):
+            input_type = 'vector'
+        elif isinstance(
+                input_data, rasterio.DatasetReader
+                ) or isinstance(
+                input_data, gdal.Dataset
+                ):
+            input_type = 'raster'
+        else:
+            raise ValueError('The input format {} is not compatible with '
+                             'solaris.'.format(type(input)))
+    return input_data, input_type
+
+
+def reproject_geometry(input_geom, input_crs=None, target_crs=None,
+                       affine_transform=None):
+    pass
 
 
 def transform_to_utm(gdf, utm_crs, estimate=True, calculate_sindex=True):
@@ -25,9 +170,12 @@ def transform_to_utm(gdf, utm_crs, estimate=True, calculate_sindex=True):
         :py:class:`rasterio.crs.CRS` string for destination UTM CRS.
     estimate : bool, optional
         .. deprecated:: 0.2.0
+
             This argument is no longer used.
+
     calculate_sindex : bool, optional
         .. deprecated:: 0.2.0
+
             This argument is no longer used.
 
     Returns
