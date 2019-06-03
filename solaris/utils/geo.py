@@ -216,7 +216,7 @@ def _parse_geo_data(input):
 
 
 def reproject_geometry(input_geom, input_crs=None, target_crs=None,
-                       affine_transform=None):
+                       affine_obj=None):
     """Reproject a geometry or coordinate into a new CRS.
 
     Arguments
@@ -261,86 +261,16 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
         output_geom = transform(transformer, input_geom)
 
     else:
-        if affine_transform is None:
+        if affine_obj is None:
             raise ValueError('If an input CRS is not provided, '
                              'affine_transform is required to complete the '
                              'transformation.')
-        elif isinstance(affine_transform, Affine):
-            affine_transform = _affine_to_list(affine_transform)
+        elif isinstance(affine_obj, Affine):
+            affine_obj = affine_to_list(affine_obj)
 
-        output_geom = affine_transform(input_geom, affine_transform)
+        output_geom = affine_transform(input_geom, affine_obj)
 
     return output_geom
-
-
-def utm_get_zone(longitude):
-    """Calculate UTM Zone from Longitude.
-
-    Arguments
-    ---------
-    longitude: float
-        longitude coordinate (Degrees.decimal degrees)
-
-    Returns
-    -------
-    out: int
-        UTM Zone number.
-
-    """
-
-    return (int(1+(longitude+180.0)/6.0))
-
-
-def utm_is_northern(latitude):
-    """Determine if a latitude coordinate is in the northern hemisphere.
-
-    Arguments
-    ---------
-    latitude: float
-        latitude coordinate (Deg.decimal degrees)
-
-    Returns
-    -------
-    out: bool
-        ``True`` if `latitude` is in the northern hemisphere, ``False``
-        otherwise.
-
-    """
-
-    return (latitude > 0.0)
-
-
-def calculate_utm_crs(coords):
-    """Calculate UTM Projection String.
-
-    Arguments
-    ---------
-    coords: list
-        ``[longitude, latitude]`` or
-        ``[min_longitude, min_latitude, max_longitude, max_latitude]`` .
-
-    Returns
-    -------
-    out: str
-        `proj4 projection string <https://proj4.org/usage/quickstart.html>`__
-
-    """
-    if len(coords) == 2:
-        longitude, latitude = coords
-    elif len(coords) == 4:
-        longitude = np.mean([coords[0], coords[2]])
-        latitude = np.mean([coords[1], coords[3]])
-
-    utm_zone = utm_get_zone(longitude)
-
-    if utm_is_northern(latitude):
-        direction_indicator = "+north"
-    else:
-        direction_indicator = "+south"
-
-    utm_crs = "+proj=utm +zone={} {} +ellps=WGS84 +datum=WGS84 +units=m +no_defs".format(utm_zone,
-                                                                                         direction_indicator)
-    return utm_crs
 
 
 def gdf_get_projection_unit(vector_file):
@@ -489,6 +419,13 @@ def list_to_affine(xform_mat):
         return Affine.from_gdal(*xform_mat)
     else:
         return Affine(*xform_mat)
+
+
+def affine_to_list(affine_obj):
+    """Convert a :class:`affine.Affine` instance to a list for Shapely."""
+    return [affine_obj.a, affine_obj.b,
+            affine_obj.d, affine_obj.e,
+            affine_obj.xoff, affine_obj.yoff]
 
 
 def geometries_internal_intersection(polygons):
@@ -775,10 +712,3 @@ def _latlon_to_utm_zone(latitude, longitude, ns_only=True):
         utm_val = int((longitude + 180) / 6) + 1
 
     return utm_val, zone_letter
-
-
-def _affine_to_list(affine_obj):
-    """Convert a :class:`affine.Affine` instance to a list for Shapely."""
-    return [affine_obj.a, affine_obj.b,
-            affine_obj.d, affine_obj.e,
-            affine_obj.xoff, affine_obj.yoff]
