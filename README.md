@@ -1,9 +1,8 @@
-<h1 align="center">Solaris</h1>
-<h2 align="center">CosmiQ Works Geospatial Analysis Pipeline Toolkit</h2>
 <p align="center">
-<a href="http://www.cosmiqworks.org"><img src="http://www.cosmiqworks.org/wp-content/uploads/2016/02/cropped-CosmiQ-Works-Logo_R_RGB.png" width="350" alt="CosmiQ Works"></a>
-<br>
-<br>
+<img src="https://github.com/CosmiQ/solaris/raw/master/static/sol_logo.png" width="350" alt="Solaris">
+</p>
+<h2 align="center">An open source ML pipeline for overhead imagery by <a href=http://www.cosmiqworks.org>CosmiQ Works</a></h2>
+<p align="center">
 <img align="center" src="https://img.shields.io/pypi/pyversions/solaris.svg" alt="PyPI python version" href="https://pypi.org/project/solaris/">
 <img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI" href="https://pypi.org/project/solaris/">
 <!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge"> -->
@@ -30,7 +29,7 @@ This repository provides the source code for the CosmiQ Works `solaris` project,
 We recommend creating a `conda` environment with the dependencies defined in [environment.yml](./environment.yml) before installing `solaris`. After cloning the repository:
 ```
 cd solaris
-conda create -n solaris -f environment.yml
+conda env create -n solaris -f environment.yml
 conda activate solaris
 pip install .
 ```
@@ -40,7 +39,7 @@ pip install .
 The package also exists on[ PyPI](https://pypi.org), but note that some of the dependencies, specifically [rtree](https://github.com/Toblerity/) and [gdal](https://www.gdal.org), are challenging to install without anaconda. We therefore recommend installing at least those dependency using `conda` before installing from PyPI.
 
 ```
-conda install -c conda-forge rtree gdal
+conda install -c conda-forge rtree gdal=2.4.1
 ```
 If you don't want to use `conda`, you can [install libspatialindex](https://libspatialindex.org), then `pip install rtree`. Installing GDAL without conda can be very difficult and approaches vary dramatically depending upon the build environment and version, but online resources may help with specific use cases.
 
