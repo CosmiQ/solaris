@@ -1,17 +1,20 @@
 import os
 from .core import _check_df_load, _check_gdf_load, _check_rasterio_im_load
+from .core import _check_geom
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+import pyproj
 from affine import Affine
 import rasterio
 from rasterio.crs import CRS
 from rasterio.vrt import WarpedVRT
 from rasterio.warp import calculate_default_transform, Resampling
+from shapely.affinity import affine_transform
 from shapely.errors import WKTReadingError
 from shapely.wkt import loads
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
-from shapely.ops import cascaded_union
+from shapely.ops import cascaded_union, transform
 import osr
 import gdal
 from warnings import warn
@@ -129,8 +132,8 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
     else:
         lat_long_input = input_data
 
-    bounds = get_bounds(lat_long_input)  # needed for finding UTM zone
-    midpoint = [(bounds[0] + bounds[2])/2., (bounds[1] + bounds[3])/2.]
+    bounds = get_dataset_bounds(lat_long_input)  # needed for finding UTM zone
+    midpoint = [(bounds[1] + bounds[3])/2., (bounds[0] + bounds[2])/2.]
     epsg = latlon_to_utm_epsg(*midpoint)
 
     output = _reproject(input_data, input_type=input_type, input_crs=input_crs,
@@ -143,7 +146,7 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
     return output
 
 
-def get_bounds(input):
+def get_dataset_bounds(input):
     """Get the ``[left, bottom, right, top]`` bounds in the input CRS.
 
     Arguments
@@ -214,8 +217,60 @@ def _parse_geo_data(input):
 
 def reproject_geometry(input_geom, input_crs=None, target_crs=None,
                        affine_transform=None):
-    # TODO: IMPLEMENT!
-    pass
+    """Reproject a geometry or coordinate into a new CRS.
+
+    Arguments
+    ---------
+    input_geom : `str`, `list`, or `Shapely <https://shapely.readthedocs.io>`_ geometry
+        A geometry object to re-project. This can be a 2-member ``list``, in
+        which case `input_geom` is assumed to coorespond to ``[x, y]``
+        coordinates in `input_crs`. It can also be a Shapely geometry object or
+        a wkt string.
+    input_crs : int, optional
+        The coordinate reference system for `input_geom`'s coordinates, as an
+        EPSG :class:`int`. Required unless `affine_transform` is provided.
+    target_crs : int, optional
+        The target coordinate reference system to re-project the geometry into.
+        If not provided, the appropriate UTM zone will be selected by default,
+        unless `affine_transform` is provided (and therefore CRSs are ignored.)
+    affine_transform : :class:`affine.Affine`, optional
+        An :class:`affine.Affine` object (or a ``[a, b, c, d, e, f]`` list to
+        convert to that format) to use for transformation. Has no effect unless
+        `input_crs` **and** `target_crs` are not provided.
+
+    Returns
+    -------
+    output_geom : Shapely geometry
+        A shapely geometry object:
+        - in `target_crs`, if one was provided;
+        - in the appropriate UTM zone, if `input_crs` was provided and
+          `target_crs` was not;
+        - with `affine_transform` applied to it if neither `input_crs` nor
+          `target_crs` were provided.
+    """
+    input_geom = _check_geom(input_geom)
+
+    if input_crs is not None:
+        if target_crs is None:
+            latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
+            target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
+        transformer = pyproj.Transformer.from_crs(
+            crs_from=pyproj.crs.CRS.from_user_input(input_crs),
+            crs_to=pyproj.crs.CRS.from_user_input(target_crs)
+            )
+        output_geom = transform(transformer, input_geom)
+
+    else:
+        if affine_transform is None:
+            raise ValueError('If an input CRS is not provided, '
+                             'affine_transform is required to complete the '
+                             'transformation.')
+        elif isinstance(affine_transform, Affine):
+            affine_transform = _affine_to_list(affine_transform)
+
+        output_geom = affine_transform(input_geom, affine_transform)
+
+    return output_geom
 
 
 def utm_get_zone(longitude):
@@ -645,7 +700,7 @@ def latlon_to_utm_epsg(latitude, longitude, return_proj4=False):
 
     if return_proj4:
         if zone_letter == 'N':
-            direction_indictator = '+north'
+            direction_indicator = '+north'
         elif zone_letter == 'S':
             direction_indicator = '+south'
         proj = "+proj=utm +zone={} {}".format(zone_number,
@@ -720,3 +775,10 @@ def _latlon_to_utm_zone(latitude, longitude, ns_only=True):
         utm_val = int((longitude + 180) / 6) + 1
 
     return utm_val, zone_letter
+
+
+def _affine_to_list(affine_obj):
+    """Convert a :class:`affine.Affine` instance to a list for Shapely."""
+    return [affine_obj.a, affine_obj.b,
+            affine_obj.d, affine_obj.e,
+            affine_obj.xoff, affine_obj.yoff]

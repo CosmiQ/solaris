@@ -4,6 +4,8 @@ import pandas as pd
 import geopandas as gpd
 import rasterio
 import skimage
+from shapely.wkt import loads
+from shapely.geometry import BaseGeometry, Point
 
 
 def _check_rasterio_im_load(im):
@@ -50,6 +52,22 @@ def _check_gdf_load(gdf):
     else:
         raise ValueError(
             "{} is not an accepted GeoDataFrame format.".format(gdf))
+
+
+def _check_geom(geom):
+    """Check if a geometry is loaded in.
+
+    Returns the geometry if it's a shapely geometry object. If it's a wkt
+    string or a list of coordinates, convert to a shapely geometry.
+    """
+    if isinstance(geom, BaseGeometry):
+        return geom
+    elif isinstance(geom, str):  # assume it's a wkt
+        return loads(geom)
+    elif isinstance(geom, list) and len(geom) == 2:  # coordinates
+        return Point(geom)
+
+
 
 
 def get_data_paths(path, infer=False):
