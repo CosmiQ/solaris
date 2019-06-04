@@ -2,6 +2,7 @@ from ..utils.core import _check_df_load
 from ..utils.core import _check_skimage_im_load, _check_rasterio_im_load
 from ..utils.geo import gdf_get_projection_unit, reproject
 from ..utils.geo import geometries_internal_intersection, _check_wkt_load
+from .polygon import georegister_px_df
 import numpy as np
 from shapely.geometry import shape
 import geopandas as gpd
@@ -555,11 +556,23 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     df = _check_df_load(df)
     df[geom_col] = df[geom_col].apply(_check_wkt_load)
 
+    if not hasattr(df, 'crs'):  # if it's not a geodataframe
+        # georegister with reference_im
+        if reference_im is None:
+            raise ValueError(
+                'If the input geometries lack a geospatial CRS, a'
+                'georegistered image must be provided.'
+            )
+        df = georegister_px_df(df, im_path=reference_im)
+
+    orig_crs = df.crs
+
     if do_transform is None:
         # determine whether or not transform should be done
         do_transform = _check_do_transform(df, reference_im, affine_obj)
 
-    # Check if dataframe is in the appropriate units (meters, and reproject if not)
+    # Check if dataframe is in the appropriate units
+    # (meters, and reproject if not)
     unit = gdf_get_projection_unit(df)
     if unit != "meter":
         # Pick UTM zone
