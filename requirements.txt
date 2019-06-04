@@ -5,7 +5,7 @@ geopandas==0.5.0
 opencv-python==4.1.0.25
 numpy==1.16.4
 tqdm==4.32.1
-GDAL==2.4.0  # pyup: ignore
+GDAL==2.4.0
 rtree==0.8.3
 networkx==2.3
 rasterio==1.0.23
@@ -18,3 +18,4 @@ affine==2.2.2
 albumentations==0.2.3
 rio-tiler==1.2.7
 pyyaml==5.1
+pyproj==2.1.3
