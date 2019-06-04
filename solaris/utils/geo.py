@@ -4,7 +4,6 @@ from .core import _check_geom
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import pyproj
 from affine import Affine
 import rasterio
 from rasterio.crs import CRS
@@ -13,8 +12,10 @@ from rasterio.warp import calculate_default_transform, Resampling
 from shapely.affinity import affine_transform
 from shapely.errors import WKTReadingError
 from shapely.wkt import loads
+from shapely.geometry import Point, Polygon, LineString
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
-from shapely.ops import cascaded_union, transform
+from shapely.ops import cascaded_union
+from fiona.transform import transform
 import osr
 import gdal
 from warnings import warn
@@ -22,7 +23,7 @@ from warnings import warn
 
 def reproject(input_object, input_crs=None,
               target_crs=None, target_object=None, dest_path=None,
-              resampling_method='bicubic'):
+              resampling_method='cubic'):
     """Reproject a dataset (df, gdf, or image) to a new coordinate system.
 
     This function takes a georegistered image or a dataset of vector geometries
@@ -34,11 +35,41 @@ def reproject(input_object, input_crs=None,
 
     Arguments
     ---------
-    input : `str` or :class:`rasterio.DatasetReader` or :class:`geopandas.GeoDataFrame`
+    input_object : `str` or :class:`rasterio.DatasetReader` or :class:`gdal.Dataset` or :class:`geopandas.GeoDataFrame`
         An object to transform to a new CRS. If a string, it must be a path
         to a georegistered image or vector dataset (e.g. a .GeoJSON). If the
         object itself does not contain georeferencing information, the
         coordinate reference system can be provided with `input_crs`.
+    input_crs : int, optional
+        The EPSG code integer for the input data's CRS. If provided and a CRS
+        is also associated with `input_object`, this argument's value has
+        precedence.
+    target_crs : int, optional
+        The EPSG code for the output projection. If values are not provided
+        for this argument or `target_object`, the input data will be
+        re-projected into the appropriate UTM zone. If both `target_crs` and
+        `target_object` are provided, `target_crs` takes precedence (and a
+        warning is raised).
+    target_object : str, optional
+        An object in the desired destination CRS. If neither this argument nor
+        `target_crs` is provided, the input will be projected into the
+        appropriate UTM zone. `target_crs` takes precedence if both it and
+        `target_object` are provided.
+    dest_path : str, optional
+        The path to save the output to (if desired). This argument is only
+        required if the input is a :class:`gdal.Dataset`; otherwise, it is
+        optional.
+    resampling_method : str, optional
+        The resampling method to use during reprojection of raster data. **Only
+        has an effect if the input is a :class:`rasterio.DatasetReader` !**
+        Possible values are
+        ``['cubic' (default), 'bilinear', 'nearest', 'average']``.
+
+    Returns
+    -------
+    output : :class:`rasterio.DatasetReader` or :class:`gdal.Dataset` or :class:`geopandas.GeoDataFrame`
+        An output in the same format as `input_object`, but reprojected
+        into the destination CRS.
     """
     input_data, input_type = _parse_geo_data(input_object)
     if input_crs is None:
@@ -47,14 +78,16 @@ def reproject(input_object, input_crs=None,
         target_data, _ = _parse_geo_data(target_object)
     else:
         target_data = None
-    if target_crs is None and target_data is None:
+    # get CRS from target_object if it's not provided
+    if target_crs is None and target_data is not None:
+        target_crs = get_crs(target_data)
+
+    if target_crs is not None:
+        output = _reproject(input_data, input_type, input_crs, target_crs,
+                            dest_path, resampling_method)
+    else:
         output = reproject_to_utm(input_data, input_type, input_crs,
                                   dest_path, resampling_method)
-    elif target_crs is None:
-        target_crs = get_crs(target_data)
-    output = _reproject(input_data, input_type, input_crs, target_crs,
-                        dest_path, resampling_method)
-
     return output
 
 
@@ -63,12 +96,14 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
 
     if input_type == 'vector':
         output = input_data.to_crs(epsg=target_crs)
+        if dest_path is not None:
+            output.to_file(dest_path, driver='GeoJSON')
 
     elif input_type == 'raster':
 
         if isinstance(input_data, rasterio.DatasetReader):
             transform, width, height = calculate_default_transform(
-                input_crs, CRS.from_epsg(target_crs),
+                CRS.from_epsg(input_crs), CRS.from_epsg(target_crs),
                 input_data.width, input_data.height, *input_data.bounds
                 )
             kwargs = input_data.meta.copy()
@@ -250,15 +285,18 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     """
     input_geom = _check_geom(input_geom)
 
+    input_coords = _get_coords(input_geom)
+
     if input_crs is not None:
         if target_crs is None:
             latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
             target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
-        transformer = pyproj.Transformer.from_crs(
-            crs_from=pyproj.crs.CRS.from_user_input(input_crs),
-            crs_to=pyproj.crs.CRS.from_user_input(target_crs)
-            )
-        output_geom = transform(transformer, input_geom)
+        xformed_coords = transform('EPSG:' + str(input_crs),
+                                   'EPSG:' + str(target_crs),
+                                   *input_coords)
+        # create a new instance of the same geometry class as above with the
+        # new coordinates
+        output_geom = input_geom.__class__(list(zip(*xformed_coords)))
 
     else:
         if affine_obj is None:
@@ -649,7 +687,7 @@ def latlon_to_utm_epsg(latitude, longitude, return_proj4=False):
     elif zone_letter == 'S':
         epsg = 32700 + zone_number
 
-    return (epsg, proj) if return_epsg else epsg
+    return (epsg, proj) if return_proj4 else epsg
 
 
 def _latlon_to_utm_zone(latitude, longitude, ns_only=True):
@@ -712,3 +750,11 @@ def _latlon_to_utm_zone(latitude, longitude, ns_only=True):
         utm_val = int((longitude + 180) / 6) + 1
 
     return utm_val, zone_letter
+
+
+def _get_coords(geom):
+    """Get coordinates from various shapely geometry types."""
+    if isinstance(geom, Point) or isinstance(geom, LineString):
+        return geom.coords.xy
+    elif isinstance(geom, Polygon):
+        return geom.exterior.coords.xy

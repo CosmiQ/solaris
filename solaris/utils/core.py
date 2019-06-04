@@ -5,7 +5,8 @@ import geopandas as gpd
 import rasterio
 import skimage
 from shapely.wkt import loads
-from shapely.geometry import BaseGeometry, Point
+from shapely.geometry import Point
+from shapely.geometry.base import BaseGeometry
 
 
 def _check_rasterio_im_load(im):
@@ -66,8 +67,6 @@ def _check_geom(geom):
         return loads(geom)
     elif isinstance(geom, list) and len(geom) == 2:  # coordinates
         return Point(geom)
-
-
 
 
 def get_data_paths(path, infer=False):
