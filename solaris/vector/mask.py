@@ -494,7 +494,7 @@ def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
 def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
               do_transform=None, affine_obj=None, shape=(900, 900),
               buffer_in_m=2, out_type='int', burn_value=255, burn_field=None,
-              verbose=False):
+              min_background_value=None, verbose=False):
     """Convert a dataframe of geometries to a pixel mask.
 
     Arguments
@@ -542,6 +542,9 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     burn_field : str, optional
         Name of a column in `df` that provides values for `burn_value` for each
         independent object. If provided, `burn_value` is ignored.
+    min_background_val : int
+        Minimum value for mask background. Optional, ignore if ``None``.
+        Defaults to ``None``.
     verbose : str, optional
         Switch to print relevant values. Defaults to ``False``.
 
@@ -613,6 +616,9 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
 
     output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
                                     transform=affine_obj)
+    if min_background_value:
+        output_arr = np.clip(output_arr, min_background_value,
+                             np.max(output_arr))
 
     if out_file:
         meta = reference_im.meta.copy()
