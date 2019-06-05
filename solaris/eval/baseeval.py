@@ -360,11 +360,11 @@ class EvalBase():
                 ('class_id', 'iou_field', 'TruePos', 'FalsePos', 'FalseNeg',
                 'Precision', 'Recall', 'F1Score')
         True_Pos_gdf : gdf
-            A dataframe containing only true positive predictions
+            A geodataframe containing only true positive predictions
         False_Neg_gdf : gdf
-            A dataframe containing only false negative predictions
+            A geodataframe containing only false negative predictions
         False_Pos_gdf : gdf
-            A dataframe containing only false positive predictions
+            A geodataframe containing only false positive predictions
         """
 
         scoring_dict_list = []
@@ -415,9 +415,13 @@ class EvalBase():
                     True_Pos_gdf = self.proposal_GDF[
                         self.proposal_GDF[iou_field] >= miniou]
                     TruePos = True_Pos_gdf.shape[0]
+                    if TruePos == 0:
+                        False_Pos_gdf = None
                     False_Pos_gdf = self.proposal_GDF[
                         self.proposal_GDF[iou_field] < miniou]
                     FalsePos = False_Pos_gdf.shape[0]
+                    if FalsePos == 0:
+                        False_Pos_gdf = None
                 except KeyError:  # handle missing iou_field
                     print("iou field {} missing")
                     TruePos = 0
