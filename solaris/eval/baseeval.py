@@ -416,7 +416,7 @@ class EvalBase():
                         self.proposal_GDF[iou_field] >= miniou]
                     TruePos = True_Pos_gdf.shape[0]
                     if TruePos == 0:
-                        False_Pos_gdf = None
+                        True_Pos_gdf = None
                     False_Pos_gdf = self.proposal_GDF[
                         self.proposal_GDF[iou_field] < miniou]
                     FalsePos = False_Pos_gdf.shape[0]
