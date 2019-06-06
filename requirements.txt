@@ -18,4 +18,4 @@ affine==2.2.2
 albumentations==0.2.3
 rio-tiler==1.2.7
 pyyaml==5.1
-pyproj==2.1.3
+pyproj==2.2.0
