@@ -5,12 +5,12 @@ import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 import os
-from . import evalfunctions as eF
+from . import iou
 from fiona.errors import DriverError
 from fiona._err import CPLE_OpenFailedError
 
 
-class EvalBase():
+class Evaluator():
     """Object to test IoU for predictions and ground truth polygons.
 
     Attributes
@@ -51,7 +51,8 @@ class EvalBase():
         self.proposal_GDF = gpd.GeoDataFrame([])  # initialize proposal GDF
 
     def __repr__(self):
-        return 'EvalBase {}'.format(os.path.split(self.ground_truth_fname)[-1])
+        return 'Evaluator {}'.format(os.path.split(
+            self.ground_truth_fname)[-1])
 
     def get_iou_by_building(self):
         """Returns a copy of the ground truth table, which includes a
@@ -62,7 +63,7 @@ class EvalBase():
         return output_ground_truth_GDF
 
     def eval_iou_spacenet_csv(self, miniou=0.5, iou_field_prefix="iou_score",
-                              imageIDField="ImageId", debug=False, minArea=0):
+                              imageIDField="ImageId", debug=False, min_area=0):
         """Evaluate IoU between the ground truth and proposals in CSVs.
 
         Arguments
@@ -79,7 +80,7 @@ class EvalBase():
         debug : bool , optional
             Argument for verbose execution during debugging. Defaults to
             ``False`` (silent execution).
-        minArea : float  or int , optional
+        min_area : float  or int , optional
             Minimum area of a ground truth polygon to be considered during
             evaluation. Often set to ``20`` in SpaceNet competitions. Defaults
             to ``0``  (consider all ground truth polygons).
@@ -95,8 +96,7 @@ class EvalBase():
                 'Precision', 'Recall', 'F1Score')
 
         """
-
-        # Get List of all ImageIDs
+        # Get List of all ImageID in both ground truth and proposals
         imageIDList = []
         imageIDList.extend(list(self.ground_truth_GDF[imageIDField].unique()))
         if not self.proposal_GDF.empty:
@@ -114,12 +114,12 @@ class EvalBase():
                 self.ground_truth_GDF[imageIDField] == imageID
                 ].copy(deep=True)
             self.ground_truth_GDF_Edit = self.ground_truth_GDF_Edit[
-                self.ground_truth_GDF_Edit.area >= minArea
+                self.ground_truth_GDF_Edit.area >= min_area
                 ]
             proposal_GDF_copy = self.proposal_GDF[self.proposal_GDF[
                 imageIDField] == imageID].copy(deep=True)
             proposal_GDF_copy = proposal_GDF_copy[proposal_GDF_copy.area
-                                                  > minArea]
+                                                  > min_area]
             if debug:
                 print(iou_field)
             for _, pred_row in proposal_GDF_copy.iterrows():
@@ -127,8 +127,8 @@ class EvalBase():
                     print(pred_row.name)
                 if pred_row.geometry.area > 0:
                     pred_poly = pred_row.geometry
-                    iou_GDF = eF.calculate_iou(pred_poly,
-                                               self.ground_truth_GDF_Edit)
+                    iou_GDF = iou.calculate_iou(pred_poly,
+                                                self.ground_truth_GDF_Edit)
                     # Get max iou
                     if not iou_GDF.empty:
                         max_index = iou_GDF['iou_score'].idxmax(axis=0,
@@ -163,7 +163,7 @@ class EvalBase():
                 proposal_GDF_copy = self.proposal_GDF[
                     self.proposal_GDF[imageIDField] == imageID].copy(deep=True)
                 proposal_GDF_copy = proposal_GDF_copy[
-                    proposal_GDF_copy.area > minArea]
+                    proposal_GDF_copy.area > min_area]
                 if not proposal_GDF_copy.empty:
                     if iou_field in proposal_GDF_copy.columns:
                         TruePos = proposal_GDF_copy[
@@ -271,8 +271,8 @@ class EvalBase():
                 if pred_row['__max_conf_class'] == class_id \
                    or class_id == 'all':
                     pred_poly = pred_row.geometry
-                    iou_GDF = eF.calculate_iou(pred_poly,
-                                               self.ground_truth_GDF_Edit)
+                    iou_GDF = iou.calculate_iou(pred_poly,
+                                                self.ground_truth_GDF_Edit)
                     # Get max iou
                     if not iou_GDF.empty:
                         max_iou_row = iou_GDF.loc[iou_GDF['iou_score'].idxmax(
@@ -493,7 +493,7 @@ class EvalBase():
         -----
         Loads in a .geojson or .csv-formatted file of proposal polygons for
         comparison to the ground truth and stores it as part of the
-        ``EvalBase`` instance. This method assumes the geometry contained in
+        ``Evaluator`` instance. This method assumes the geometry contained in
         the proposal file is in WKT format.
 
         """
@@ -558,7 +558,7 @@ class EvalBase():
 
         Notes
         -----
-        Loads the ground truth vector data into the ``EvalBase`` instance.
+        Loads the ground truth vector data into the ``Evaluator`` instance.
 
         """
         if truthCSV:
@@ -585,9 +585,9 @@ class EvalBase():
 
 def eval_base(ground_truth_vector_file, csvFile=False,
               truth_geo_value='PolygonWKT_Pix'):
-    """Deprecated API to EvalBase.
+    """Deprecated API to Evaluator.
 
     .. deprecated:: 0.3
-        Use :class:`EvalBase` instead."""
+        Use :class:`Evaluator` instead."""
 
-    return EvalBase(ground_truth_vector_file)
+    return Evaluator(ground_truth_vector_file)

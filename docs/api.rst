@@ -113,12 +113,12 @@ Submodule summaries
 
 .. autosummary::
 
-  solaris.eval.baseeval.EvalBase
-  solaris.eval.evalfunctions.calculate_iou
-  solaris.eval.evalfunctions.process_iou
+  solaris.eval.base.Evaluator
+  solaris.eval.iou.calculate_iou
+  solaris.eval.iou.process_iou
   solaris.eval.challenges.off_nadir_dataset.get_collect_id
   solaris.eval.challenges.off_nadir_dataset.get_aoi
-  solaris.eval.challenges.spacenet_buildings2_dataset.eval_spacenet_buildings2
+  solaris.eval.challenges.spacenet_buildings2_dataset.spacenet_buildings_2
 
 `solaris.utils <api/utils.html>`_: Utility functions for the above toolsets
 -----------------------------------------------------------------------------------------

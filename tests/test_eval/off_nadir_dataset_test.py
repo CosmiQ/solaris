@@ -1,12 +1,12 @@
 import os
-from solaris.eval.challenges.off_nadir_dataset import eval_off_nadir
+from solaris.eval.challenges import off_nadir_buildings
 import solaris
 import subprocess
 import pandas as pd
 
 
 class TestEvalOffNadir(object):
-    """Tests for the ``eval_off_nadir`` function."""
+    """Tests for the ``off_nadir`` function."""
 
     def test_scoring(self):
         """Test a round of scoring."""
@@ -15,7 +15,7 @@ class TestEvalOffNadir(object):
                                                 'test_results.csv'))
         pred_results_full = pd.read_csv(os.path.join(solaris.data.data_dir,
                                                      'test_results_full.csv'))
-        results_df, results_df_full = eval_off_nadir(
+        results_df, results_df_full = off_nadir_buildings(
             os.path.join(solaris.data.data_dir, 'sample_preds.csv'),
             os.path.join(solaris.data.data_dir, 'sample_truth.csv')
             )

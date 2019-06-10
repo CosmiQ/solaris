@@ -1,13 +1,12 @@
 import os
-from solaris.eval.challenges.spacenet_buildings2_dataset \
-    import eval_spacenet_buildings2
+from solaris.eval.challenges import spacenet_buildings_2
 import solaris
 import subprocess
 import pandas as pd
 
 
 class TestEvalSpaceNetBuildings2(object):
-    """Tests for the ``eval_spacenet_buildings2`` function."""
+    """Tests for the ``spacenet_buildings_2`` function."""
 
     def test_scoring(self):
         """Test a round of scoring."""
@@ -17,7 +16,7 @@ class TestEvalSpaceNetBuildings2(object):
         pred_results_full = pd.read_csv(
             os.path.join(solaris.data.data_dir,
                          'SN2_test_results_full.csv'))
-        results_df, results_df_full = eval_spacenet_buildings2(
+        results_df, results_df_full = spacenet_buildings_2(
             os.path.join(solaris.data.data_dir, 'SN2_sample_preds.csv'),
             os.path.join(solaris.data.data_dir, 'SN2_sample_truth.csv')
             )
