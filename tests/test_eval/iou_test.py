@@ -1,4 +1,4 @@
-from solaris.eval.evalfunctions import calculate_iou, process_iou
+from solaris.eval.iou import calculate_iou, process_iou
 from solaris import data
 from shapely.geometry import Polygon
 

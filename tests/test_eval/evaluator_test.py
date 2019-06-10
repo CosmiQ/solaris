@@ -9,7 +9,7 @@ class TestEvaluator(object):
     def test_init_from_file(self):
         """Test instantiation of an Evaluator instance from a file."""
         base_instance = Evaluator(os.path.join(solaris.data.data_dir,
-                                              'gt.geojson'))
+                                               'gt.geojson'))
         gdf = solaris.data.gt_gdf()
         assert base_instance.ground_truth_sindex.bounds == gdf.sindex.bounds
         assert base_instance.proposal_GDF.equals(gpd.GeoDataFrame([]))
@@ -28,7 +28,7 @@ class TestEvaluator(object):
     def test_init_empty_geojson(self):
         """Test instantiation of Evaluator with an empty geojson file."""
         base_instance = Evaluator(os.path.join(solaris.data.data_dir,
-                                              'empty.geojson'))
+                                               'empty.geojson'))
         expected_gdf = gpd.GeoDataFrame({'sindex': [],
                                          'condition': [],
                                          'geometry': []})
@@ -61,7 +61,8 @@ class TestEvaluator(object):
         eb = Evaluator(path_truth)
         eb.load_proposal(path_pred, conf_field_list=['Confidence'],
                          proposalCSV=True)
-        eb.eval_iou_spacenet_csv(miniou=0.5, imageIDField='ImageId', minArea=20)
+        eb.eval_iou_spacenet_csv(miniou=0.5, imageIDField='ImageId',
+                                 min_area=20)
         output = eb.get_iou_by_building()
         result_actual = pd.DataFrame(output)
         result_actual.sort_values(by=['ImageId', 'BuildingId'], inplace=True)
