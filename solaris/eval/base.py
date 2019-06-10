@@ -10,7 +10,7 @@ from fiona.errors import DriverError
 from fiona._err import CPLE_OpenFailedError
 
 
-class EvalBase():
+class Evaluator():
     """Object to test IoU for predictions and ground truth polygons.
 
     Attributes
@@ -51,7 +51,7 @@ class EvalBase():
         self.proposal_GDF = gpd.GeoDataFrame([])  # initialize proposal GDF
 
     def __repr__(self):
-        return 'EvalBase {}'.format(os.path.split(self.ground_truth_fname)[-1])
+        return 'Evaluator {}'.format(os.path.split(self.ground_truth_fname)[-1])
 
     def get_iou_by_building(self):
         """Returns a copy of the ground truth table, which includes a
@@ -493,7 +493,7 @@ class EvalBase():
         -----
         Loads in a .geojson or .csv-formatted file of proposal polygons for
         comparison to the ground truth and stores it as part of the
-        ``EvalBase`` instance. This method assumes the geometry contained in
+        ``Evaluator`` instance. This method assumes the geometry contained in
         the proposal file is in WKT format.
 
         """
@@ -558,7 +558,7 @@ class EvalBase():
 
         Notes
         -----
-        Loads the ground truth vector data into the ``EvalBase`` instance.
+        Loads the ground truth vector data into the ``Evaluator`` instance.
 
         """
         if truthCSV:
@@ -582,12 +582,14 @@ class EvalBase():
     def eval(self, type='iou'):
         pass
 
+    def _eval_core()
+
 
 def eval_base(ground_truth_vector_file, csvFile=False,
               truth_geo_value='PolygonWKT_Pix'):
-    """Deprecated API to EvalBase.
+    """Deprecated API to Evaluator.
 
     .. deprecated:: 0.3
-        Use :class:`EvalBase` instead."""
+        Use :class:`Evaluator` instead."""
 
-    return EvalBase(ground_truth_vector_file)
+    return Evaluator(ground_truth_vector_file)

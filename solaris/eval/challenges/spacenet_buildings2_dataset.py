@@ -1,7 +1,7 @@
 from __future__ import print_function, with_statement, division
 
 import pandas as pd
-from .. import baseeval as bF
+from .. import base as bF
 
 # Note, for mac osx compatability import something from shapely.geometry before
 # importing fiona or geopandas
@@ -12,7 +12,7 @@ from .. import baseeval as bF
 def eval_spacenet_buildings2(prop_csv, truth_csv, miniou=0.5, minArea=20):
     """Evaluate a SpaceNet2 building footprint competition proposal csv.
 
-    Uses :class:`EvalBase` to evaluate SpaceNet2 challenge proposals.
+    Uses :class:`Evaluator` to evaluate SpaceNet2 challenge proposals.
 
     Arguments
     ---------
@@ -42,7 +42,7 @@ def eval_spacenet_buildings2(prop_csv, truth_csv, miniou=0.5, minArea=20):
 
     """
 
-    evalObject = bF.EvalBase(ground_truth_vector_file=truth_csv)
+    evalObject = bF.Evaluator(ground_truth_vector_file=truth_csv)
     evalObject.load_proposal(prop_csv,
                              conf_field_list=['Confidence'],
                              proposalCSV=True

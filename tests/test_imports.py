@@ -9,7 +9,7 @@ class TestImports(object):
         from solaris.raster import image
         from solaris.nets import callbacks, datagen, infer, model_io, losses
         from solaris.nets import train, transform, zoo
-        from solaris.eval import baseeval, evalfunctions
+        from solaris.eval import base, evalfunctions
         from solaris.eval.challenges import off_nadir_dataset
         from solaris.eval.challenges import spacenet_buildings2_dataset
         import solaris

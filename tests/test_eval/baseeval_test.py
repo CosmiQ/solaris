@@ -1,14 +1,14 @@
 import os
-from solaris.eval.baseeval import EvalBase
+from solaris.eval.base import Evaluator
 import solaris
 import geopandas as gpd
 import pandas as pd
 
 
-class TestEvalBase(object):
+class TestEvaluator(object):
     def test_init_from_file(self):
-        """Test instantiation of an EvalBase instance from a file."""
-        base_instance = EvalBase(os.path.join(solaris.data.data_dir,
+        """Test instantiation of an Evaluator instance from a file."""
+        base_instance = Evaluator(os.path.join(solaris.data.data_dir,
                                               'gt.geojson'))
         gdf = solaris.data.gt_gdf()
         assert base_instance.ground_truth_sindex.bounds == gdf.sindex.bounds
@@ -17,17 +17,17 @@ class TestEvalBase(object):
             base_instance.ground_truth_GDF_Edit)
 
     def test_init_from_gdf(self):
-        """Test instantiation of an EvalBase from a pre-loaded GeoDataFrame."""
+        """Test instantiation of an Evaluator from a pre-loaded GeoDataFrame."""
         gdf = solaris.data.gt_gdf()
-        base_instance = EvalBase(gdf)
+        base_instance = Evaluator(gdf)
         assert base_instance.ground_truth_sindex.bounds == gdf.sindex.bounds
         assert base_instance.proposal_GDF.equals(gpd.GeoDataFrame([]))
         assert base_instance.ground_truth_GDF.equals(
             base_instance.ground_truth_GDF_Edit)
 
     def test_init_empty_geojson(self):
-        """Test instantiation of EvalBase with an empty geojson file."""
-        base_instance = EvalBase(os.path.join(solaris.data.data_dir,
+        """Test instantiation of Evaluator with an empty geojson file."""
+        base_instance = Evaluator(os.path.join(solaris.data.data_dir,
                                               'empty.geojson'))
         expected_gdf = gpd.GeoDataFrame({'sindex': [],
                                          'condition': [],
@@ -36,7 +36,7 @@ class TestEvalBase(object):
 
     def test_score_proposals(self):
         """Test reading in a proposal GDF from a geojson and scoring it."""
-        eb = EvalBase(os.path.join(solaris.data.data_dir, 'gt.geojson'))
+        eb = Evaluator(os.path.join(solaris.data.data_dir, 'gt.geojson'))
         eb.load_proposal(os.path.join(solaris.data.data_dir, 'pred.geojson'))
         pred_gdf = solaris.data.pred_gdf()
         assert eb.proposal_GDF.iloc[:, 0:3].sort_index().equals(pred_gdf)
@@ -58,7 +58,7 @@ class TestEvalBase(object):
         path_pred = os.path.join(data_folder, 'SN2_sample_preds.csv')
         path_ious = os.path.join(data_folder, 'SN2_sample_iou_by_building.csv')
         path_temp = './temp.pd'
-        eb = EvalBase(path_truth)
+        eb = Evaluator(path_truth)
         eb.load_proposal(path_pred, conf_field_list=['Confidence'],
                          proposalCSV=True)
         eb.eval_iou_spacenet_csv(miniou=0.5, imageIDField='ImageId', minArea=20)

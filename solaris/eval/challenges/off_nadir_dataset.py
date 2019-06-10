@@ -1,7 +1,7 @@
 from __future__ import print_function, with_statement, division
 
 import pandas as pd
-from .. import baseeval as bF
+from .. import base as bF
 import re
 
 # Note, for mac osx compatability import something from shapely.geometry before
@@ -14,7 +14,7 @@ def eval_off_nadir(prop_csv, truth_csv, imageColumns={}, miniou=0.5,
                    minArea=20):
     """Evaluate an off-nadir competition proposal csv.
 
-    Uses :class:`EvalBase` to evaluate off-nadir challenge proposals. See
+    Uses :class:`Evaluator` to evaluate off-nadir challenge proposals. See
     ``imageColumns`` in the source code for how collects are broken into
     Nadir, Off-Nadir, and Very-Off-Nadir bins.
 
@@ -51,7 +51,7 @@ def eval_off_nadir(prop_csv, truth_csv, imageColumns={}, miniou=0.5,
 
     """
 
-    evalObject = bF.EvalBase(ground_truth_vector_file=truth_csv)
+    evalObject = bF.Evaluator(ground_truth_vector_file=truth_csv)
     evalObject.load_proposal(prop_csv,
                              conf_field_list=['Confidence'],
                              proposalCSV=True

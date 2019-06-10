@@ -113,7 +113,7 @@ Submodule summaries
 
 .. autosummary::
 
-  solaris.eval.baseeval.EvalBase
+  solaris.eval.base.Evaluator
   solaris.eval.evalfunctions.calculate_iou
   solaris.eval.evalfunctions.process_iou
   solaris.eval.challenges.off_nadir_dataset.get_collect_id
