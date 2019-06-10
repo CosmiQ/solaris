@@ -1,6 +1,6 @@
 import os
 from .core import _check_df_load, _check_gdf_load, _check_rasterio_im_load
-from .core import _check_geom
+from .core import _check_geom, _check_crs
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -74,6 +74,8 @@ def reproject(input_object, input_crs=None,
     input_data, input_type = _parse_geo_data(input_object)
     if input_crs is None:
         input_crs = get_crs(input_data)
+    else:
+        input_crs = _check_crs(input_crs)
     if target_object is not None:
         target_data, _ = _parse_geo_data(target_object)
     else:
@@ -83,6 +85,7 @@ def reproject(input_object, input_crs=None,
         target_crs = get_crs(target_data)
 
     if target_crs is not None:
+        target_crs = _check_crs(target_crs)
         output = _reproject(input_data, input_type, input_crs, target_crs,
                             dest_path, resampling_method)
     else:
@@ -160,6 +163,7 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
     if input_crs is None:
         raise ValueError('An input CRS must be provided by input_data or'
                          ' input_crs.')
+    input_crs = _check_crs(input_crs)
 
     if input_crs != 4326:  # if it's not WGS 84 lat/long
         lat_long_input = _reproject(input_data, input_type, input_crs,
@@ -169,10 +173,10 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
 
     bounds = get_dataset_bounds(lat_long_input)  # needed for finding UTM zone
     midpoint = [(bounds[1] + bounds[3])/2., (bounds[0] + bounds[2])/2.]
-    epsg = latlon_to_utm_epsg(*midpoint)
+    utm_epsg = latlon_to_utm_epsg(*midpoint)
 
     output = _reproject(input_data, input_type=input_type, input_crs=input_crs,
-                        target_crs=epsg, dest_path=dest_path,
+                        target_crs=utm_epsg, dest_path=dest_path,
                         resampling_method=resampling_method)
     # cleanup
     if os.path.isfile('tmp'):
@@ -288,9 +292,11 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     input_coords = _get_coords(input_geom)
 
     if input_crs is not None:
+        input_crs = _check_crs(input_crs)
         if target_crs is None:
             latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
             target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
+        target_crs = _check_crs(target_crs)
         xformed_coords = transform('EPSG:' + str(input_crs),
                                    'EPSG:' + str(target_crs),
                                    *input_coords)
@@ -331,10 +337,9 @@ def gdf_get_projection_unit(vector_file):
         The unit i.e. meter, metre, or degree, of the projection
     """
     c = _check_gdf_load(vector_file)
-    crs = c.crs
+    crs = _check_crs(c.crs)
     srs = osr.SpatialReference()
-    x = (crs['init']).split(":")[1]
-    srs.ImportFromEPSG(int(x))
+    srs.ImportFromEPSG(crs)
     WKT = srs.ExportToWkt()
     # get count of 'UNIT'
     if WKT.count('UNIT') == 1:
@@ -370,10 +375,9 @@ def raster_get_projection_unit(image):
         The unit i.e. meters or degrees, of the projection
     """
     c = _check_rasterio_im_load(image)
-    crs = c.crs
+    crs = _check_crs(c.crs)
     srs = osr.SpatialReference()
-    x = (crs['init']).split(":")[1]
-    srs.ImportFromEPSG(int(x))
+    srs.ImportFromEPSG(crs)
     WKT = srs.ExportToWkt()
     # get count of 'UNIT'
     if WKT.count('UNIT') == 1:
@@ -396,7 +400,7 @@ def get_utm_vrt(source, crs='EPSG:3857', resampling=Resampling.bilinear,
     ---------
     source : :py:class:`rasterio.io.DatasetReader`
         The dataset to virtually warp using :py:class:`rasterio.vrt.WarpedVRT`.
-    crs : :py:class:`rasterio.crs.CRS`, optional
+    crs : int, optional
         Coordinate reference system for the VRT. Defaults to 'EPSG:3857'
         (Web Mercator).
     resampling : :py:class:`rasterio.enums.Resampling` method, optional
@@ -418,9 +422,9 @@ def get_utm_vrt(source, crs='EPSG:3857', resampling=Resampling.bilinear,
     A :py:class:`rasterio.vrt.WarpedVRT` instance with the transformation.
 
     """
-
+    crs = _check_crs(crs)
     vrt_params = dict(
-        crs=crs,
+        crs=CRS.from_epsg(crs),
         resampling=Resampling.bilinear,
         src_nodata=src_nodata,
         dst_nodata=dst_nodata)
@@ -437,7 +441,7 @@ def get_utm_vrt_profile(source, crs='EPSG:3857',
     ---------
     source : :py:class:`rasterio.io.DatasetReader`
         The dataset to virtually warp using :py:class:`rasterio.vrt.WarpedVRT`.
-    crs : :py:class:`rasterio.crs.CRS`, optional
+    crs : int, optional
         Coordinate reference system for the VRT. Defaults to ``"EPSG:3857"``
         (Web Mercator).
     resampling : :py:class:`rasterio.enums.Resampling` method, optional
@@ -460,7 +464,7 @@ def get_utm_vrt_profile(source, crs='EPSG:3857',
     applied.
 
     """
-
+    crs = _check_crs(crs)
     with get_utm_vrt(source, crs=crs, resampling=resampling,
                      src_nodata=src_nodata, dst_nodata=dst_nodata) as vrt:
         vrt_profile = vrt.profile
