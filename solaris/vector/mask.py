@@ -1,7 +1,7 @@
-from ..utils.core import _check_df_load
+from ..utils.core import _check_df_load, _check_geom
 from ..utils.core import _check_skimage_im_load, _check_rasterio_im_load
 from ..utils.geo import gdf_get_projection_unit, reproject
-from ..utils.geo import geometries_internal_intersection, _check_wkt_load
+from ..utils.geo import geometries_internal_intersection
 from .polygon import georegister_px_df
 import numpy as np
 from shapely.geometry import shape
@@ -193,7 +193,7 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         # determine whether or not transform should be done
         do_transform = _check_do_transform(df, reference_im, affine_obj)
 
-    df[geom_col] = df[geom_col].apply(_check_wkt_load)  # load in geoms if wkt
+    df[geom_col] = df[geom_col].apply(_check_geom)  # load in geoms if wkt
     if not do_transform:
         affine_obj = Affine(1, 0, 0, 0, 1, 0)  # identity transform
 
@@ -375,7 +375,7 @@ def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         # determine whether or not transform should be done
         do_transform = _check_do_transform(df, reference_im, affine_obj)
 
-    df[geom_col] = df[geom_col].apply(_check_wkt_load)  # load in geoms if wkt
+    df[geom_col] = df[geom_col].apply(_check_geom)  # load in geoms if wkt
     if reference_im:
         reference_im = _check_rasterio_im_load(reference_im)
     # grow geometries by half `contact_spacing` to find overlaps
@@ -560,7 +560,7 @@ def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         raise ValueError(
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
-    df[geom_col] = df[geom_col].apply(_check_wkt_load)
+    df[geom_col] = df[geom_col].apply(_check_geom)
 
     if not hasattr(df, 'crs'):  # if it's not a geodataframe
         # georegister with reference_im
