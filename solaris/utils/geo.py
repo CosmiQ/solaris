@@ -670,17 +670,6 @@ def _reduce_geom_precision(geom, precision=2):
     return shape(geojson)
 
 
-def _check_wkt_load(x):
-    """Check if an object is a loaded polygon or not. If not, load it."""
-    if isinstance(x, str):
-        try:
-            x = loads(x)
-        except WKTReadingError:
-            warn('{} is not a WKT-formatted string.'.format(x))
-
-    return x
-
-
 def latlon_to_utm_epsg(latitude, longitude, return_proj4=False):
     """Get the WGS84 UTM EPSG code based on a latitude and longitude value.
 
