@@ -1,10 +1,9 @@
 """Script for executing eval for SpaceNet challenges."""
-from __future__ import print_function, with_statement, division
 from ..eval.challenges import off_nadir_buildings
 from ..eval.challenges import spacenet_buildings_2
 import argparse
 import pandas as pd
-supported_challenges = ['off-nadir', 'spaceNet-buildings2']
+supported_challenges = ['off-nadir', 'spacenet-buildings2']
 # , 'spaceNet-buildings1', 'spacenet-roads1', 'buildings', 'roads']
 
 
