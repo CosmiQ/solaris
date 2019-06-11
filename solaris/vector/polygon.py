@@ -3,8 +3,9 @@ import shapely
 from affine import Affine
 import rasterio
 from rasterio.warp import transform_bounds
+from rasterio.crs import CRS
 from ..utils.geo import list_to_affine, _reduce_geom_precision
-from ..utils.core import _check_gdf_load
+from ..utils.core import _check_gdf_load, _check_crs, _check_rasterio_im_load
 from ..raster.image import get_geo_transform
 from shapely.geometry import box, Polygon
 import pandas as pd
@@ -129,6 +130,10 @@ def affine_transform_gdf(gdf, affine_obj, inverse=False, geom_col="geometry",
     if precision is not None:
         gdf['geometry'] = gdf['geometry'].apply(
             _reduce_geom_precision, precision=precision)
+
+    # the CRS is no longer valid - remove it
+    gdf.crs = None
+
     return gdf
 
 
@@ -149,10 +154,10 @@ def georegister_px_df(df, im_path=None, affine_obj=None, crs=None,
         An affine transformation to apply to `geom` in the form of an
         ``[a, b, d, e, xoff, yoff]`` list or an :class:`affine.Affine` object.
         Required if not using `raster_src`.
-    crs : dict, optional
-        The coordinate reference system for the output GeoDataFrame. Required
-        if not providing a raster image to extract the information from. Format
-        should be ``{'init': 'epsgxxxx'}``, replacing xxxx with the EPSG code.
+    crs : int
+        The coordinate reference system for the output GeoDataFrame as an EPSG
+        code integer. Required if not providing a raster image to extract the
+        information from.
     geom_col : str, optional
         The column containing geometry in `df`. If not provided, defaults to
         ``"geometry"``.
@@ -165,16 +170,17 @@ def georegister_px_df(df, im_path=None, affine_obj=None, crs=None,
 
     """
     if im_path is not None:
-        affine_obj = rasterio.open(im_path).transform
-        crs = rasterio.open(im_path).crs
+        im = _check_rasterio_im_load(im_path)
+        affine_obj = im.transform
+        crs = im.crs
     else:
         if not affine_obj or not crs:
-            raise ValueError(
-                'If an image path is not provided, ' +
-                'affine_obj and crs must be.')
+            raise ValueError('If an image path is not provided, '
+                             'affine_obj and crs must be.')
+    crs = _check_crs(crs)
     tmp_df = affine_transform_gdf(df, affine_obj, geom_col=geom_col,
                                   precision=precision)
-    result = gpd.GeoDataFrame(tmp_df, crs=crs)
+    result = gpd.GeoDataFrame(tmp_df, crs='epsg:' + str(crs))
 
     if output_path is not None:
         if output_path.lower().endswith('json'):
@@ -197,9 +203,7 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
         column named ``'geometry'`` in this argument.
     im_path : str
         Path to a georeferenced image (ie a GeoTIFF) that geolocates to the
-        same geography as the `geojson`(s). If a directory, the bounds of each
-        GeoTIFF will be loaded in and all overlapping geometries will be
-        transformed. This function will also accept a
+        same geography as the `geojson`(s). This function will also accept a
         :class:`osgeo.gdal.Dataset` or :class:`rasterio.DatasetReader` with
         georeferencing information in this argument.
     geom_col : str, optional
@@ -222,20 +226,14 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
 
     """
     # get the bbox and affine transforms for the image
-    if isinstance(im_path, str):
-        bbox = box(*rasterio.open(im_path).bounds)
-        affine_obj = rasterio.open(im_path).transform
-        im_crs = rasterio.open(im_path).crs
-
-    else:
-        bbox = box(im_path.bounds)
-        affine_obj = im_path.transform
-        im_crs = im_path.crs
-
+    im = _check_rasterio_im_load(im_path)
+    if isinstance(im_path, rasterio.DatasetReader):
+        im_path = im_path.name
     # make sure the geo vector data is loaded in as geodataframe(s)
     gdf = _check_gdf_load(geojson)
+    overlap_gdf = get_overlapping_subset(gdf, im)
 
-    overlap_gdf = get_overlapping_subset(gdf, bbox=bbox, bbox_crs=im_crs)
+    affine_obj = im.transform
     transformed_gdf = affine_transform_gdf(overlap_gdf, affine_obj=affine_obj,
                                            inverse=True, precision=precision,
                                            geom_col=geom_col)
@@ -271,6 +269,10 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
         `bbox` is passed and `im` is not, a `bbox_crs` should be provided to
         ensure correct geolocation - if it isn't, it will be assumed to have
         the same crs as `gdf`.
+    bbox_crs : int, optional
+        The coordinate reference system that the bounding box is in as an EPSG
+        int. If not provided, it's assumed that the CRS is the same as `im`
+        (if provided) or `gdf` (if not).
 
     Returns
     -------
@@ -280,22 +282,27 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
         Coordinates are kept in the CRS of `gdf`.
 
     """
-    if not im and not bbox:
+    if im is None and bbox is None:
         raise ValueError('Either `im` or `bbox` must be provided.')
-    if isinstance(gdf, str):
-        gdf = gpd.read_file(gdf)
-    if isinstance(im, str):
-        im = rasterio.open(im)
+    gdf = _check_gdf_load(gdf)
     sindex = gdf.sindex
-    # use transform_bounds in case the crs is different - no effect if not
-    if im:
+    if im is not None:
+        im = _check_rasterio_im_load(im)
         bbox = transform_bounds(im.crs, gdf.crs, *im.bounds)
-    else:
-        if isinstance(bbox, Polygon):
-            bbox = bbox.bounds
-        if not bbox_crs:
+        bbox_crs = im.crs
+    # use transform_bounds in case the crs is different - no effect if not
+    if isinstance(bbox, Polygon):
+        bbox = bbox.bounds
+    if bbox_crs is None:
+        try:
             bbox_crs = gdf.crs
-        bbox = transform_bounds(bbox_crs, gdf.crs, *bbox)
+        except AttributeError:
+            raise ValueError('If `im` and `bbox_crs` are not provided, `gdf`'
+                             'must provide a coordinate reference system.')
+    else:
+        bbox_crs = _check_crs(bbox_crs)
+        bbox_crs = CRS.from_epsg(bbox_crs)
+    bbox = transform_bounds(bbox_crs, gdf.crs, *bbox)
     try:
         intersectors = list(sindex.intersection(bbox))
     except RTreeError:

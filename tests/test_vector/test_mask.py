@@ -246,7 +246,7 @@ class TestRoadMask(object):
         output_mask = road_mask(
             os.path.join(data_dir, 'sample_roads_for_masking.geojson'),
             reference_im=os.path.join(data_dir, 'road_mask_input.tif'),
-            do_transform=True,
+            width=4, meters=True, do_transform=True,
             out_file=os.path.join(data_dir, 'test_out.tif')
             )
         truth_mask = skimage.io.imread(

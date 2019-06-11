@@ -2,7 +2,7 @@ from ..utils.core import _check_df_load, _check_geom
 from ..utils.core import _check_skimage_im_load, _check_rasterio_im_load
 from ..utils.geo import gdf_get_projection_unit, reproject
 from ..utils.geo import geometries_internal_intersection
-from .polygon import georegister_px_df
+from .polygon import georegister_px_df, geojson_to_px_gdf, affine_transform_gdf
 import numpy as np
 from shapely.geometry import shape
 import geopandas as gpd
@@ -161,8 +161,7 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         Affine transformation to use to convert from geo coordinates to pixel
         space. Only provide this argument if `df` is a
         :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
-        coordinate space. Ignored if `reference_im` is provided or if
-        ``do_transform=None``.
+        coordinate space. Ignored if `reference_im` is provided.
     shape : tuple, optional
         An ``(x_size, y_size)`` tuple defining the pixel extent of the output
         mask. Ignored if `reference_im` is provided.
@@ -258,7 +257,7 @@ def boundary_mask(footprint_msk=None, out_file=None, reference_im=None,
         affine transformation matrix, the image extent, etc. If provided,
         `affine_obj` and `shape` are ignored
     boundary_width : int, optional
-        The width of the boundary to be created in pixels. Defaults to 3.
+        The width of the boundary to be created **in pixels.** Defaults to 3.
     boundary_type : ``"inner"`` or ``"outer"``, optional
         Where to draw the boundaries: within the object (``"inner"``) or
         outside of it (``"outer"``). Defaults to ``"inner"``.
@@ -309,9 +308,10 @@ def boundary_mask(footprint_msk=None, out_file=None, reference_im=None,
     return output_arr
 
 
-def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
+def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
+                 reference_im=None, geom_col='geometry',
                  do_transform=None, affine_obj=None, shape=(900, 900),
-                 out_type='int', contact_spacing=10, burn_value=255):
+                 out_type='int', burn_value=255):
     """Create a pixel mask labeling closely juxtaposed objects.
 
     Notes
@@ -326,6 +326,15 @@ def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         with a column containing geometries (identified by `geom_col`). If the
         geometries in `df` are not in pixel coordinates, then `affine` or
         `reference_im` must be passed to provide the transformation to convert.
+    contact_spacing : `int` or `float`, optional
+        The desired maximum distance between adjacent polygons to be labeled
+        as contact. Will be in pixel units unless ``meters=True`` is provided.
+    meters : bool, optional
+        Should `width` be defined in units of meters? Defaults to no
+        (``False``). If ``True`` and `df` is not in a CRS with metric units,
+        the function will attempt to transform to the relevant CRS using
+        ``df.to_crs()`` (if `df` is a :class:`geopandas.GeoDataFrame`) or
+        using the data provided in `reference_im` (if not).
     out_file : str, optional
         Path to an image file to save the output to. Must be compatible with
         :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
@@ -352,10 +361,6 @@ def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         An ``(x_size, y_size)`` tuple defining the pixel extent of the output
         mask. Ignored if `reference_im` is provided.
     out_type : 'float' or 'int'
-    contact_spacing : `int` or `float`, optional
-        The desired maximum distance between adjacent polygons to be labeled
-        as contact. `contact_spacing` will be in the same units as `df` 's
-        geometries, not necessarily in pixel units.
     burn_value : `int` or `float`, optional
         The value to use for labeling objects in the mask. Defaults to 255 (the
         max value for ``uint8`` arrays). The mask array will be set to the same
@@ -378,8 +383,10 @@ def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     df[geom_col] = df[geom_col].apply(_check_geom)  # load in geoms if wkt
     if reference_im:
         reference_im = _check_rasterio_im_load(reference_im)
-    # grow geometries by half `contact_spacing` to find overlaps
-    buffered_geoms = df[geom_col].apply(lambda x: x.buffer(contact_spacing/2))
+    buffered_geoms = buffer_df_geoms(df, contact_spacing/2., meters=meters,
+                                     reference_im=reference_im,
+                                     geom_col=geom_col, affine_obj=affine_obj)
+    buffered_geoms = buffered_geoms[geom_col]
     # create a single multipolygon that covers all of the intersections
     intersect_poly = geometries_internal_intersection(buffered_geoms)
     # create a small df containing the intersections to make a footprint from
@@ -409,6 +416,224 @@ def contact_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             dst.write(output_arr, indexes=1)
 
     return output_arr
+
+
+def road_mask(df, width=4, meters=False, out_file=None, reference_im=None,
+              geom_col='geometry', do_transform=None, affine_obj=None,
+              shape=(900, 900), out_type='int', burn_value=255,
+              burn_field=None, min_background_value=None, verbose=False):
+    """Convert a dataframe of geometries to a pixel mask.
+
+    Arguments
+    ---------
+    df : :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame`
+        A :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame` instance
+        with a column containing geometries (identified by `geom_col`). If the
+        geometries in `df` are not in pixel coordinates, then `affine` or
+        `reference_im` must be passed to provide the transformation to convert.
+    width : `float` or `int`, optional
+        The total width to make a road (i.e. twice x if using
+        road.buffer(x)). In pixel units unless `meters` is ``True``.
+    meters : bool, optional
+        Should `width` be defined in units of meters? Defaults to no
+        (``False``). If ``True`` and `df` is not in a CRS with metric units,
+        the function will attempt to transform to the relevant CRS using
+        ``df.to_crs()`` (if `df` is a :class:`geopandas.GeoDataFrame`) or
+        using the data provided in `reference_im` (if not).
+    out_file : str, optional
+        Path to an image file to save the output to. Must be compatible with
+        :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
+        provided (for metadata purposes).
+    reference_im : :class:`rasterio.DatasetReader` or `str`, optional
+        An image to extract necessary coordinate information from: the
+        affine transformation matrix, the image extent, etc. If provided,
+        `affine_obj` and `shape` are ignored.
+    geom_col : str, optional
+        The column containing geometries in `df`. Defaults to ``"geometry"``.
+    do_transform : bool, optional
+        Should the values in `df` be transformed from geospatial coordinates
+        to pixel coordinates? Defaults to ``None``, in which case the function
+        attempts to infer whether or not a transformation is required based on
+        the presence or absence of a CRS in `df`. If ``True``, either
+        `reference_im` or `affine_obj` must be provided as a source for the
+        the required affine transformation matrix.
+    affine_obj : `list` or :class:`affine.Affine`, optional
+        Affine transformation to use to convert from geo coordinates to pixel
+        space. Only provide this argument if `df` is a
+        :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
+        coordinate space. Ignored if `reference_im` is provided.
+    shape : tuple, optional
+        An ``(x_size, y_size)`` tuple defining the pixel extent of the output
+        mask. Ignored if `reference_im` is provided.
+    out_type : 'float' or 'int'
+    burn_value : `int` or `float`, optional
+        The value to use for labeling objects in the mask. Defaults to 255 (the
+        max value for ``uint8`` arrays). The mask array will be set to the same
+        dtype as `burn_value`. Ignored if `burn_field` is provided.
+    burn_field : str, optional
+        Name of a column in `df` that provides values for `burn_value` for each
+        independent object. If provided, `burn_value` is ignored.
+    min_background_val : int
+        Minimum value for mask background. Optional, ignore if ``None``.
+        Defaults to ``None``.
+    verbose : str, optional
+        Switch to print relevant values. Defaults to ``False``.
+
+    Returns
+    -------
+    mask : :class:`numpy.array`
+        A pixel mask with 0s for non-object pixels and `burn_value` at object
+        pixels. `mask` dtype will coincide with `burn_value`.
+    """
+
+    # start with required checks and pre-population of values
+    if out_file and not reference_im:
+        raise ValueError(
+            'If saving output to file, `reference_im` must be provided.')
+    df = _check_df_load(df)
+    df[geom_col] = df[geom_col].apply(_check_geom)  # ensure WKTs are loaded
+
+    buffered_df = buffer_df_geoms(df, width/2., meters=meters,
+                                  reference_im=reference_im, geom_col=geom_col,
+                                  affine_obj=affine_obj)
+
+    if do_transform is None:
+        # determine whether or not transform should be done
+        do_transform = _check_do_transform(df, reference_im, affine_obj)
+
+    if not do_transform:
+        affine_obj = Affine(1, 0, 0, 0, 1, 0)  # identity transform
+
+    if reference_im:
+        reference_im = _check_rasterio_im_load(reference_im)
+        shape = reference_im.shape
+        if do_transform:
+            affine_obj = reference_im.transform
+
+    # extract geometries and pair them with burn values
+    if burn_field:
+        if out_type == 'int':
+            feature_list = list(zip(buffered_df[geom_col],
+                                    buffered_df[burn_field].astype('uint8')))
+        else:
+            feature_list = list(zip(buffered_df[geom_col],
+                                    buffered_df[burn_field].astype('uint8')))
+    else:
+        feature_list = list(zip(buffered_df[geom_col],
+                                [burn_value] * len(buffered_df)))
+
+    output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
+                                    transform=affine_obj)
+    if min_background_value:
+        output_arr = np.clip(output_arr, min_background_value,
+                             np.max(output_arr))
+
+    if out_file:
+        meta = reference_im.meta.copy()
+        meta.update(count=1)
+        if out_type == 'int':
+            meta.update(dtype='uint8')
+        with rasterio.open(out_file, 'w', **meta) as dst:
+            dst.write(output_arr, indexes=1)
+
+    return output_arr
+
+
+def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
+                    geom_col='geometry', affine_obj=None):
+    """Buffer geometries within a pd.DataFrame or gpd.GeoDataFrame.
+
+    Arguments
+    ---------
+    df : :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame`
+        A :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame` instance
+        with a column containing geometries (identified by `geom_col`). If `df`
+        lacks a ``crs`` attribute (isn't a :class:`geopandas.GeoDataFrame` )
+        and ``meters=True``, then `reference_im` must be provided for
+        georeferencing.
+    buffer : `int` or `float`
+        The amount to buffer the geometries in `df`. In pixel units unless
+        ``meters=True``. This corresponds to width/2 in mask creation
+        functions.
+    meters : bool, optional
+        Should buffers be in pixel units (default) or metric units (if `meters`
+        is ``True``)?
+    reference_im : `str` or :class:`rasterio.DatasetReader`, optional
+        The path to a reference image covering the same geographic extent as
+        the area labeled in `df`. Provided for georeferencing of pixel
+        coordinate geometries in `df` or conversion of georeferenced geometries
+        to pixel coordinates as needed. Required if `meters` is ``True`` and
+        `df` lacks a ``crs`` attribute.
+    geom_col : str, optional
+        The column containing geometries in `df`. Defaults to ``"geometry"``.
+    affine_obj : `list` or :class:`affine.Affine`, optional
+        Affine transformation to use to convert geoms in `df` from a geographic
+        crs to pixel space. Only provide this argument if `df` is a
+        :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
+        coordinate space. Ignored if `reference_im` is provided.
+
+    Returns
+    -------
+    buffered_df : :class:`pandas.DataFrame`
+        A :class:`pandas.DataFrame` in the original coordinate reference system
+        with objects buffered per `buffer`.
+    """
+    if reference_im is not None:
+        reference_im = _check_rasterio_im_load(reference_im)
+
+    if hasattr(df, 'crs'):
+        orig_crs = df.crs
+    else:
+        orig_crs = None  # will represent pixel crs
+
+    # Check if dataframe is in the appropriate units and reproject if not
+    if not meters:
+        if hasattr(df, 'crs') and reference_im is not None:
+            # if the df is georeferenced and a reference_im is provided,
+            # use reference_im to transform df to px coordinates
+            df_for_buffer = geojson_to_px_gdf(df.copy(), reference_im)
+        elif hasattr(df, 'crs') and reference_im is None:
+            df_for_buffer = affine_transform_gdf(df.copy(),
+                                                 affine_obj=affine_obj)
+        else:  # if it's already in px coordinates
+            df_for_buffer = df.copy()
+
+    else:
+        # check if the df is in a metric crs
+        if hasattr(df, 'crs'):
+            if crs_is_metric(df):
+                df_for_buffer = df.copy()
+            else:
+                df_for_buffer = reproject(df.copy())  # defaults to UTM
+        else:
+            # assume df is in px coords - use reference_im to georegister
+            if reference_im is not None:
+                df_for_buffer = georegister_px_df(df.copy(),
+                                                  im_path=reference_im)
+            else:
+                raise ValueError('If using `meters=True`, either `df` must be '
+                                 'a geopandas GeoDataFrame or `reference_im` '
+                                 'must be provided for georegistration.')
+
+    df_for_buffer[geom_col] = df_for_buffer[geom_col].apply(
+        lambda x: x.buffer(buffer))
+
+    # return to original crs
+    if getattr(df_for_buffer, 'crs', None) != orig_crs:
+        if orig_crs is not None and \
+                getattr(df_for_buffer, 'crs', None) is not None:
+            buffered_df = df_for_buffer.to_crs(orig_crs)
+        elif orig_crs is None:  # but df_for_buffer has one: meters=True case
+            buffered_df = geojson_to_px_gdf(df_for_buffer, reference_im)
+        else:  # orig_crs exists, but df_for_buffer doesn't have one
+            buffered_df = georegister_px_df(df_for_buffer,
+                                            im_path=reference_im,
+                                            affine_obj=affine_obj,
+                                            crs=orig_crs)
+    else:
+        buffered_df = df_for_buffer
+
+    return buffered_df
 
 
 def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
@@ -491,144 +716,14 @@ def mask_to_poly_geojson(mask_arr, reference_im=None, output_path=None,
     return polygon_gdf
 
 
-def road_mask(df, out_file=None, reference_im=None, geom_col='geometry',
-              do_transform=None, affine_obj=None, shape=(900, 900),
-              buffer_in_m=2, out_type='int', burn_value=255, burn_field=None,
-              min_background_value=None, verbose=False):
-    """Convert a dataframe of geometries to a pixel mask.
-
-    Arguments
-    ---------
-    df : :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame`
-        A :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame` instance
-        with a column containing geometries (identified by `geom_col`). If the
-        geometries in `df` are not in pixel coordinates, then `affine` or
-        `reference_im` must be passed to provide the transformation to convert.
-    out_file : str, optional
-        Path to an image file to save the output to. Must be compatible with
-        :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
-        provided (for metadata purposes).
-    reference_im : :class:`rasterio.DatasetReader` or `str`, optional
-        An image to extract necessary coordinate information from: the
-        affine transformation matrix, the image extent, etc. If provided,
-        `affine_obj` and `shape` are ignored.
-    geom_col : str, optional
-        The column containing geometries in `df`. Defaults to ``"geometry"``.
-    do_transform : bool, optional
-        Should the values in `df` be transformed from geospatial coordinates
-        to pixel coordinates? Defaults to ``None``, in which case the function
-        attempts to infer whether or not a transformation is required based on
-        the presence or absence of a CRS in `df`. If ``True``, either
-        `reference_im` or `affine_obj` must be provided as a source for the
-        the required affine transformation matrix.
-    affine_obj : `list` or :class:`affine.Affine`, optional
-        Affine transformation to use to convert from geo coordinates to pixel
-        space. Only provide this argument if `df` is a
-        :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
-        coordinate space. Ignored if `reference_im` is provided or if
-        ``do_transform=None``.
-    shape : tuple, optional
-        An ``(x_size, y_size)`` tuple defining the pixel extent of the output
-        mask. Ignored if `reference_im` is provided.
-    buffer_in_m : 'float' or 'int'
-        The amount to buffer a roadway linestring on either side in meters.
-        For example a value == 2 will create a roadway 4 meters in total width
-        around the centerline.
-    out_type : 'float' or 'int'
-    burn_value : `int` or `float`, optional
-        The value to use for labeling objects in the mask. Defaults to 255 (the
-        max value for ``uint8`` arrays). The mask array will be set to the same
-        dtype as `burn_value`. Ignored if `burn_field` is provided.
-    burn_field : str, optional
-        Name of a column in `df` that provides values for `burn_value` for each
-        independent object. If provided, `burn_value` is ignored.
-    min_background_val : int
-        Minimum value for mask background. Optional, ignore if ``None``.
-        Defaults to ``None``.
-    verbose : str, optional
-        Switch to print relevant values. Defaults to ``False``.
-
-    Returns
-    -------
-    mask : :class:`numpy.array`
-        A pixel mask with 0s for non-object pixels and `burn_value` at object
-        pixels. `mask` dtype will coincide with `burn_value`.
-    """
-
-    # start with required checks and pre-population of values
-    if out_file and not reference_im:
-        raise ValueError(
-            'If saving output to file, `reference_im` must be provided.')
-    df = _check_df_load(df)
-    df[geom_col] = df[geom_col].apply(_check_geom)
-
-    if not hasattr(df, 'crs'):  # if it's not a geodataframe
-        # georegister with reference_im
-        if reference_im is None:
-            raise ValueError(
-                'If the input geometries lack a geospatial CRS, a'
-                'georegistered image must be provided.'
-            )
-        df = georegister_px_df(df, im_path=reference_im)
-
-    orig_crs = df.crs
-
-    if do_transform is None:
-        # determine whether or not transform should be done
-        do_transform = _check_do_transform(df, reference_im, affine_obj)
-
-    # Check if dataframe is in the appropriate units (meters, metres
-    # and reproject if not)
-    unit = str(gdf_get_projection_unit(df)).strip()
-    if verbose:
-        print("unit:", unit)
-    if unit not in ['"meter"', '"metre"', "'meter'", "'meter'",
-                    'meter', 'metre']:
-        # Pick UTM zone
-        df = reproject(df)  # defaults to UTM
-        df[geom_col] = df[geom_col].apply(lambda x: x.buffer(buffer_in_m))
-        # Send back to old CRS
-        df = df.to_crs(orig_crs)
-
+def crs_is_metric(gdf):
+    """Check if a GeoDataFrame's CRS is in metric units."""
+    units = str(gdf_get_projection_unit(gdf)).strip().lower()
+    if units in ['"meter"', '"metre"', "'meter'", "'meter'",
+                 'meter', 'metre']:
+        return True
     else:
-        df[geom_col] = df[geom_col].apply(lambda x: x.buffer(buffer_in_m))
-
-    # load in geoms if wkt
-    if not do_transform:
-        affine_obj = Affine(1, 0, 0, 0, 1, 0)  # identity transform
-
-    if reference_im:
-        reference_im = _check_rasterio_im_load(reference_im)
-        shape = reference_im.shape
-        if do_transform:
-            affine_obj = reference_im.transform
-
-    # extract geometries and pair them with burn values
-    if burn_field:
-        if out_type == 'int':
-            feature_list = list(zip(df[geom_col],
-                                    df[burn_field].astype('uint8')))
-        else:
-            feature_list = list(zip(df[geom_col],
-                                    df[burn_field].astype('uint8')))
-    else:
-        feature_list = list(zip(df[geom_col], [burn_value] * len(df)))
-
-    output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
-                                    transform=affine_obj)
-    if min_background_value:
-        output_arr = np.clip(output_arr, min_background_value,
-                             np.max(output_arr))
-
-    if out_file:
-        meta = reference_im.meta.copy()
-        meta.update(count=1)
-        if out_type == 'int':
-            meta.update(dtype='uint8')
-        with rasterio.open(out_file, 'w', **meta) as dst:
-            dst.write(output_arr, indexes=1)
-
-    return output_arr
+        return False
 
 
 def _check_do_transform(df, reference_im, affine_obj):
