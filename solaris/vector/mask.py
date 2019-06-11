@@ -418,7 +418,7 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
     return output_arr
 
 
-def road_mask(df, width=8, meters=False, out_file=None, reference_im=None,
+def road_mask(df, width=4, meters=False, out_file=None, reference_im=None,
               geom_col='geometry', do_transform=None, affine_obj=None,
               shape=(900, 900), out_type='int', burn_value=255,
               burn_field=None, min_background_value=None, verbose=False):
@@ -591,23 +591,25 @@ def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
         if hasattr(df, 'crs') and reference_im is not None:
             # if the df is georeferenced and a reference_im is provided,
             # use reference_im to transform df to px coordinates
-            df_for_buffer = geojson_to_px_gdf(df, reference_im)
+            df_for_buffer = geojson_to_px_gdf(df.copy(), reference_im)
         elif hasattr(df, 'crs') and reference_im is None:
-            df_for_buffer = affine_transform_gdf(df, affine_obj=affine_obj)
+            df_for_buffer = affine_transform_gdf(df.copy(),
+                                                 affine_obj=affine_obj)
         else:  # if it's already in px coordinates
-            df_for_buffer = df
+            df_for_buffer = df.copy()
 
     else:
         # check if the df is in a metric crs
         if hasattr(df, 'crs'):
             if crs_is_metric(df):
-                df_for_buffer = df
+                df_for_buffer = df.copy()
             else:
-                df_for_buffer = reproject(df)  # defaults to UTM
+                df_for_buffer = reproject(df.copy())  # defaults to UTM
         else:
             # assume df is in px coords - use reference_im to georegister
             if reference_im is not None:
-                df_for_buffer = georegister_px_df(df, im_path=reference_im)
+                df_for_buffer = georegister_px_df(df.copy(),
+                                                  im_path=reference_im)
             else:
                 raise ValueError('If using `meters=True`, either `df` must be '
                                  'a geopandas GeoDataFrame or `reference_im` '
@@ -617,8 +619,9 @@ def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
         lambda x: x.buffer(buffer))
 
     # return to original crs
-    if getattr(df_for_buffer, 'crs') != orig_crs:
-        if orig_crs is not None and getattr(df_for_buffer, 'crs') is not None:
+    if getattr(df_for_buffer, 'crs', None) != orig_crs:
+        if orig_crs is not None and \
+                getattr(df_for_buffer, 'crs', None) is not None:
             buffered_df = df_for_buffer.to_crs(orig_crs)
         elif orig_crs is None:  # but df_for_buffer has one: meters=True case
             buffered_df = geojson_to_px_gdf(df_for_buffer, reference_im)
@@ -627,6 +630,8 @@ def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
                                             im_path=reference_im,
                                             affine_obj=affine_obj,
                                             crs=orig_crs)
+    else:
+        buffered_df = df_for_buffer
 
     return buffered_df
 

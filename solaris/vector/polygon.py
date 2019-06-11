@@ -227,6 +227,8 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
     """
     # get the bbox and affine transforms for the image
     im = _check_rasterio_im_load(im_path)
+    if isinstance(im_path, rasterio.DatasetReader):
+        im_path = im_path.name
     # make sure the geo vector data is loaded in as geodataframe(s)
     gdf = _check_gdf_load(geojson)
     overlap_gdf = get_overlapping_subset(gdf, im)
