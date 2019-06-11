@@ -47,7 +47,7 @@ class TestEvalCLISN2(object):
                                  'SN2_sample_truth.csv')
         subprocess.call(['spacenet_eval', '--proposal_csv='+proposal_csv,
                          '--truth_csv='+truth_csv,
-                         '--challenge=spaceNet-buildings2',
+                         '--challenge=spacenet-buildings2',
                          '--output_file=test_out'])
         test_results = pd.read_csv('test_out.csv')
         full_test_results = pd.read_csv('test_out_full.csv')
