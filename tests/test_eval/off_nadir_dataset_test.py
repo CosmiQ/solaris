@@ -1,6 +1,6 @@
 import os
-from solaris.eval.challenges import off_nadir_buildings
 import solaris
+from solaris.eval.challenges import off_nadir_buildings
 import subprocess
 import pandas as pd
 
