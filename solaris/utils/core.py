@@ -69,6 +69,20 @@ def _check_geom(geom):
         return Point(geom)
 
 
+def _check_crs(input_crs):
+    """Convert CRS to the integer format passed by ``solaris``."""
+    if isinstance(input_crs, dict):
+        # assume it's an {'init': 'epsgxxxx'} dict
+        out_crs = int(input_crs['init'].lower().strip('epsg:'))
+    elif isinstance(input_crs, str):
+        # handle PROJ4 strings, epsg strings, wkt strings
+        out_crs = rasterio.crs.CRS.from_string(input_crs).to_epsg()
+    elif isinstance(input_crs, rasterio.crs.CRS):
+        out_crs = input_crs.to_epsg()
+    elif isinstance(input_crs, int):
+        out_crs = input_crs
+    return out_crs
+
 def get_data_paths(path, infer=False):
     """Get a pandas dataframe of images and labels from a csv.
 

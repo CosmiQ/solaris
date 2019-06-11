@@ -2,14 +2,17 @@ import os
 import rasterio
 from rasterio.warp import transform_bounds
 from rasterio.io import DatasetReader
+from shapely.geometry import box
 import math
 from rio_tiler.errors import TileOutsideBounds
+from ..utils.core import _check_crs, _check_rasterio_im_load
 from ..utils.tile import tile_read_utm, tile_exists_utm
+from ..utils.geo import latlon_to_utm_epsg, reproject_geometry
 import numpy as np
 
 
 def tile_utm_source(src, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
-                    nodata=None, alpha=None, dst_crs='epsg:4326'):
+                    nodata=None, alpha=None, dst_crs=4326):
     """
     Create a UTM tile from a :py:class:`rasterio.Dataset` in memory.
 
@@ -38,7 +41,8 @@ def tile_utm_source(src, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
         Alpha band index for tiling. By default, uses the same band as
         specified by `src`.
     dst_crs : str, optional
-        Coordinate reference system for output. Defaults to ``"epsg:4326"``.
+        EPSG code for the output coordinate reference system. Defaults to
+        ``4326``.
 
     Returns
     -------
@@ -57,9 +61,11 @@ def tile_utm_source(src, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
             Affine transformation for the window.
 
     """
-
+    dst_crs = _check_crs(dst_crs)
     wgs_bounds = transform_bounds(
-        *[src.crs, dst_crs] + list(src.bounds), densify_pts=21)
+        *[src.crs,
+          rasterio.crs.CRS.from_epsg(dst_crs)] + list(src.bounds),
+        densify_pts=21)
 
     indexes = indexes if indexes is not None else src.indexes
     tile_bounds = (ll_x, ll_y, ur_x, ur_y)
@@ -72,7 +78,7 @@ def tile_utm_source(src, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
 
 
 def tile_utm(source, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
-             nodata=None, alpha=None, dst_crs='epsg:4326'):
+             nodata=None, alpha=None, dst_crs=4326):
     """
     Create a UTM tile from a file or a :py:class:`rasterio.Dataset` in memory.
 
@@ -102,8 +108,8 @@ def tile_utm(source, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
     alpha : :obj:`int`, optional
         Alpha band index for tiling. By default, uses the same band as
         specified by `src`.
-    dst_crs : str, optional
-        Coordinate reference system for output. Defaults to ``"epsg:4326"``.
+    dst_crs : int, optional
+        EPSG code for the output CRS. Defaults to ``4326``.
 
     Returns
     -------
@@ -119,10 +125,10 @@ def tile_utm(source, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
             :py:class:`rasterio.windows.Window` object indicating the raster
             location of the dataset subregion being returned in `data`.
         window_transform : :py:class:`affine.Affine`
-            Affine transformation for the window.
+            Affine transformation for the indow.
 
     """
-
+    dst_crs = _check_crs(dst_crs)
     if isinstance(source, DatasetReader):
         src = source
     elif os.path.exists(source):
@@ -160,8 +166,8 @@ def get_chip(source, ll_x, ll_y, gsd,
     utm_crs : :py:class:`rasterio.crs.CRS`, optional
         UTM coordinate reference system string for the imagery. If not
         provided, this is calculated using
-        :func:`cw_tiler.utils.get_wgs84_bounds` and
-        :func:`cw_tiler.utils.calculate_utm_crs` .
+        :func:`solaris.utils.get_wgs84_bounds` and
+        :func:`solaris.utils.calculate_utm_crs` .
     indexes : tuple of 3 ints, optional
         Band indexes for the output. By default, extracts all of the
         indexes from `source`.
@@ -194,14 +200,15 @@ def get_chip(source, ll_x, ll_y, gsd,
     ur_x = ll_x + gsd * tilesize
     ur_y = ll_y + gsd * tilesize
 
-    if isinstance(source, DatasetReader):
-        src = source
-    else:
-        src = rasterio.open(source)
+    source = _check_rasterio_im_load(source)
 
     if not utm_crs:
-        wgs_bounds = utils.get_wgs84_bounds(src)
-        utm_crs = utils.calculate_utm_crs(wgs_bounds)
+        src_bounds = source.bounds
+        src_bounds = box(src_bounds['left'], src_bounds['bottom'],
+                         src_bounds['right'], src_bounds['top'])
+        wgs_pt = reproject_geometry(src_bounds,
+                                        source.crs, 4326).centroid.coords
+        utm_crs = latlon_to_utm_epsg(**wgs_pt)
 
     return tile_utm(source, ll_x, ll_y, ur_x, ur_y, indexes=indexes,
                     tilesize=tilesize, nodata=nodata, alpha=alpha,

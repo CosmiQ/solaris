@@ -1,5 +1,3 @@
-from __future__ import print_function, with_statement, division
-
 import shapely.wkt
 import geopandas as gpd
 import pandas as pd
