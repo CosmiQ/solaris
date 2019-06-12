@@ -461,7 +461,7 @@ class Evaluator():
 
     def load_proposal(self, proposal_vector_file, conf_field_list=['conf'],
                       proposalCSV=False, pred_row_geo_value='PolygonWKT_Pix',
-                      conf_field_mapping=[]):
+                      conf_field_mapping=None):
         """Load in a proposal geojson or CSV.
 
         Arguments
@@ -525,7 +525,7 @@ class Evaluator():
                 self.proposal_GDF['__total_conf'] = 1.0
                 self.proposal_GDF['__max_conf_class'] = 1
 
-            if conf_field_mapping:
+            if conf_field_mapping is not None:
                 self.proposal_GDF['__max_conf_class'] = [
                     conf_field_mapping[item] for item in
                     self.proposal_GDF['__max_conf_class'].values]
