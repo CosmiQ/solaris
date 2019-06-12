@@ -288,7 +288,7 @@ def calculate_anchor_points(utm_bounds, stride_size_meters=400, extend=False,
     return anchor_point_list_dict
 
 
-def calculate_cells(anchor_point_list_dict, cell_size_meters, utm_bounds=[]):
+def calculate_cells(anchor_point_list_dict, cell_size_meters, utm_bounds=None):
     """ Calculate boundaries for image cells (chips) from anchor points.
 
     This function takes the output from :func:`calculate_anchor_points` as well
@@ -321,7 +321,7 @@ def calculate_cells(anchor_point_list_dict, cell_size_meters, utm_bounds=[]):
     for anchor_point_list_id, anchor_point_list in anchor_point_list_dict.items():
         cells_list = []
         for anchor_point in anchor_point_list:
-            if utm_bounds:
+            if utm_bounds is not None:
                 if (anchor_point[0] + cell_size_meters < utm_bounds[2]) and (
                         anchor_point[1] + cell_size_meters < utm_bounds[3]):
                     cells_list.append([anchor_point[0], anchor_point[1],
