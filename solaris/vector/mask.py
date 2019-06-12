@@ -577,6 +577,11 @@ def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
     buffered_df : :class:`pandas.DataFrame`
         A :class:`pandas.DataFrame` in the original coordinate reference system
         with objects buffered per `buffer`.
+
+    See Also
+    --------
+    road_mask : Function to create road network masks.
+    contact_mask : Function to create masks of contact points between polygons.
     """
     if reference_im is not None:
         reference_im = _check_rasterio_im_load(reference_im)

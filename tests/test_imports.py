@@ -9,5 +9,5 @@ class TestImports(object):
         from solaris.raster import image
         from solaris.nets import callbacks, datagen, infer, model_io, losses
         from solaris.nets import train, transform, zoo
-        from solaris.eval import base, iou, challenges, pixel_metrics
+        from solaris.eval import base, iou, challenges, pixel
         import solaris

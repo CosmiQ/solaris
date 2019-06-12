@@ -5,41 +5,43 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-###############################################################################
-def compute_iou(truth_mask, prop_mask, verbose=False):
-    """
-    Compute pixel-wise intersection over union
+def iou(truth_mask, prop_mask, prop_threshold=0.5, verbose=False):
+    """Compute pixel-wise intersection over union.
 
-    Notes
-    -----
-    Multiply truth_mask by 2, and subtract.  Make sure arrays are clipped
+    Multiplies truth_mask by 2, and subtract.  Make sure arrays are clipped
     so that overlapping regions don't cause problems
 
     Arguments
     ---------
-    truth_mask : np array
-        2-D array of ground truth.
-    prop_mask : np array
+    truth_mask : :class:`numpy.ndarray`
+        2-D binary array of ground truth pixels.
+    prop_mask : :class:`numpy.ndarray`
         2-D array of proposals.
-    verbose : bool
-        Switch to print relevant values
+    prop_threshold : float, optional
+        The threshold for proposal values to be defined as positive (``1``) or
+        negative (``0``) predictions. Values >= `prop_threshold` will be set to
+        ``1``, values < `prop_threshold` will be set to ``0``.
+    verbose : bool, optional
+        Switch to print relevant values.
 
     Returns
     -------
     iou : float
         Intersection over union of ground truth and proposal
     """
-
+    if truth_mask.shape != prop_mask.shape:
+        raise ValueError("The shape of `truth_mask` and `prop_mask` must "
+                         "be the same.")
     truth_mask_clip = np.clip(truth_mask, 0, 1).astype(float)
-    prop_mask_clip = np.clip(prop_mask, 0, 1).astype(float)
+    prop_mask_clip = (np.clip(prop_mask, 0, 1) >= prop_threshold).astype(float)
     # subtract array
     sub_mask = 2*prop_mask_clip - truth_mask_clip
     add_mask = prop_mask_clip + truth_mask_clip
 
     # true pos = 1, false_pos = 2, true_neg = 0, false_neg = -1
-    true_pos_count = len(np.where(sub_mask == 1)[0])
-    union = len(np.where(add_mask > 0)[0])
-    intersection = true_pos_count
+    tp_count = np.sum(sub_mask == 1)
+    union = np.sum(add_mask > 0)
+    intersection = tp_count
 
     iou = 1. * intersection / union
 
@@ -51,63 +53,67 @@ def compute_iou(truth_mask, prop_mask, verbose=False):
     return iou
 
 
-###############################################################################
-def compute_f1(truth_mask, prop_mask, show_plot=False, im_file='',
-               show_colorbar=False, plot_file='', dpi=200, verbose=False):
-    """
-    Compute pixel-wise f1 score
+def f1(truth_mask, prop_mask, prop_threshold=0.5, show_plot=False, im_file='',
+       show_colorbar=False, plot_file='', dpi=200, verbose=False):
+    """Compute pixel-wise precision, recall, and f1 score.
 
-    Notes
-    -----
     Find true pos, false pos, true neg, false neg as well as f1 score.
     Multiply truth_mask by 2, and subtract.  Make sure arrays are clipped
     so that overlapping regions don't cause problems.
 
     Arguments
     ---------
-    truth_mask : np array
-        2-D array of ground truth.
-    prop_mask : np array
+    truth_mask : :class:`numpy.ndarray`
+        2-D binary array of ground truth pixels.
+    prop_mask : :class:`numpy.ndarray`
         2-D array of proposals.
-    show_plot : bool
+    prop_threshold : float, optional
+        The threshold for proposal values to be defined as positive (``1``) or
+        negative (``0``) predictions. Values >= `prop_threshold` will be set to
+        ``1``, values < `prop_threshold` will be set to ``0``.
+    show_plot : bool, optional
         Switch to plot the outputs. Defaults to ``False``.
-    im_file : str
-        Image file corresponding to the masks. Ignored if show_plot == False.
-        Defaults to ``''``.
-    show_colorbar : bool
-        Switch to show colorbar. Ignored if show_plot == False.
+    im_file : str, optional
+        Image file corresponding to the masks. Ignored if
+        ``show_plot == False``. Defaults to ``''``.
+    show_colorbar : bool, optional
+        Switch to show colorbar. Ignored if ``show_plot == False``.
         Defaults to ``False``.
-    plot_file : str
-        Output file if plotting. Ignored if show_plot == False.
+    plot_file : str, optional
+        Output file if plotting. Ignored if ``show_plot == False``.
         Defaults to ``''``.
-    dpi : int
-        Dots per inch for plotting. Ignored if show_plot == False.
+    dpi : int, optional
+        Dots per inch for plotting. Ignored if ``show_plot == False``.
         Defaults to ``200``.
-    verbose : bool
-        Switch to print relevant values
+    verbose : bool, optional
+        Switch to print relevant values.
 
     Returns
     -------
-    output : tuple
-        Tuple containing [f1, precision, recall]
+    f1 : float
+        Pixel-wise F1 score.
+    precision : float
+        Pixel-wise precision.
+    recall : float
+        Pixel-wise recall.
     """
 
     truth_mask_clip = np.clip(truth_mask, 0, 1).astype(float)
-    prop_mask_clip = np.clip(prop_mask, 0, 1).astype(float)
+    prop_mask_clip = (np.clip(prop_mask, 0, 1) >= prop_threshold).astype(float)
     # subtract array
     sub_mask = 2*prop_mask_clip - truth_mask_clip
     # sub_mask2 = prop_mask_clip - truth_mask_clip
 
     # true pos = 1, false_pos = 2, true_neg = 0, false_neg = -1
     n_pos = len(np.where(truth_mask_clip == 1)[0])
-    true_pos_count = len(np.where(sub_mask == 1)[0])
-    false_pos_count = len(np.where(sub_mask == 2)[0])
-    true_neg_count = len(np.where(sub_mask == 0)[0])
-    false_neg_count = len(np.where(sub_mask == -1)[0])
+    tp_count = len(np.where(sub_mask == 1)[0])
+    fp_count = len(np.where(sub_mask == 2)[0])
+    tn_count = len(np.where(sub_mask == 0)[0])
+    fn_count = len(np.where(sub_mask == -1)[0])
 
-    if (n_pos > 0) and (true_pos_count > 0):
-        precision = float(true_pos_count) / float( true_pos_count + false_pos_count)
-        recall = float(true_pos_count) / float( true_pos_count + false_neg_count)
+    if (n_pos > 0) and (tp_count > 0):
+        precision = float(tp_count) / float(tp_count + fp_count)
+        recall = float(tp_count) / float(tp_count + fn_count)
         f1 = 2 * precision * recall / (precision + recall)
     else:
         precision, recall, f1 = 0, 0, 0
@@ -115,14 +121,15 @@ def compute_f1(truth_mask, prop_mask, show_plot=False, im_file='',
     if verbose:
         print("mask.shape:\t", truth_mask.shape)
         print("num pixels:\t", truth_mask.size)
-        print("false_neg:\t", false_neg_count)
-        print("false_pos:\t", false_pos_count)
-        print("true_neg:\t", true_neg_count)
-        print("true_pos:\t", true_pos_count)
+        print("false_neg:\t", fn_count)
+        print("false_pos:\t", fp_count)
+        print("true_neg:\t", tn_count)
+        print("true_pos:\t", tp_count)
         print("precision:\t", precision)
         print("recall:\t\t", recall)
         print("F1 score:\t", f1)
 
+    # TODO: split this out into a separate function
     if show_plot:
 
         fontsize = 6
@@ -191,11 +198,9 @@ def compute_f1(truth_mask, prop_mask, show_plot=False, im_file='',
 
         plt.show()
 
-    output = (f1, precision, recall)
-    return output
+    return f1, precision, recall
 
 
-###############################################################################
 def _get_neighborhood_limits(row, col, h, w, rho=3):
     '''Get neighbors of point p with pixel coords row, col'''
 
@@ -207,8 +212,7 @@ def _get_neighborhood_limits(row, col, h, w, rho=3):
     return rowmin, rowmax, colmin, colmax
 
 
-###############################################################################
-def compute_relaxed_f1(truth_mask, prop_mask, radius=3, verbose=False):
+def relaxed_f1(truth_mask, prop_mask, radius=3, verbose=False):
     """
     Compute relaxed f1 score
 
@@ -245,12 +249,41 @@ def compute_relaxed_f1(truth_mask, prop_mask, radius=3, verbose=False):
     output : tuple
         Tuple containing [relaxed_f1, relaxed_precision, relaxed_recall]
 
-    Example usage
-    -------------
-    h,w = 50, 50
-    truth_mask = np.random.randint(2, size=(h,w))
-    prop_mask = np.random.randint(2, size=(h,w))
-    compute_relaxed_f1(truth_mask, prop_mask, radius=3, verbose=True)
+    Examples
+    --------
+
+    >>> truth_mask = np.zeros(shape=(10, 10))
+    >>> prop_mask = np.zeros(shape=(10, 10))
+
+    >>> truth_mask[5, :] = 1
+    >>> prop_mask[5, :] = 1
+    >>> prop_mask[:, 2] = 0
+    >>> prop_mask[:, 3] = 1
+    >>> prop_mask[6:8, :] = 0
+    >>> prop_mask
+    array([[0., 0., 0., 1., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 1., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 1., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 1., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 1., 0., 0., 0., 0., 0., 0.],
+           [1., 1., 0., 1., 1., 1., 1., 1., 1., 1.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 1., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 1., 0., 0., 0., 0., 0., 0.]])
+    >>>truth_mask
+    array([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [1., 1., 1., 1., 1., 1., 1., 1., 1., 1.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]])
+    >>> relaxed_f1(truth_mask, prop_mask, radius=3)
+    (0.8571428571428571, 0.75, 1.0)
     """
 
     truth_mask_clip = np.clip(truth_mask, 0, 1).astype(float)
@@ -295,10 +328,10 @@ def compute_relaxed_f1(truth_mask, prop_mask, radius=3, verbose=False):
         relaxed_precision = 1. * precision_count / n_prop
 
     if (relaxed_recall > 0) and (relaxed_precision > 0):
-        f1 = 2 * relaxed_precision * relaxed_recall \
+        relaxed_f1 = 2 * relaxed_precision * relaxed_recall \
             / (relaxed_precision + relaxed_recall)
     else:
-        f1 = 0
+        relaxed_f1 = 0
 
     if verbose:
         print("mask.shape:\t", truth_mask.shape)
@@ -307,5 +340,5 @@ def compute_relaxed_f1(truth_mask, prop_mask, radius=3, verbose=False):
         print("recall:\t\t", relaxed_recall)
         print("rF1 score:\t", f1)
 
-    output = (f1, relaxed_precision, relaxed_recall)
+    output = (relaxed_f1, relaxed_precision, relaxed_recall)
     return output
