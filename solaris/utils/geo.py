@@ -9,6 +9,7 @@ import rasterio
 from rasterio.crs import CRS
 from rasterio.vrt import WarpedVRT
 from rasterio.warp import calculate_default_transform, Resampling
+from rasterio.warp import transform_bounds
 from shapely.affinity import affine_transform
 from shapely.errors import WKTReadingError
 from shapely.wkt import loads
@@ -165,13 +166,7 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
                          ' input_crs.')
     input_crs = _check_crs(input_crs)
 
-    if input_crs != 4326:  # if it's not WGS 84 lat/long
-        lat_long_input = _reproject(input_data, input_type, input_crs,
-                                    4326, 'tmp', resampling_method)
-    else:
-        lat_long_input = input_data
-
-    bounds = get_dataset_bounds(lat_long_input)  # needed for finding UTM zone
+    bounds = get_bounds(input_data, crs=4326)  # need in wkt84 for UTM zone
     midpoint = [(bounds[1] + bounds[3])/2., (bounds[0] + bounds[2])/2.]
     utm_epsg = latlon_to_utm_epsg(*midpoint)
 
@@ -185,17 +180,21 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
     return output
 
 
-def get_dataset_bounds(input):
-    """Get the ``[left, bottom, right, top]`` bounds in the input CRS.
+def get_bounds(input, crs=None):
+    """Get the ``[left, bottom, right, top]`` bounds in any CRS.
 
     Arguments
     ---------
-    geo_obj : a georeferenced raster or vector dataset
+    geo_obj : a georeferenced raster or vector dataset.
+    crs : int, optional
+        The EPSG code for the CRS the bounds should be returned in. If not
+        provided, the bounds will be returned in the same crs as `geo_obj`.
 
     Returns
     -------
     bounds : list
-        ``[left, bottom, right, top]`` bounds in the input CRS.
+        ``[left, bottom, right, top]`` bounds in the input crs (if `crs` is
+        ``None``) or in `crs` if it was provided.
     """
     input_data, input_type = _parse_geo_data(input)
     if input_type == 'vector':
@@ -211,6 +210,14 @@ def get_dataset_bounds(input):
             min_y = max_y + input_gt[5]*input_data.RasterYSize
 
             bounds = [min_x, min_y, max_x, max_y]
+
+    if crs is not None:
+        crs = _check_crs(crs)
+        src_crs = get_crs(input_data)
+    # transform bounds to desired CRS
+    bounds = transform_bounds(CRS.from_epsg(src_crs),
+                              CRS.from_epsg(crs),
+                              **bounds)
 
     return bounds
 

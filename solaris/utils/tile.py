@@ -6,7 +6,6 @@ from rasterio.io import DatasetReader
 from rasterio.warp import transform_bounds
 from rasterio.vrt import WarpedVRT
 from rasterio.enums import Resampling
-from rio_tiler.errors import RioTilerError
 from rasterio import transform
 
 
@@ -128,113 +127,6 @@ def tile_exists_utm(boundsSrc, boundsTile):
     boundsTileBox = box(*boundsTile)
 
     return boundsSrcBox.intersects(boundsTileBox)
-
-
-def get_wgs84_bounds(source):
-    """Transform dataset bounds from source crs to wgs84.
-
-    Arguments
-    ---------
-    source : str or :py:class:`rasterio.io.DatasetReader`
-        Source dataset to get bounds transformation for. Can either be a string
-        path to a dataset file or an opened
-        :py:class:`rasterio.io.DatasetReader`.
-
-    Returns
-    -------
-    wgs_bounds : tuple
-        Bounds tuple for `source` in wgs84 crs with shape ``(W, S, E, N)``.
-
-    """
-    if isinstance(source, DatasetReader):
-        src = source
-    else:
-        src = rasterio.open(source)
-    wgs_bounds = transform_bounds(*[src.crs, 'epsg:4326'] + list(src.bounds),
-                                  densify_pts=21)
-    return wgs_bounds
-
-
-def get_utm_bounds(source, utm_EPSG):
-    """Transform bounds from source crs to a UTM crs.
-
-    Arguments
-    ---------
-    source : str or :py:class:`rasterio.io.DatasetReader`
-        Source dataset. Can either be a string path to a dataset GeoTIFF or
-        a :py:class:`rasterio.io.DatasetReader` object.
-    utm_EPSG : str
-        :py:class:`rasterio.crs.CRS` string indicating the UTM crs to transform
-        into.
-
-    Returns
-    -------
-    utm_bounds : tuple
-        Bounding box limits in `utm_EPSG` crs coordinates with shape
-        ``(W, S, E, N)``.
-
-    """
-    if isinstance(source, DatasetReader):
-        src = source
-    else:
-        src = rasterio.open(source)
-    utm_bounds = transform_bounds(*[src.crs, utm_EPSG] + list(src.bounds),
-                                  densify_pts=21)
-    return utm_bounds
-
-
-def search_gdf_bounds(gdf, tile_bounds):
-    """Use `tile_bounds` to subset `gdf` and return the intersect.
-
-    Arguments
-    ---------
-    gdf : :py:class:`geopandas.GeoDataFrame`
-        A :py:class:`geopandas.GeoDataFrame` of polygons to subset.
-    tile_bounds : tuple
-        A tuple of shape ``(W, S, E, N)`` that denotes the boundaries of a
-        tile.
-
-    Returns
-    -------
-    smallGdf : :py:class:`geopandas.GeoDataFrame`
-        The subset of `gdf` that overlaps with `tile_bounds` .
-
-    """
-
-    tile_polygon = box(tile_bounds)
-    smallGdf = search_gdf_polygon(gdf, tile_polygon)
-
-    return smallGdf
-
-
-def search_gdf_polygon(gdf, tile_polygon):
-    """Find polygons in a GeoDataFrame that overlap with `tile_polygon` .
-
-    Arguments
-    ---------
-    gdf : :py:class:`geopandas.GeoDataFrame`
-        A :py:class:`geopandas.GeoDataFrame` of polygons to search.
-    tile_polygon : :py:class:`shapely.geometry.Polygon`
-        A :py:class:`shapely.geometry.Polygon` denoting a tile's bounds.
-
-    Returns
-    -------
-    precise_matches : :py:class:`geopandas.GeoDataFrame`
-        The subset of `gdf` that overlaps with `tile_polygon` . If
-        there are no overlaps, this will return an empty
-        :py:class:`geopandas.GeoDataFrame`.
-
-    """
-
-    sindex = gdf.sindex
-    possible_matches_index = list(sindex.intersection(tile_polygon.bounds))
-    possible_matches = gdf.iloc[possible_matches_index]
-    precise_matches = possible_matches[
-        possible_matches.intersects(tile_polygon)
-    ]
-    if precise_matches.empty:
-        precise_matches = gpd.GeoDataFrame(geometry=[])
-    return precise_matches
 
 
 def clip_gdf(gdf, poly_to_cut, min_partial_perc=0.0, geom_type="Polygon",

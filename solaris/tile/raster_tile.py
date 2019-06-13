@@ -4,11 +4,150 @@ from rasterio.warp import transform_bounds
 from rasterio.io import DatasetReader
 from shapely.geometry import box
 import math
-from rio_tiler.errors import TileOutsideBounds
+from rio_cogeo.cogeo import cog_validate
 from ..utils.core import _check_crs, _check_rasterio_im_load
-from ..utils.tile import tile_read_utm, tile_exists_utm
+from ..utils.tile import tile_exists_utm
 from ..utils.geo import latlon_to_utm_epsg, reproject_geometry
 import numpy as np
+
+
+class Tiler(object):
+    """An object to tile geospatial image strips into smaller pieces.
+
+    Arguments
+    ---------
+    src : str or :class:`rasterio.io.DatasetReader`
+        The source imagery to tile. Can either be a path or URL to an image
+        or an image object already loaded using :func:`rasterio.open`.
+    dest_dir : str
+        Path to save output files to.
+    tile_size : `tuple` of `int`s, optional
+        The size of the output tiles in ``(y, x)`` coordinates. By default,
+        this is in pixel units; this can be changed to metric units using the
+        `size_in_meters` argument.
+    size_in_meters : bool, optional
+        Is `tile_size` in pixel units (default) or metric? To set to metric,
+        use ``size_in_meters=True``.
+    dest_crs : int, optional
+        The EPSG code for the CRS that output tiles are in. If not provided,
+        tiles use the crs of `src` by default.
+    nodata : int, optional
+        The value in `src` that specifies nodata. If this value is not
+        provided, solaris will attempt to infer the nodata value from the `src`
+        metadata.
+    alpha : int, optional
+        The band to specify as alpha. If not provided, solaris will attempt to
+        infer if an alpha band is present from the `src` metadata.
+    force_load_cog : bool, optional
+        If `src` is a cloud-optimized geotiff, use this argument to force
+        loading in the entire image at once.
+    verbose : bool, optional
+        Verbose text output. By default, verbose text is not printed.
+
+    Attributes
+    ----------
+    src : :class:`rasterio.io.DatasetReader`
+        The source dataset to tile.
+    src_path : str
+        The path or URL to the source dataset. Used for calling
+        ``rio_cogeo.cogeo.cog_validate()``.
+    dest_dir : str
+        The directory to save the output tiles to.
+    dest_crs : int
+        The EPSG code for the output images.
+    tile_size: tuple
+        A ``(y, x)`` :class:`tuple` storing the dimensions of the output.
+        These are in pixel units unless ``size_in_meters=True``.
+    size_in_meters : bool
+        If ``True``, the units of `tile_size` are in meters instead of pixels.
+    is_cog : bool
+        Indicates whether or not the image being tiled is a Cloud-Optimized
+        GeoTIFF (COG). Determined by checking COG validity using
+        `rio-cogeo <https://github.com/cogeotiff/rio-cogeo>`_.
+    nodata : `int` or ``None``
+        The value for nodata in the outputs. Will be set to zero in outputs if
+        ``None``.
+    alpha : `int` or ``None``
+        The band index corresponding to an alpha channel (if one exists).
+        ``None`` if there is no alpha channel.
+    tile_bounds : list
+        A :class:`list` containing ``[left, bottom, right, top]`` bounds
+        sublists for each tile created.
+    """
+
+    def __init__(self, src, dest_dir, tile_size=(900, 900),
+                 size_in_meters=False,
+                 dest_crs=None, nodata=None, alpha=None, force_load_cog=False,
+                 verbose=False):
+        # set up attributes
+        if verbose:
+            print("Processing Tiler arguments...")
+        if isinstance(src, str):
+            self.is_cog = cog_validate(src)
+        else:
+            self.is_cog = cog_validate(src.name)
+        # determine whether or not image needs to be loaded (is it a cog, etc)
+        if self.is_cog and not force_load_cog:
+            self.src = src
+        else:
+            self.src = _check_rasterio_im_load(src)
+
+        self.src_path = self.src.name
+        self.dest_dir = dest_dir
+        if not os.path.exists(self.dest_dir):
+            os.makedirs(self.dest_dir)
+        if dest_crs is not None:
+            self.dest_crs = _check_crs(dest_crs)
+        else:
+            self.dest_crs = _check_crs(self.src.crs)
+        self.tile_size = tile_size
+        self.size_in_meters = size_in_meters
+
+        if nodata is None:
+            self.nodata = src.nodata
+        else:
+            self.nodata = nodata
+        # get index of alpha channel
+        if alpha is None:
+            mf_list = [rasterio.enums.MaskFlags.alpha in i for i in
+                       src.mask_flag_enums]  # list with True at idx of alpha c
+            try:
+                self.alpha = np.where(mf_list)[0] + 1
+            except IndexError:  # if there isn't a True
+                self.alpha = None
+        else:
+            self.alpha = alpha
+        self.verbose = verbose
+        if self.verbose:
+            print('Tiler arguments processed.')
+            print('is_cog: {}'.format(self.is_cog))
+            print('src: {}'.format(self.src))
+            print('src_path: {}'.format(self.src_path))
+            print('dest_dir: {}'.format(self.dest_dir))
+            print('dest_crs: {}'.format(self.dest_crs))
+            print('tile_size: {}'.format(self.tile_size))
+            print('size_in_meters: {}'.format(self.size_in_meters))
+            print('nodata: {}'.format(self.nodata))
+            print('alpha: {}'.format(self.alpha))
+
+    def make_tile_images(self):
+        """Create the tiled output imagery from input tiles.
+
+        Uses the arguments provided at initialization to generate output tiles.
+        First, tile locations are generated based on `Tiler.tile_size` and
+        `Tiler.size_in_meters` given the bounds of the input image.
+
+        Arguments
+        ---------
+        None
+
+        Returns
+        -------
+        tile_bounds: list
+            A list of the bounds of each tile generated in the order they were
+            created, to be used in tiling vector data. These data are also
+            stored as an attribute of the :class:`Tiler` instance named
+            `tile_bounds`.
 
 
 def tile_utm_source(src, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
@@ -139,6 +278,104 @@ def tile_utm(source, ll_x, ll_y, ur_x, ur_y, indexes=None, tilesize=256,
     return tile_utm_source(src, ll_x, ll_y, ur_x, ur_y, indexes=indexes,
                            tilesize=tilesize, nodata=nodata, alpha=alpha,
                            dst_crs=dst_crs)
+
+
+def tile_read_utm(source, bounds, tilesize, indexes=[1], nodata=None,
+                  alpha=None, dst_crs='EPSG:3857', verbose=False,
+                  boundless=False):
+    """Read data and mask.
+
+    Arguments
+    ---------
+    source : str or :py:class:`rasterio.io.DatasetReader`
+        input file path or :py:class:`rasterio.io.DatasetReader` object.
+    bounds : ``(W, S, E, N)`` tuple
+        bounds in `dst_crs` .
+    tilesize : int
+        Length of one edge of the output tile in pixels.
+    indexes : list of ints or int, optional
+        Channel index(es) to output. Returns a 3D :py:class:`np.ndarray` of
+        shape (C, Y, X) if `indexes` is a list, or a 2D array if `indexes` is
+        an int channel index. Defaults to ``1``.
+    nodata: int or float, optional
+        nodata value to use in :py:class:`rasterio.vrt.WarpedVRT`.
+        Defaults to ``None`` (use all data in warping).
+    alpha: int, optional
+        Force alphaband if not present in the dataset metadata. Defaults to
+        ``None`` (don't force).
+    dst_crs: str, optional
+        Destination coordinate reference system. Defaults to ``"EPSG:3857"``
+        (Web Mercator)
+    verbose : bool, optional
+        Verbose text output. Defaults to ``False``.
+    boundless : bool, optional
+        This argument is deprecated and should never be used.
+
+    Returns
+    -------
+    data : :py:class:`np.ndarray`
+        int pixel values. Shape is ``(C, Y, X)`` if retrieving multiple
+        channels, ``(Y, X)`` otherwise.
+    mask : :py:class:`np.ndarray`
+        int mask indicating which pixels contain information and which are
+        `nodata`. Pixels containing data have value ``255``, `nodata`
+        pixels have value ``0``.
+    window : :py:class:`rasterio.windows.Window`
+        :py:class:`rasterio.windows.Window` object indicating the raster
+        location of the dataset subregion being returned in `data`.
+    window_transform : :py:class:`affine.Affine`
+        Affine transformation for `window` .
+
+
+
+    """
+    w, s, e, n = bounds
+    if alpha is not None and nodata is not None:
+        raise RioTilerError('cannot pass alpha and nodata option')
+
+    if isinstance(indexes, int):
+        indexes = [indexes]
+    out_shape = (len(indexes), tilesize, tilesize)
+    if verbose:
+        print(dst_crs)
+    vrt_params = dict(crs=dst_crs, resampling=Resampling.bilinear,
+                      src_nodata=nodata, dst_nodata=nodata)
+
+    if not isinstance(source, DatasetReader):
+        src = rasterio.open(source)
+    else:
+        src = source
+    with WarpedVRT(src, **vrt_params) as vrt:
+        window = vrt.window(w, s, e, n, precision=21)
+        if verbose:
+            print(window)
+        window_transform = transform.from_bounds(w, s, e, n,
+                                                 tilesize, tilesize)
+
+        data = vrt.read(window=window,
+                        resampling=Resampling.bilinear,
+                        out_shape=out_shape,
+                        indexes=indexes)
+        if verbose:
+            print(bounds)
+            print(window)
+            print(out_shape)
+            print(indexes)
+            print(boundless)
+            print(window_transform)
+
+        if nodata is not None:
+            mask = np.all(data != nodata, axis=0).astype(np.uint8) * 255
+        elif alpha is not None:
+            mask = vrt.read(alpha, window=window,
+                            out_shape=(tilesize, tilesize),
+                            resampling=Resampling.bilinear)
+        else:
+            mask = vrt.read_masks(1, window=window,
+                                  out_shape=(tilesize, tilesize),
+                                  resampling=Resampling.bilinear)
+    return data, mask, window, window_transform
+
 
 
 def get_chip(source, ll_x, ll_y, gsd,
