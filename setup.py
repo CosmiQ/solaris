@@ -32,7 +32,7 @@ else:
                  'rasterio>=1.0.18',
                  'scipy>=1.2.0',
                  'scikit-image>=0.14.0',
-                 'tensorflow>=1.14.0',
+                 'tensorflow==1.13.1',
                  'torch>=1.1.0',
                  'affine>=2.2.2',
                  'albumentations>=0.2.3',

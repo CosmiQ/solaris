@@ -7,7 +7,7 @@
   },
   "assignees": ["nrweir"],
   "baseBranches": ["dev"],
-  "ignoreDeps": ["GDAL"],
+  "ignoreDeps": ["GDAL", "tensorflow"],
   "labels": ["dependencies"],
   "reviewers": ["nrweir"]
 }
