@@ -129,6 +129,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                             resampling=getattr(Resampling, resampling_method)
                         )
                 output = rasterio.open(dest_path)
+                input_data.close()
 
             else:
                 output = np.zeros(shape=(height, width, input_data.count))
