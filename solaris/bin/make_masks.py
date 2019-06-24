@@ -64,7 +64,7 @@ def main():
                         ' multiple files in batch. In this case,'
                         ' --argument-csv must be provided. See help'
                         ' for --argument_csv and the codebase docs at'
-                        ' https://cw-geodata.readthedocs.io for more info.')
+                        ' https://solaris.readthedocs.io for more info.')
     parser.add_argument('--argument_csv', '-a', type=str,
                         help='The reference file for variable values for'
                         ' batch processing. It must contain columns to pass'
@@ -74,7 +74,7 @@ def main():
                         ' if you wish to define them differently for items'
                         ' in the batch. These columns must have the same'
                         ' names as the corresponding arguments. See the '
-                        ' usage recipes at https://cw-geodata.readthedocs.io'
+                        ' usage recipes at https://solaris.readthedocs.io'
                         ' for examples.')
     parser.add_argument('--workers', '-w', type=int, default=1,
                         help='The number of parallel processing workers to'
@@ -172,8 +172,9 @@ def main():
 
     else:
         with Pool(processes=args.workers) as pool:
-            result = tqdm(pool.map(_func_wrapper, zip(repeat(df_to_px_mask),
-                                                      arg_dict_list)))
+            result = tqdm(pool.starmap(_func_wrapper,
+                                       zip(repeat(df_to_px_mask),
+                                           arg_dict_list)))
             pool.close()
 
 

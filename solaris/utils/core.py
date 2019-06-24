@@ -1,13 +1,14 @@
 import os
 import numpy as np
+from shapely.wkt import loads
+from shapely.geometry import Point
+from shapely.geometry.base import BaseGeometry
 import pandas as pd
 import geopandas as gpd
 import rasterio
 import skimage
-from shapely.wkt import loads
-from shapely.geometry import Point
-from shapely.geometry.base import BaseGeometry
-
+from fiona._err import CPLE_OpenFailedError
+from fiona.errors import DriverError
 
 def _check_rasterio_im_load(im):
     """Check if `im` is already loaded in; if not, load it in."""
@@ -47,7 +48,10 @@ def _check_df_load(df):
 def _check_gdf_load(gdf):
     """Check if `gdf` is already loaded in, if not, load from geojson."""
     if isinstance(gdf, str):
-        return gpd.read_file(gdf)
+        try:
+            return gpd.read_file(gdf)
+        except (DriverError, CPLE_OpenFailedError):
+            return gpd.GeoDataFrame()
     elif isinstance(gdf, gpd.GeoDataFrame):
         return gdf
     else:
