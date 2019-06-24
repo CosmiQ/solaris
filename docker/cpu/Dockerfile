@@ -1,17 +1,12 @@
 FROM nvidia/cuda:9.2-devel-ubuntu16.04
 LABEL maintainer="nweir <nweir@iqt.org>"
 
-ENV CUDNN_VERSION 7.3.0.29
-LABEL com.nvidia.cudnn.version="${CUDNN_VERSION}"
 ARG solaris_branch='master'
 
 
 # prep apt-get and cudnn
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	    apt-utils \
-            libcudnn7=$CUDNN_VERSION-1+cuda9.0 \
-            libcudnn7-dev=$CUDNN_VERSION-1+cuda9.0 && \
-    apt-mark hold libcudnn7 && \
     rm -rf /var/lib/apt/lists/*
 
 # install requirements
