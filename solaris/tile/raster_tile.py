@@ -9,7 +9,7 @@ from shapely.geometry import box
 import math
 from rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
-from ..utils.tile import tile_exists, read_cog_tile
+from ..utils.tile import read_cog_tile
 from ..utils.geo import latlon_to_utm_epsg, reproject_geometry, reproject
 from ..utils.geo import raster_get_projection_unit
 import numpy as np
