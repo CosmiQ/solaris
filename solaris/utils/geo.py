@@ -199,7 +199,7 @@ def get_bounds(input, crs=None):
     """
     input_data, input_type = _parse_geo_data(input)
     if input_type == 'vector':
-        bounds = input_data.geometry.total_bounds
+        bounds = list(input_data.geometry.total_bounds)
     elif input_type == 'raster':
         if isinstance(input_data, rasterio.DatasetReader):
             bounds = list(input_data.bounds)
