@@ -134,8 +134,8 @@ def main():
             return result
     else:
         with Pool(processes=args.workers) as pool:
-            result = tqdm(pool.map(_func_wrapper, zip(repeat(func_to_call),
-                                                      arg_dict_list)))
+            result = tqdm(pool.starmap(_func_wrapper, zip(repeat(func_to_call),
+                                                          arg_dict_list)))
             pool.close()
 
 

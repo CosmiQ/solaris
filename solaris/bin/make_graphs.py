@@ -101,8 +101,9 @@ def main():
 
     else:
         with Pool(processes=args.workers) as pool:
-            result = tqdm(pool.map(_func_wrapper, zip(repeat(geojson_to_graph),
-                                                      arg_dict_list)))
+            result = tqdm(pool.starmap(_func_wrapper,
+                                       zip(repeat(geojson_to_graph),
+                                           arg_dict_list)))
             pool.close()
 
 
