@@ -181,12 +181,14 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         pixels. `mask` dtype will coincide with `burn_value`.
 
     """
-
     # start with required checks and pre-population of values
     if out_file and not reference_im:
         raise ValueError(
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
+
+    if len(df) == 0:
+        return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
         # determine whether or not transform should be done
@@ -375,6 +377,9 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
         raise ValueError(
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
+
+    if len(df) == 0:
+        return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
         # determine whether or not transform should be done
