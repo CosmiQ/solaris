@@ -81,7 +81,7 @@ def spacenet_buildings_2(prop_csv, truth_csv, miniou=0.5, min_area=20):
 
 
 def off_nadir_buildings(prop_csv, truth_csv, image_columns={}, miniou=0.5,
-                        min_area=20):
+                        min_area=20, verbose=False):
     """Evaluate an off-nadir competition proposal csv.
 
     Uses :class:`Evaluator` to evaluate off-nadir challenge proposals. See
@@ -172,6 +172,8 @@ def off_nadir_buildings(prop_csv, truth_csv, image_columns={}, miniou=0.5,
 
     # Recalculate Values after Summation of AOIs
     for indexVal in results_DF.index:
+        if verbose:
+            print(indexVal)
         rowValue = results_DF[results_DF.index == indexVal]
         # Precision = TruePos / float(TruePos + FalsePos)
         if float(rowValue['TruePos'] + rowValue['FalsePos']) > 0:
