@@ -15,7 +15,7 @@ from ..utils.geo import raster_get_projection_unit
 import numpy as np
 
 
-class Tiler(object):
+class RasterTiler(object):
     """An object to tile geospatial image strips into smaller pieces.
 
     Arguments

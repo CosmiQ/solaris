@@ -1,102 +1,31 @@
 import geopandas as gpd
-import numpy as np
-from shapely.geometry import box
-import rasterio
+import json
 from affine import Affine
-from rasterio.io import DatasetReader
-from rasterio.warp import transform_bounds
 from rasterio.windows import Window
 from rasterio.vrt import WarpedVRT
 from rasterio.enums import Resampling
-from rasterio import transform
 from rio_tiler.utils import get_vrt_transform, has_alpha_band
 from rio_tiler.utils import _requested_tile_aligned_with_internal_tile
 
 
-def clip_gdf(gdf, poly_to_cut, min_partial_perc=0.0, geom_type="Polygon",
-             use_sindex=True):
-    """Clip GDF to a provided polygon.
+def save_empty_geojson(path, crs):
+    empty_geojson_dict = {
+        "type": "FeatureCollection",
+        "crs":
+        {
+            "type": "name",
+            "properties":
+            {
+                "name": "urn:ogc:def:crs:EPSG:{}".format(crs)
+            }
+        },
+        "features":
+        []
+    }
 
-    Note
-    ----
-    Clips objects within `gdf` to the region defined by
-    `poly_to_cut`. Also adds several columns to the output:
-
-    `origarea`
-        The original area of the polygons (only used if `geom_type` ==
-        ``"Polygon"``).
-    `origlen`
-        The original length of the objects (only used if `geom_type` ==
-        ``"LineString"``).
-    `partialDec`
-        The fraction of the object that remains after clipping
-        (fraction of area for Polygons, fraction of length for
-        LineStrings.) Can filter based on this by using `min_partial_perc`.
-    `truncated`
-        Boolean indicator of whether or not an object was clipped.
-
-    Arguments
-    ---------
-    gdf : :py:class:`geopandas.GeoDataFrame`
-        A :py:class:`geopandas.GeoDataFrame` of polygons to clip.
-    poly_to_cut : :py:class:`shapely.geometry.Polygon`
-        The polygon to clip objects in `gdf` to.
-    min_partial_perc : float, optional
-        The minimum fraction of an object in `gdf` that must be
-        preserved. Defaults to 0.0 (include any object if any part remains
-        following clipping).
-    geom_type : str, optional
-        Type of objects in `gdf`. Can be one of
-        ``["Polygon", "LineString"]`` . Defaults to ``"Polygon"`` .
-    use_sindex : bool, optional
-        Use the `gdf` sindex be used for searching. Improves efficiency
-        but requires `libspatialindex <http://libspatialindex.github.io/>`__ .
-
-    Returns
-    -------
-    cutGeoDF : :py:class:`geopandas.GeoDataFrame`
-        `gdf` with all contained objects clipped to `poly_to_cut` .
-        See notes above for details on additional clipping columns added.
-
-    """
-
-    # check if geoDF has origAreaField
-
-    if use_sindex:
-        gdf = search_gdf_polygon(gdf, poly_to_cut)
-
-    # if geom_type == "LineString":
-    if 'origarea' in gdf.columns:
-        pass
-    else:
-        if "geom_type" == "LineString":
-            gdf['origarea'] = 0
-        else:
-            gdf['origarea'] = gdf.area
-    if 'origlen' in gdf.columns:
-        pass
-    else:
-        if "geom_type" == "LineString":
-            gdf['origlen'] = gdf.length
-        else:
-            gdf['origlen'] = 0
-    # TODO must implement different case for lines and for spatialIndex
-    # (Assume RTree is already performed)
-
-    cutGeoDF = gdf.copy()
-    cutGeoDF.geometry = gdf.intersection(poly_to_cut)
-
-    if geom_type == 'Polygon':
-        cutGeoDF['partialDec'] = cutGeoDF.area / cutGeoDF['origarea']
-        cutGeoDF = cutGeoDF.loc[cutGeoDF['partialDec'] > min_partial_perc, :]
-        cutGeoDF['truncated'] = (cutGeoDF['partialDec'] != 1.0).astype(int)
-    else:
-        cutGeoDF = cutGeoDF[cutGeoDF.geom_type != "GeometryCollection"]
-        cutGeoDF['partialDec'] = 1
-        cutGeoDF['truncated'] = 0
-    # TODO: IMPLEMENT TRUNCATION MEASUREMENT FOR LINESTRINGS
-
-    return cutGeoDF
+    with open(path, 'w') as f:
+        json.dump(empty_geojson_dict, f)
+        f.close()
 
 
 def read_cog_tile(src,
