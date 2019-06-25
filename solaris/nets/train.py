@@ -102,11 +102,13 @@ class Trainer(object):
                     if self.verbose and batch_idx % 10 == 0:
 
                         print('    loss at batch {}: {}'.format(
-                            batch_idx, np.round(loss, 3)))
+                            batch_idx, np.round(loss, 5)))
                         # calculate metrics
                         for metric in self.metrics:
-                            print('{} score: {}'.format(
+                            print('     {} score: {}'.format(
                                 metric, metric(target, output)))
+                print('     Training loss at epoch {}: {}'.format(
+                    epoch, np.round(loss, 5)))
                 # VALIDATION
                 self.model.eval()
                 val_loss = []
