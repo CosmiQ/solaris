@@ -28,6 +28,7 @@ Functionality used directly from albumentations:
 - Normalize
 - HueSaturationValue  # NOTE: CAN ONLY HANDLE RGB 3-CHANNEL!
 - RGBShift  # NOTE: CAN ONLY HANDLE RGB 3-CHANNEL!
+- RandomRotate90
 - RandomBrightnessContrast
 - Blur
 - MotionBlur
@@ -67,7 +68,7 @@ __all__ = ['Crop', 'VerticalFlip', 'HorizontalFlip', 'Flip', 'Transpose',
            'OpticalDistortion', 'GridDistortion', 'ElasticTransform',
            'Normalize', 'HueSaturationValue', 'RGBShift',
            'RandomBrightnessContrast', 'Blur', 'MotionBlur', 'MedianBlur',
-           'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate',
+           'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate', 'RandomRotate90',
            'RandomScale', 'Cutout', 'Compose', 'OneOf', 'OneOrOther', 'NoOp',
            'RandomRotate90', 'process_aug_dict', 'get_augs', 'build_pipeline']
 

@@ -49,11 +49,7 @@ def get_single_loss(framework, loss_name, params_dict):
             return keras_losses.get(loss_name.lower(), None)
     elif framework in ['torch', 'pytorch']:
         if params_dict is None:
-            try:
-                return torch_losses.get(loss_name.lower(), None)()
-            except TypeError:
-                raise ValueError('The loss function named {}'
-                                 ' is not validfor Torch.'.format(loss_name))
+            return torch_losses.get(loss_name.lower(), None)()
         else:
             return torch_losses.get(loss_name.lower(), None)(**params_dict)
 

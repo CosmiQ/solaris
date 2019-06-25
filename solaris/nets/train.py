@@ -23,8 +23,8 @@ class Trainer(object):
         self.batch_size = self.config['batch_size']
         self.framework = self.config['nn_framework']
         self.model_name = self.config['model_name']
-        self.model_path = self.config['model_path']
-        self.model = get_model(self.model_name, self.nn_framework,
+        self.model_path = self.config.get('model_path', None)
+        self.model = get_model(self.model_name, self.framework,
                                self.model_path)
         self.train_df, self.val_df = get_train_val_dfs(self.config)
         self.train_datagen = make_data_generator(self.framework, self.config,
@@ -56,11 +56,16 @@ class Trainer(object):
 
         elif self.framework == 'torch':
             # create optimizer
-            self.optimizer = self.optimizer(
-                self.model.parameters(), lr=self.lr,
-                **self.config['training']['opt_args']
+            if self.config['training']['opt_args'] is not None:
+                self.optimizer = self.optimizer(
+                    self.model.parameters(), lr=self.lr,
+                    **self.config['training']['opt_args']
                 )
-            # wrap in lr_scheduler if one was created
+            else:
+                self.optimizer = self.optimizer(
+                    self.model.parameters(), lr=self.lr
+                )
+           # wrap in lr_scheduler if one was created
             for cb in self.callbacks:
                 if isinstance(cb, _LRScheduler):
                     self.optimizer = cb(
@@ -90,9 +95,9 @@ class Trainer(object):
                     print('Beginning training epoch {}'.format(epoch))
                 # TRAINING
                 self.model.train()
-                for batch_idx, batch_vals in enumerate(self.train_datagen):
-                    data = batch_vals['image'].cuda()
-                    target = batch_vals['label'].cuda()
+                for batch_idx, batch in enumerate(self.train_datagen):
+                    data = batch['image'].cuda()
+                    target = batch['label'].cuda()
                     self.optimizer.zero_grad()
                     output = self.model(data)
 

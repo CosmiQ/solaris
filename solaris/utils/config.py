@@ -21,12 +21,12 @@ def parse(path):
         f.close()
     if not config['train'] and not config['infer']:
         raise ValueError('"train", "infer", or both must be true.')
-    if config['train'] and config['data']['train_im_src'] is None:
-        raise ValueError('"train_im_src" must be provided if training.')
-    if config['train'] and config['data']['train_label_src'] is None:
-        raise ValueError('"train_label_src" must be provided if training.')
-    if config['infer'] and config['data']['infer_im_src'] is None:
-        raise ValueError('"infer_im_src" must be provided if "infer".')
+    if config['train'] and config['training_data_csv'] is None:
+        raise ValueError('"training_data_csv" must be provided if training.')
+    if config['infer'] and config['inference_data_csv'] is None:
+        raise ValueError('"inference_data_csv" must be provided if "infer".')
+    if config['training']['lr'] is not None:
+        config['training']['lr'] = float(config['training']['lr'])
     # TODO: IMPLEMENT UPDATING VALUES BASED ON EMPTY ELEMENTS HERE!
 
     return config
