@@ -1,6 +1,7 @@
 import os
 from solaris.nets.datagen import make_data_generator, InferenceTiler
 from solaris.data import data_dir
+from solaris.utils.io import _check_channel_order
 import pandas as pd
 import numpy as np
 import skimage
@@ -81,9 +82,9 @@ class TestDataGenerator(object):
         expected_mask[expected_mask != 0] = 1  # this should be binary
 
         assert np.array_equal(sample['image'],
-                              expected_im[np.newaxis, :, :, np.newaxis])
+                              expected_im[np.newaxis, np.newaxis, :, :])
         assert np.array_equal(sample['label'],
-                              expected_mask[np.newaxis, :, :, np.newaxis])
+                              expected_mask[np.newaxis, np.newaxis, :, :])
 
 
 class TestInferenceTiler(object):
