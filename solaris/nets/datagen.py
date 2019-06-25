@@ -196,6 +196,8 @@ class TorchDataset(Dataset):
         mask = imread(self.df['label'].iloc[idx])
         if not self.config['data_specs']['is_categorical']:
             mask[mask != 0] = 1
+        if len(mask.shape) == 2:
+            mask = mask[np.newaxis, :, :]
         sample = {'image': image, 'mask': mask}
         if self.aug:
             sample = self.aug(**sample)
