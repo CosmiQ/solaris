@@ -247,7 +247,7 @@ class InferenceTiler(object):
         """
         # read in the image if it's a path
         if isinstance(im, str):
-            im = imread(im)
+            im = imread(im, make_8bit=True)
         # determine how many samples will be generated with the sliding window
         src_im_height = im.shape[0]
         src_im_width = im.shape[1]

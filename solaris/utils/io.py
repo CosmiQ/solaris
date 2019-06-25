@@ -3,7 +3,8 @@ import numpy as np
 import skimage
 
 
-def imread(path, rescale=False, rescale_min='auto', rescale_max='auto'):
+def imread(path, make_8bit=False, rescale=False,
+           rescale_min='auto', rescale_max='auto'):
     """Read in an image file and rescale pixel values (if applicable).
 
     Note
@@ -20,6 +21,8 @@ def imread(path, rescale=False, rescale_min='auto', rescale_max='auto'):
     ---------
     path : str
         Path to the image file to load.
+    make_8bit : bool, optional
+        Should the image be converted to an 8-bit format? Defaults to False.
     rescale : bool, optional
         Should pixel intensities be rescaled? Defaults to no (False).
     rescale_min : ``'auto'`` or :class:`int` or :class:`float` or :class:`list`
@@ -65,10 +68,10 @@ def imread(path, rescale=False, rescale_min='auto', rescale_max='auto'):
             raise TypeError('The loaded image array is an unexpected dtype.')
     else:
         raise TypeError('The loaded image array is an unexpected dtype.')
-
-    im_arr = preprocess_im_arr(im_arr, dtype, rescale=rescale,
-                               rescale_min=rescale_min,
-                               rescale_max=rescale_max)
+    if make_8bit:
+        im_arr = preprocess_im_arr(im_arr, dtype, rescale=rescale,
+                                   rescale_min=rescale_min,
+                                   rescale_max=rescale_max)
     return im_arr
 
 
