@@ -73,6 +73,34 @@ __all__ = ['Crop', 'VerticalFlip', 'HorizontalFlip', 'Flip', 'Transpose',
            'RandomRotate90', 'process_aug_dict', 'get_augs', 'build_pipeline']
 
 
+class DropChannel(ImageOnlyTransform):
+    """Drop a channel from an input image.
+
+    Arguments
+    ---------
+    idx : int
+        The channel index to drop.
+    axis : int, optional (default: 1)
+        The axis to drop the channel from. Defaults to ``1`` (torch channel
+        axis). Set to ``3`` for TF models where the channel is the last axis
+        of an image.
+    always_apply : bool, optional (default: False)
+        Apply this transformation to every image? Defaults to no (``False``).
+    p : float [0, 1], optional (default: 1.0)
+        Probability that the augmentation is performed to each image. Defaults
+        to ``1.0``.
+    """
+
+    def __init__(self, idx, axis=1, always_apply=False, p=1.0):
+        super().__init__(always_apply, p)
+
+        self.idx = idx
+        self.axis = axis
+
+    def apply(self, im_arr, idx, axis=1, **params):
+        return np.delete(im_arr, idx, axis)
+
+
 class Rotate(DualTransform):
     """Array rotation using scipy.ndimage's implementation.
 
