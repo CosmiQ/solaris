@@ -97,7 +97,7 @@ class DropChannel(ImageOnlyTransform):
         self.idx = idx
         self.axis = axis
 
-    def apply(self, im_arr, idx, axis=1, **params):
+    def apply(self, im_arr, **params):
         return np.delete(im_arr, self.idx, self.axis)
 
 
