@@ -105,7 +105,7 @@ class Trainer(object):
                 self.model.train()
                 for batch_idx, batch in enumerate(self.train_datagen):
                     data = batch['image'].cuda()
-                    target = batch['mask'].cuda()
+                    target = batch['mask'].cuda().float()
                     self.optimizer.zero_grad()
                     output = self.model(data)
 
