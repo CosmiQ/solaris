@@ -23,8 +23,8 @@ class Trainer(object):
         self.batch_size = self.config['batch_size']
         self.framework = self.config['nn_framework']
         self.model_name = self.config['model_name']
-        self.model_path = self.config['model_path']
-        self.model = get_model(self.model_name, self.nn_framework,
+        self.model_path = self.config.get('model_path', None)
+        self.model = get_model(self.model_name, self.framework,
                                self.model_path)
         self.train_df, self.val_df = get_train_val_dfs(self.config)
         self.train_datagen = make_data_generator(self.framework, self.config,
