@@ -98,7 +98,7 @@ class DropChannel(ImageOnlyTransform):
         self.axis = axis
 
     def apply(self, im_arr, idx, axis=1, **params):
-        return np.delete(im_arr, idx, axis)
+        return np.delete(im_arr, self.idx, self.axis)
 
 
 class Rotate(DualTransform):
@@ -448,5 +448,5 @@ aug_matcher = {
     'gaussnoise': GaussNoise, 'clahe': CLAHE, 'randomgamma': RandomGamma,
     'tofloat': ToFloat, 'rotate': Rotate, 'randomscale': RandomScale,
     'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp,
-    'randomrotate90': RandomRotate90, 'dropchannel': DropChannel
+    'randomrotate90': RandomRotate90, 'dropchannel': DropChannelidx
 }
