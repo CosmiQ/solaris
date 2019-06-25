@@ -37,10 +37,10 @@ def get_loss(framework, config):
         return get_single_loss(framework, loss_name, loss_dict)
 
 
-def get_single_loss(framework, loss_name, loss_dict):
+def get_single_loss(framework, loss_name, params_dict):
     if framework == 'keras':
         if loss_name.lower() == 'focal':
-            return k_focal_loss(**loss_dict)
+            return k_focal_loss(**params_dict)
         else:
             # keras_losses in the next line is a matching dict
             # TODO: the next line doesn't handle non-focal loss functions that
@@ -48,7 +48,10 @@ def get_single_loss(framework, loss_name, loss_dict):
             # refactor this to handle that possibility.
             return keras_losses.get(loss_name.lower(), None)
     elif framework in ['torch', 'pytorch']:
-        return torch_losses.get(loss_name.lower(), None)(**loss_dict)
+        if params_dict is None:
+            return torch_losses.get(loss_name.lower(), None)()
+        else:
+            return torch_losses.get(loss_name.lower(), None)(**params_dict)
 
 
 def keras_composite_loss(loss_dict, weight_dict):

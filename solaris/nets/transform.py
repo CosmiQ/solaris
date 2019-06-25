@@ -28,6 +28,7 @@ Functionality used directly from albumentations:
 - Normalize
 - HueSaturationValue  # NOTE: CAN ONLY HANDLE RGB 3-CHANNEL!
 - RGBShift  # NOTE: CAN ONLY HANDLE RGB 3-CHANNEL!
+- RandomRotate90
 - RandomBrightnessContrast
 - Blur
 - MotionBlur
@@ -57,7 +58,8 @@ from albumentations.augmentations.transforms import Crop, VerticalFlip,       \
     HorizontalFlip, Flip, Transpose, Resize, CenterCrop, RandomCrop, Cutout,  \
     RandomSizedCrop, OpticalDistortion, GridDistortion, ElasticTransform,     \
     Normalize, HueSaturationValue, RGBShift, RandomBrightnessContrast,        \
-    Blur, MotionBlur, MedianBlur, GaussNoise, CLAHE, RandomGamma, ToFloat
+    Blur, MotionBlur, MedianBlur, GaussNoise, CLAHE, RandomGamma, ToFloat,    \
+    RandomRotate90
 from albumentations.core.composition import Compose, OneOf, OneOrOther
 
 
@@ -66,7 +68,7 @@ __all__ = ['Crop', 'VerticalFlip', 'HorizontalFlip', 'Flip', 'Transpose',
            'OpticalDistortion', 'GridDistortion', 'ElasticTransform',
            'Normalize', 'HueSaturationValue', 'RGBShift',
            'RandomBrightnessContrast', 'Blur', 'MotionBlur', 'MedianBlur',
-           'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate',
+           'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate', 'RandomRotate90',
            'RandomScale', 'Cutout', 'Compose', 'OneOf', 'OneOrOther', 'NoOp',
            'process_aug_dict', 'get_augs', 'build_pipeline']
 
@@ -417,5 +419,6 @@ aug_matcher = {
     'blur': Blur, 'motionblur': MotionBlur, 'medianblur': MedianBlur,
     'gaussnoise': GaussNoise, 'clahe': CLAHE, 'randomgamma': RandomGamma,
     'tofloat': ToFloat, 'rotate': Rotate, 'randomscale': RandomScale,
-    'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp
+    'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp,
+    'randomrotate90': RandomRotate90
 }

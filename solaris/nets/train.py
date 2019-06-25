@@ -56,11 +56,16 @@ class Trainer(object):
 
         elif self.framework == 'torch':
             # create optimizer
-            self.optimizer = self.optimizer(
-                self.model.parameters(), lr=self.lr,
-                **self.config['training']['opt_args']
+            if self.config['training']['opt_args'] is not None:
+                self.optimizer = self.optimizer(
+                    self.model.parameters(), lr=self.lr,
+                    **self.config['training']['opt_args']
                 )
-            # wrap in lr_scheduler if one was created
+            else: 
+                self.optimizer = self.optimizer(
+                    self.model.parameters(), lr=self.lr
+                )
+           # wrap in lr_scheduler if one was created
             for cb in self.callbacks:
                 if isinstance(cb, _LRScheduler):
                     self.optimizer = cb(
@@ -90,8 +95,9 @@ class Trainer(object):
                     print('Beginning training epoch {}'.format(epoch))
                 # TRAINING
                 self.model.train()
-                for batch_idx, (data, target) in enumerate(self.train_datagen):
-                    data, target = data.cuda(), target.cuda()
+                for batch_idx, batch in enumerate(self.train_datagen):
+                    data = batch['image'].cuda() 
+                    target = batch['label'].cuda()
                     self.optimizer.zero_grad()
                     output = self.model(data)
 
