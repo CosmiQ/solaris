@@ -66,9 +66,9 @@ def imread(path, rescale=False, rescale_min='auto', rescale_max='auto'):
     else:
         raise TypeError('The loaded image array is an unexpected dtype.')
 
-    im_arr = preprocess_im_arr(im_arr, dtype, rescale=rescale,
-                               rescale_min=rescale_min,
-                               rescale_max=rescale_max)
+    # im_arr = preprocess_im_arr(im_arr, dtype, rescale=rescale,
+    #                            rescale_min=rescale_min,
+    #                            rescale_max=rescale_max)
     return im_arr
 
 
@@ -280,3 +280,14 @@ def rescale_arr(im_arr, im_format, rescale_min='auto', rescale_max='auto'):
             scale_factor/(rescale_max-rescale_min))
 
     return im_arr
+
+
+def _check_channel_order(im_arr, framework):
+    im_shape = im_arr.shape
+    if len(im_shape) > 2:  # doesn't matter for 1-channel images
+        if im_shape[0] > im_shape[2] and framework in ['torch', 'pytorch']:
+            # in [Y, X, C], needs to be in [C, Y, X]
+            im_arr = np.moveaxis(im_arr, 2, 0)
+        elif im_shape[2] > im_shape[0] and framework == 'keras':
+            # in [C, Y, X], needs to be in [Y, X, C]
+            im_arr = np.moveaxis(im_arr, 0, 2)
