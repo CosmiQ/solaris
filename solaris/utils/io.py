@@ -287,12 +287,19 @@ def rescale_arr(im_arr, im_format, rescale_min='auto', rescale_max='auto'):
 
 def _check_channel_order(im_arr, framework):
     im_shape = im_arr.shape
-    if len(im_shape) > 2:  # doesn't matter for 1-channel images
+    if len(im_shape) == 3:  # doesn't matter for 1-channel images
         if im_shape[0] > im_shape[2] and framework in ['torch', 'pytorch']:
             # in [Y, X, C], needs to be in [C, Y, X]
             im_arr = np.moveaxis(im_arr, 2, 0)
         elif im_shape[2] > im_shape[0] and framework == 'keras':
             # in [C, Y, X], needs to be in [Y, X, C]
             im_arr = np.moveaxis(im_arr, 0, 2)
+    elif len(im_shape) == 4:  # for a whole minibatch
+        if im_shape[1] > im_shape[3] and framework in ['torch', 'pytorch']:
+            # in [Y, X, C], needs to be in [C, Y, X]
+            im_arr = np.moveaxis(im_arr, 3, 1)
+        elif im_shape[3] > im_shape[1] and framework == 'keras':
+            # in [C, Y, X], needs to be in [Y, X, C]
+            im_arr = np.moveaxis(im_arr, 1, 3)
 
     return im_arr
