@@ -448,5 +448,5 @@ aug_matcher = {
     'gaussnoise': GaussNoise, 'clahe': CLAHE, 'randomgamma': RandomGamma,
     'tofloat': ToFloat, 'rotate': Rotate, 'randomscale': RandomScale,
     'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp,
-    'randomrotate90': RandomRotate90, 'dropchannel': DropChannelidx
+    'randomrotate90': RandomRotate90, 'dropchannel': DropChannel
 }
