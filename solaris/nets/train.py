@@ -116,7 +116,7 @@ class Trainer(object):
                     if self.verbose and batch_idx % 10 == 0:
 
                         print('    loss at batch {}: {}'.format(
-                            batch_idx, np.round(loss, 3)))
+                            batch_idx, loss.round(5)))
                         # calculate metrics
                         for metric in self.metrics:
                             print('{} score: {}'.format(
@@ -128,11 +128,11 @@ class Trainer(object):
                                 target) in enumerate(self.val_datagen):
                     val_output = self.model(data)
                     val_loss.append(self.loss(val_output, target))
-                val_loss = np.mean(val_loss)
+                val_loss = torch.mean(val_loss)
                 if self.verbose:
                     print()
                     print('    Validation loss at epoch {}: {}'.format(
-                        epoch, val_loss))
+                        epoch, val_loss.round(5)))
                     print()
                 check_continue = self._run_torch_callbacks(loss, val_loss)
                 if not check_continue:
