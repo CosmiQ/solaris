@@ -292,6 +292,8 @@ torch_losses = {
     'binary_crossentropy': nn.BCELoss,
     'bce': nn.BCELoss,
     'bceloss': nn.BCELoss,
+    'bcewithlogits': nn.BCEWithLogitsLoss,
+    'bcewithlogitsloss': nn.BCEWithLogitsLoss,
     'hinge': nn.HingeEmbeddingLoss,
     'hingeembeddingloss': nn.HingeEmbeddingLoss,
     'multiclass_hinge': nn.MultiMarginLoss,
