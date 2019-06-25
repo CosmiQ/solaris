@@ -12,6 +12,7 @@ from .metrics import get_metrics
 from ..utils.core import get_data_paths
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
+import tensorflow as tf
 
 
 class Trainer(object):
@@ -38,9 +39,14 @@ class Trainer(object):
         self.callbacks = get_callbacks(self.framework, self.config)
         self.metrics = get_metrics(self.framework, self.config)
         self.verbose = self.config['training']['verbose']
+        if self.framework in ['torch', 'pytorch']:
+            self.gpu_available = torch.cuda.is_available()
+        elif self.framework == 'keras':
+            self.gpu_available = tf.test.is_gpu_available()
 
         self.is_initialized = False
         self.stop = False
+
 
         self.initialize_model()
 
@@ -55,6 +61,8 @@ class Trainer(object):
                                             metrics=self.metrics)
 
         elif self.framework == 'torch':
+            if self.gpu_available:
+                self.model = self.model.cuda()
             # create optimizer
             if self.config['training']['opt_args'] is not None:
                 self.optimizer = self.optimizer(
