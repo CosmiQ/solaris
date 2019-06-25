@@ -193,14 +193,14 @@ class TorchDataset(Dataset):
         'Get one image:mask pair'
         # Generate indexes of the batch
         image = imread(self.df['image'].iloc[idx])
-        mask = imread(self.df['label'].iloc[idx])
+        mask = imread(self.df['mask'].iloc[idx])
         if not self.config['data_specs']['is_categorical']:
             mask[mask != 0] = 1
-        sample = {'image': image, 'label': mask}
+        sample = {'image': image, 'mask': mask}
         if self.aug:
             sample = self.aug(**sample)
         sample['image'] = _check_channel_order(sample['image'], 'torch')
-        sample['label'] = _check_channel_order(sample['label'], 'torch')
+        sample['mask'] = _check_channel_order(sample['mask'], 'torch')
         return sample
 
 
