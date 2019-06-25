@@ -200,7 +200,7 @@ class TorchDataset(Dataset):
         if self.aug:
             sample = self.aug(**sample)
         sample['image'] = _check_channel_order(sample['image'], 'torch')
-        sample['mask'] = _check_channel_order(sample['mask'], 'torch')
+        sample['label'] = _check_channel_order(sample['label'], 'torch')
         return sample
 
 
