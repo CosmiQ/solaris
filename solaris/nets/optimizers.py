@@ -46,6 +46,6 @@ def get_optimizer(framework, config):
                          'file.')
 
     if framework in ['torch', 'pytorch']:
-        return torch_optimizers.get(config['training']['optimizer'], None)
+        return torch_optimizers.get(config['training']['optimizer'].lower())
     elif framework == 'keras':
-        return keras_optimizers.get(config['training']['optimizer'], None)
+        return keras_optimizers.get(config['training']['optimizer'].lower())

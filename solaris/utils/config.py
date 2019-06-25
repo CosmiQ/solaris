@@ -19,9 +19,6 @@ def parse(path):
     with open(path, 'r') as f:
         config = yaml.safe_load(f)
         f.close()
-    if config['model_name'] not in zoo.models:
-        raise ValueError('{} is not a valid model name.'.format(
-            config['model_name']))
     if not config['train'] and not config['infer']:
         raise ValueError('"train", "infer", or both must be true.')
     if config['train'] and config['data']['train_im_src'] is None:
