@@ -47,7 +47,6 @@ class Trainer(object):
         self.is_initialized = False
         self.stop = False
 
-
         self.initialize_model()
 
     def initialize_model(self):
@@ -106,10 +105,7 @@ class Trainer(object):
                 self.model.train()
                 for batch_idx, batch in enumerate(self.train_datagen):
                     data = batch['image'].cuda()
-                #    print(f'Data type: {type(data)}')
-                #    print(f'Data mean: {torch.mean(data, (2, 3)).data}')
                     target = batch['mask'].cuda().float()
-                #    print(f'Target type: {type(target)}')
                     self.optimizer.zero_grad()
                     output = self.model(data)
                     loss = self.loss(output, target)
@@ -142,7 +138,7 @@ class Trainer(object):
                         epoch, val_loss))
                     print()
 #                    for metric in self.metrics['val']:
-#                        with tf_sess.as_default(): 
+#                        with tf_sess.as_default():
 #                            print('validation {} score: {}'.format(
 #                            metric, metric(tf.convert_to_tensor(target.detach().cpu().numpy(), dtype='float64'), tf.convert_to_tensor(output.detach().cpu().numpy(), dtype='float64')).eval()))
                 check_continue = self._run_torch_callbacks(loss, val_loss)
@@ -178,7 +174,7 @@ class Trainer(object):
                 elif cb.monitor == 'periodic':
                     cb(self.model)
 
-            return True
+        return True
 
     def save_model(self):
         """Save the final model output."""

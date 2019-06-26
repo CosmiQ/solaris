@@ -232,3 +232,11 @@ class TorchModelCheckpoint(object):
             torch.save(model.state_dict(), save_name)
         else:
             torch.save(model, save_name)
+
+
+torch_callback_dict = {
+    "early_stopping": TorchEarlyStopping,
+    "model_checkpoint": TorchModelCheckpoint,
+    "terminate_on_nan": TorchTerminateOnNaN,
+    "terminate_on_metric_nan": TorchTerminateOnMetricNaN
+}

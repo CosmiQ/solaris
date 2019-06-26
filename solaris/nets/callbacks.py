@@ -1,6 +1,7 @@
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras.callbacks import Callback
+from .torch_callbacks import torch_callback_dict
 import torch
 
 
@@ -44,7 +45,7 @@ def get_callbacks(framework, config):
             if callback == 'lr_schedule':
                 callbacks.append(get_lr_schedule(framework, config))
             else:
-                callbacks.append(callback)
+                callbacks.append(torch_callback_dict[callback](**params))
 
     return callbacks
 

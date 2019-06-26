@@ -128,9 +128,9 @@ training:
                          # if not provided, only the final model is saved.
   callbacks:
     model_checkpoint:
-      filepath: '/home/local_data/solaris_test_run/xdxd_best.pth'
+      filepath: 'xdxd_sn4_best.pth'
       monitor: val_loss
-  model_dest_path: '/home/local_data/solaris_test_run/xdxd.pth'  # path to save the trained model output and checkpoint(s)
+  model_dest_path: 'xdxd_sn4.pth'  # path to save the trained model output and checkpoint(s)
                      # to. Should be a filename ending in .h5, .hdf5 for keras
                      # or .pth, .pt for torch. Epoch numbers will be appended
                      # for checkpoints.
