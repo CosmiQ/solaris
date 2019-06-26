@@ -16,7 +16,7 @@ infer: false  # set to false for training only
 
 pretrained: false  # use pretrained weights associated with the model?
 nn_framework:  torch
-batch_size: 32
+batch_size: 4
 
 data_specs:
   width: 512
@@ -62,6 +62,9 @@ inference_data_csv: # TODO # path to the reference csv that defines inference da
 
 training_augmentation:  # augmentations for use with training data
   augmentations:
+    DropChannel:
+      idx: 3
+      axis: 2
     HorizontalFlip:
       p: 0.5
     RandomRotate90:
@@ -71,9 +74,16 @@ training_augmentation:  # augmentations for use with training data
       width: 512
       p: 1.0
     Normalize:
+      mean:  # mean values after dividing by max pixel value
+        - 0.006479
+        - 0.009328
+        - 0.01123
+      std:  # std after dividing by max pixel value
+        - 0.004986
+        - 0.004964
+        - 0.004950
       p: 1.0
-    # include augmentations here. See the documentation for options and
-    # required arguments.
+      max_pixel_value: 65535.0
   p: 1.0  # probability of applying the entire training augmentation pipeline.
   shuffle: true  # should the image order be shuffled in each epoch.
 validation_augmentation:  # augmentations for use with validation data
@@ -102,11 +112,11 @@ training:
   opt_args:  # dictionary of values (e.g. alpha, gamma, momentum) specific to
              # the optimizer.
   loss:
-    - bce  # loss function(s). See docs for options. This should be a list of loss
-    - jaccard     # names with sublists of loss function hyperparameters (if applicable).
-         # See the docs for more details and usage examples.
+    bcewithlogits:
+    jaccard:
+
   loss_weights:
-    - bce: 1  # (optional) weights to use for each loss function if using
+    - bcewithlogits: 1  # (optional) weights to use for each loss function if using
     - jaccard: 0.25 # loss: composite. This must be a set of key:value pairs where
                  # defining the weight for each sub-loss within the composite.
                  # If using a composite and a value isn't provided here, all

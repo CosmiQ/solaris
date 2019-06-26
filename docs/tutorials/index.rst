@@ -52,11 +52,12 @@ The `Python API Reference <../api.html>`_ provides full documentation of
 everything described above and more. For usage examples to get you started, see
 the tutorials below.
 
-* `Tiling imagery with solaris <api_tiling_tutorial.html>`_
-* `Creating training masks with solaris <api_masks_tutorial.html>`_
-* `Training a SpaceNet model with solaris <api_training_spacenet.html>`_
-* `Inference with a pre-trained SpaceNet model using solaris <api_inference_spacenet.html>`_
-* `Training a custom model using solaris <api_training_custom.html>`_
+* `Tiling imagery <api_tiling_tutorial.html>`_
+* `Creating training masks <api_masks_tutorial.html>`_
+* `Training a SpaceNet model <api_training_spacenet.html>`_
+* `Inference with a pre-trained SpaceNet model <api_inference_spacenet.html>`_
+* `Training a custom model <api_training_custom.html>`_
+* `Converting pixel masks to vector labels <api_mask_to_vector.html>`_
 * `Scoring your model's performance with the solaris Python API <api_eval.html>`_
 
 
