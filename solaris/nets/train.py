@@ -141,7 +141,8 @@ class Trainer(object):
 #                        with tf_sess.as_default():
 #                            print('validation {} score: {}'.format(
 #                            metric, metric(tf.convert_to_tensor(target.detach().cpu().numpy(), dtype='float64'), tf.convert_to_tensor(output.detach().cpu().numpy(), dtype='float64')).eval()))
-                check_continue = self._run_torch_callbacks(loss, val_loss)
+                check_continue = self._run_torch_callbacks(
+                    loss.cpu().numpy(), val_loss.cpu().numpy())
                 if not check_continue:
                     break
 
