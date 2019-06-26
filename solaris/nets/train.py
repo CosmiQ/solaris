@@ -31,7 +31,7 @@ class Trainer(object):
         self.train_datagen = make_data_generator(self.framework, self.config,
                                                  self.train_df, stage='train')
         self.val_datagen = make_data_generator(self.framework, self.config,
-                                               self.train_df, stage='train')
+                                               self.val_df, stage='train')
         self.epochs = self.config['training']['epochs']
         self.optimizer = get_optimizer(self.framework, self.config)
         self.lr = self.config['training']['lr']
@@ -98,6 +98,7 @@ class Trainer(object):
                                      callbacks=self.callbacks)
 
         elif self.framework == 'torch':
+#            tf_sess = tf.Session()
             for epoch in range(self.epochs):
                 if self.verbose:
                     print('Beginning training epoch {}'.format(epoch))
@@ -105,10 +106,12 @@ class Trainer(object):
                 self.model.train()
                 for batch_idx, batch in enumerate(self.train_datagen):
                     data = batch['image'].cuda()
+                #    print(f'Data type: {type(data)}')
+                #    print(f'Data mean: {torch.mean(data, (2, 3)).data}')
                     target = batch['mask'].cuda().float()
+                #    print(f'Target type: {type(target)}')
                     self.optimizer.zero_grad()
                     output = self.model(data)
-
                     loss = self.loss(output, target)
                     loss.backward()
                     self.optimizer.step()
@@ -116,24 +119,32 @@ class Trainer(object):
                     if self.verbose and batch_idx % 10 == 0:
 
                         print('    loss at batch {}: {}'.format(
-                            batch_idx, loss.round(5)))
+                            batch_idx, loss))
                         # calculate metrics
-                        for metric in self.metrics:
-                            print('{} score: {}'.format(
-                                metric, metric(target, output)))
+#                        for metric in self.metrics['train']:
+#                            with tf_sess.as_default():
+#                                print('{} score: {}'.format(
+#                                    metric, metric(tf.convert_to_tensor(target.detach().cpu().numpy(), dtype='float64'), tf.convert_to_tensor(output.detach().cpu().numpy(), dtype='float64')).eval()))
                 # VALIDATION
-                self.model.eval()
-                val_loss = []
-                for batch_idx, (data,
-                                target) in enumerate(self.val_datagen):
-                    val_output = self.model(data)
-                    val_loss.append(self.loss(val_output, target))
-                val_loss = torch.mean(val_loss)
+                with torch.no_grad():
+                    self.model.eval()
+                    torch.cuda.empty_cache()
+                    val_loss = []
+                    for batch_idx, batch in enumerate(self.val_datagen):
+                        data = batch['image'].cuda()
+                        target = batch['mask'].cuda().float()
+                        val_output = self.model(data)
+                        val_loss.append(self.loss(val_output, target))
+                    val_loss = torch.mean(torch.stack(val_loss))
                 if self.verbose:
                     print()
                     print('    Validation loss at epoch {}: {}'.format(
-                        epoch, val_loss.round(5)))
+                        epoch, val_loss))
                     print()
+#                    for metric in self.metrics['val']:
+#                        with tf_sess.as_default(): 
+#                            print('validation {} score: {}'.format(
+#                            metric, metric(tf.convert_to_tensor(target.detach().cpu().numpy(), dtype='float64'), tf.convert_to_tensor(output.detach().cpu().numpy(), dtype='float64')).eval()))
                 check_continue = self._run_torch_callbacks(loss, val_loss)
                 if not check_continue:
                     break
