@@ -40,7 +40,17 @@ From a terminal, run::
   git clone https://github.com/cosmiq/solaris.git
   cd solaris
   git checkout [branch_name]  # for example, git checkout dev
+
+If you have access to a GPU where you're installing ``solaris``, use the following::
+
+  conda env create -f environment-gpu.yml
+
+If you don't have access to a GPU::
+
   conda env create -f environment.yml
+
+Finally, run the last two lines (for installs both with or without GPU)::
+
   conda activate solaris
   pip install .
 

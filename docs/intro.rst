@@ -1,9 +1,7 @@
 
-
-
-==============================
+##############################
 An introduction to ``solaris``
-==============================
+##############################
 
 --------------
 
@@ -48,7 +46,7 @@ open source tool suite that can:
 
 #. Accommodate any geospatial imagery and label formats,
 
-#. prepare them for use in machine learning in a standardized fashion,
+#. prepare data for use in machine learning in a standardized fashion,
 
 #. train computer vision models and generate predictions on geospatial imagery
    data using common deep learning frameworks, and
