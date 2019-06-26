@@ -225,9 +225,9 @@ class TorchModelCheckpoint(object):
             entire model must be saved to resume training without re-defining
             the model architecture, optimizer, and loss function.
         """
-        save_name = os.splitext(self.filepath)[0] + '_{}+{}'.format(
+        save_name = os.path.splitext(self.filepath)[0] + '_{}+{}'.format(
             self.epoch, np.round(self.last_saved_value, 3))
-        save_name = save_name + os.splitext(self.filepath)[1]
+        save_name = save_name + os.path.splitext(self.filepath)[1]
         if weights_only:
             torch.save(model.state_dict(), save_name)
         else:
