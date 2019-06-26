@@ -44,7 +44,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     # 'autoapi.extension',
-    'sphinx.ext.autosectionlabel'
+    'sphinx.ext.autosectionlabel',
+    'nbsphinx'
 ]
 
 # autoapi_type = 'python'

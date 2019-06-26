@@ -8,6 +8,19 @@ An open source machine learning pipeline for geospatial imagery
 ***************************************************************
 
 
+.. toctree::
+  :name: mastertoc
+  :maxdepth: 3
+  :glob:
+  :hidden:
+
+  index
+  installation
+  intro
+  api
+  tutorials/index
+
+
 ==========
 
 User Guide

@@ -2,6 +2,19 @@
 Solaris Tutorials and Cookbook
 ##############################
 
+.. toctree::
+  :maxdepth: 3
+  :glob:
+  :hidden:
+
+  index
+  cli*
+
+  api
+  tutorials/index
+  notebooks/*.ipynb
+
+
 There are two different ways to use ``solaris``:
 
 * :ref:`The Command Line Interface` (Simple use with existing models)
