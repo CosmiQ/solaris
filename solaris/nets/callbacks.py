@@ -41,7 +41,7 @@ def get_callbacks(framework, config):
             else:
                 callbacks.append(keras_callbacks[callback](**params))
     elif framework == 'torch':
-        for callback in config['training']['callbacks'].keys():
+        for callback, params in config['training']['callbacks'].items():
             if callback == 'lr_schedule':
                 callbacks.append(get_lr_schedule(framework, config))
             else:
