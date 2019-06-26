@@ -12,6 +12,7 @@ from ..utils.core import _check_crs, _check_rasterio_im_load
 from ..utils.tile import read_cog_tile
 from ..utils.geo import latlon_to_utm_epsg, reproject_geometry, reproject
 from ..utils.geo import raster_get_projection_unit
+from tqdm import tqdm
 import numpy as np
 
 
@@ -129,15 +130,13 @@ class RasterTiler(object):
         self.verbose = verbose
         if self.verbose:
             print('Tiler initialized.')
-            print('is_cog: {}'.format(self.is_cog))
-            print('src: {}'.format(self.src))
-            print('src_path: {}'.format(self.src_path))
             print('dest_dir: {}'.format(self.dest_dir))
-            print('dest_crs: {}'.format(self.dest_crs))
-            print('tile_size: {}'.format(self.tile_size))
-            print('size_in_meters: {}'.format(self.size_in_meters))
-            print('nodata: {}'.format(self.nodata))
-            print('alpha: {}'.format(self.alpha))
+            if dest_crs is not None:
+                print('dest_crs: EPSG:{}'.format(self.dest_crs))
+            else:
+                print('dest_crs will be inferred from source data.')
+            print('src_tile_size: {}'.format(self.src_tile_size))
+            print('tile size units metric: {}'.format(self.src_metric_size))
 
     def tile(self, src, dest_dir=None, channel_idxs=None, nodata=None,
              alpha=None, aoi_bounds=None, restrict_to_aoi=False):
@@ -145,10 +144,18 @@ class RasterTiler(object):
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
                                        alpha, aoi_bounds, restrict_to_aoi)
 
-        for tile_data, mask, profile in tile_gen:
+        if self.verbose:
+            print('Beginning tiling...')
+        for tile_data, mask, profile in tqdm(tile_gen):
             self.save_tile(tile_data, mask, profile)
-
+        if self.verbose:
+            print('Tiling complete. Cleaning up...')
         self.src.close()
+        if os.path.exists(os.path.join(self.dest_dir, 'tmp.tif')) and \
+                self.src_crs != _check_crs(self.src.crs):
+            os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
+        if self.verbose:
+            print("Done.")
 
     def tile_generator(self, src, dest_dir=None, channel_idxs=None,
                        nodata=None, alpha=None, aoi_bounds=None,
@@ -210,18 +217,37 @@ class RasterTiler(object):
             self.is_cog = cog_validate(src)
         else:
             self.is_cog = cog_validate(src.name)
+        if self.verbose:
+            print('COG: {}'.format(self.is_cog))
         self.src = _check_rasterio_im_load(src)
         if channel_idxs is None:  # if not provided, include them all
             channel_idxs = list(range(1, self.src.count + 1))
             print(channel_idxs)
+        self.src_crs = _check_crs(self.src.crs)
+        if self.verbose:
+            print('Source CRS: EPSG:{}'.format(self.src_crs))
         if self.dest_crs is None:
-            self.dest_crs = _check_crs(self.src.crs)
+            self.dest_crs = self.src_crs
+        if self.verbose:
+            print('Destination CRS: EPSG:{}'.format(self.dest_crs))
         self.src_path = self.src.name
-        proj_unit = raster_get_projection_unit(self.src).strip('"').strip("'")
+        self.proj_unit = raster_get_projection_unit(
+            self.src).strip('"').strip("'")
+        if self.verbose:
+            print("Inputs OK.")
         if self.src_metric_size:
-            if proj_unit not in ['meter', 'metre']:
+            if self.verbose:
+                print("Checking if inputs are in metric units...")
+            if self.proj_unit not in ['meter', 'metre']:
+                if self.verbose:
+                    print("Input CRS is not metric. "
+                          "Reprojecting the input to UTM.")
                 self.src = reproject(self.src,
-                                     resampling_method=self.resampling)
+                                     resampling_method=self.resampling,
+                                     dest_path=os.path.join(self.dest_dir,
+                                                            'tmp.tif'))
+                if self.verbose:
+                    print('Done reprojecting.')
         if nodata is None and self.nodata is None:
             self.nodata = self.src.nodata
         else:
@@ -256,32 +282,24 @@ class RasterTiler(object):
                     tile_data = vrt.read(window=window,
                                          resampling=getattr(Resampling,
                                                             self.resampling),
-                                         out_shape=out_shape,
                                          indexes=channel_idxs)
                 else:
                     tile_data = vrt.read(window=window,
                                          resampling=getattr(Resampling,
-                                                            self.resampling),
-                                         out_shape=out_shape)
+                                                            self.resampling))
                 # get the affine xform between src and dest for the tile
                 aff_xform = transform.from_bounds(*tb,
                                                   self.dest_tile_size[1],
                                                   self.dest_tile_size[0])
-                if self.nodata is not None:
+                if self.nodata:
                     mask = np.all(tile_data != nodata,
                                   axis=0).astype(np.uint8) * 255
-                elif self.alpha is not None:
+                elif self.alpha:
                     mask = vrt.read(self.alpha, window=window,
-                                    out_shape=(self.dest_tile_size[1],
-                                               self.dest_tile_size[0]),
                                     resampling=getattr(Resampling,
                                                        self.resampling))
                 else:
-                    mask = vrt.read_masks(1, window=window,
-                                          out_shape=(self.dest_tile_size[1],
-                                                     self.dest_tile_size[0]),
-                                          resampling=getattr(Resampling,
-                                                             self.resampling))
+                    mask = None  # placeholder
 
             else:
                 tile_data, mask, window, aff_xform = read_cog_tile(
@@ -307,9 +325,16 @@ class RasterTiler(object):
     def save_tile(self, tile_data, mask, profile):
         """Save a tile created by ``Tiler.tile_generator()``."""
         dest_fname_root = os.path.splitext(os.path.split(self.src_path)[1])[0]
-        dest_fname = '{}_{}_{}.tif'.format(dest_fname_root,
-                                           int(profile['transform'][2]),
-                                           int(profile['transform'][5]))
+        if self.proj_unit not in ['meter', 'metre']:
+            dest_fname = '{}_{}_{}.tif'.format(
+                dest_fname_root,
+                np.round(profile['transform'][2], 3),
+                np.round(profile['transform'][5], 3))
+        else:
+            dest_fname = '{}_{}_{}.tif'.format(
+                dest_fname_root,
+                int(profile['transform'][2]),
+                int(profile['transform'][5]))
         # if self.cog_output:
         #     dest_path = os.path.join(self.dest_dir, 'tmp.tif')
         #else:

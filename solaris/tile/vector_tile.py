@@ -1,8 +1,10 @@
 import os
+import numpy as np
 from shapely.geometry import box, Polygon
 import geopandas as gpd
 from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
+from tqdm import tqdm
 
 
 class VectorTiler(object):
@@ -18,6 +20,8 @@ class VectorTiler(object):
 
     def __init__(self, dest_dir=None, dest_crs=None, output_format='GeoJSON',
                  verbose=False):
+        if verbose:
+            print('Preparing the tiler...')
         self.dest_dir = dest_dir
         if not os.path.isdir(self.dest_dir):
             os.makedirs(self.dest_dir)
@@ -25,6 +29,8 @@ class VectorTiler(object):
             self.dest_crs = _check_crs(dest_crs)
         self.output_format = output_format
         self.verbose = verbose
+        if self.verbose:
+            print('Initialization done.')
 
     def tile(self, src, tile_bounds, geom_type='Polygon',
              split_multi_geometries=True, min_partial_perc=0.0,
@@ -61,11 +67,17 @@ class VectorTiler(object):
         tile_gen = self.tile_generator(src, tile_bounds, geom_type,
                                        split_multi_geometries,
                                        min_partial_perc)
-        for tile_gdf, tb in tile_gen:
-            out_path = os.path.join(self.dest_dir,
-                                    '{}_{}_{}.json'.format(dest_fname_base,
-                                                           int(tb[0]),
-                                                           int(tb[1])))
+        for tile_gdf, tb in tqdm(tile_gen):
+            if isinstance(tb[0], float):
+                out_path = os.path.join(
+                    self.dest_dir, '{}_{}_{}.json'.format(dest_fname_base,
+                                                          np.round(tb[0], 3),
+                                                          np.round(tb[1], 3)))
+            else:
+                out_path = os.path.join(
+                    self.dest_dir, '{}_{}_{}.json'.format(dest_fname_base,
+                                                          int(tb[0]),
+                                                          int(tb[1])))
             if len(tile_gdf) > 0:
                 tile_gdf.to_file(out_path, driver='GeoJSON')
             else:
@@ -186,9 +198,6 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
         See notes above for details on additional clipping columns added.
 
     """
-
-    # check if geoDF has origAreaField
-    print(tile_bounds)
     if isinstance(tile_bounds, tuple):
         tb = box(*tile_bounds)
     elif isinstance(tile_bounds, Polygon):

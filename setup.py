@@ -35,6 +35,7 @@ else:
                  'scikit-image>=0.14.0',
                  'tensorflow==1.13.1',
                  'torch>=1.1.0',
+                 'matplotlib>=3.1.0',
                  'affine>=2.2.2',
                  'albumentations>=0.2.3',
                  'rio-tiler>=1.2.7',
