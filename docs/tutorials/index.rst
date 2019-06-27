@@ -71,7 +71,7 @@ the tutorials below.
 
 Reference
 =========
-* `API reference <api.html>`_
+* `API reference <api/index>`_
 
 Index
 =====
