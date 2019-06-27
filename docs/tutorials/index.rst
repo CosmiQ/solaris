@@ -62,7 +62,7 @@ everything described above and more. For usage examples to get you started, see
 the tutorials below.
 
 * `Tiling imagery <notebooks/api_tiling_tutorial.ipynb>`_
-* `Creating training masks <notebooks/api_masks_tutorial>`_
+* `Creating training masks <notebooks/api_masks_tutorial.ipynb>`_
 * `Training a SpaceNet model <notebooks/api_training_spacenet>`_
 * `Inference with a pre-trained SpaceNet model <notebooks/api_inference_spacenet>`_
 * `Training a custom model <notebooks/api_training_custom>`_
