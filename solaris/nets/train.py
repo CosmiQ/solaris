@@ -18,7 +18,7 @@ import tensorflow as tf
 class Trainer(object):
     """Object for training `solaris` models using PyTorch or Keras."""
 
-    def __init__(self, config):
+    def __init__(self, config, custom_model_dict=None):
         self.config = config
         self.pretrained = self.config['pretrained']
         self.batch_size = self.config['batch_size']
@@ -26,7 +26,7 @@ class Trainer(object):
         self.model_name = self.config['model_name']
         self.model_path = self.config.get('model_path', None)
         self.model = get_model(self.model_name, self.framework,
-                               self.model_path)
+                               self.model_path, custom_model_dict)
         self.train_df, self.val_df = get_train_val_dfs(self.config)
         self.train_datagen = make_data_generator(self.framework, self.config,
                                                  self.train_df, stage='train')

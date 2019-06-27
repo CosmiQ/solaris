@@ -9,14 +9,22 @@ from .zoo import model_dict
 # model_name in the config file.
 
 
-def get_model(model_name, framework, model_path=None, pretrained=False):
+def get_model(model_name, framework, model_path=None, pretrained=False,
+              custom_model_dict=None):
     """Load a model from a file based on its name."""
 
-    md = model_dict.get(model_name)
-    if md is not None:  # if the model's in the dict
-        if model_path is None:
-            model_path = md.get('weight_path')
-        model = md.get('arch')()
+    md = model_dict.get(model_name, None)
+    if md is None:  # if the model's not provided by solaris
+        if custom_model_dict is None:
+            raise ValueError(f"{model_name} can't be found in solaris and no "
+                             "custom_model_dict was provided. Check your "
+                             "model_name in the config file and/or provide a "
+                             "custom_model_dict argument to Trainer().")
+        else:
+            md = custom_model_dict
+    if model_path is None:
+        model_path = md.get('weight_path')
+    model = md.get('arch')()
     if model is not None and pretrained:
         try:
             model = _load_model_weights(model, model_path, framework)

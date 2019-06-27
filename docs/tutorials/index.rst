@@ -36,7 +36,7 @@ find your data, you just make basic edits to a configuration file template, then
 ``solaris`` does all the work to make your analysis pipeline fit together. Tutorials
 on creating configuration files and running the CLI can be found below.
 
-* `Creating the .yml config file <cli_yml_config.html>`_
+* `Creating the .yml config file <notebooks/creating_the_yaml_config_file.ipynb>`_
 * `Creating reference files to help solaris find your imagery <cli_im_ref.html>`_
 * `Creating reference files to make training masks <cli_mask_ref.html>`_
 * `Running a full analysis pipeline using the solaris CLI <cli_full_tutorial.html>`_
