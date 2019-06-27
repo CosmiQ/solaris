@@ -109,7 +109,8 @@ def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
             df=df, reference_im=reference_im, geom_col=geom_col,
             affine_obj=affine_obj, shape=shape, out_type=out_type,
             contact_spacing=kwargs.get('contact_spacing', 10),
-            burn_value=burn_value
+            burn_value=burn_value,
+            meters=kwargs.get('meters', False)
         )
 
     output_arr = np.stack([mask_dict[c] for c in channels], axis=-1)
@@ -496,15 +497,14 @@ def road_mask(df, width=4, meters=False, out_file=None, reference_im=None,
         raise ValueError(
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
+    if do_transform is None:
+        # determine whether or not transform should be done
+        do_transform = _check_do_transform(df, reference_im, affine_obj)
     df[geom_col] = df[geom_col].apply(_check_geom)  # ensure WKTs are loaded
 
     buffered_df = buffer_df_geoms(df, width/2., meters=meters,
                                   reference_im=reference_im, geom_col=geom_col,
                                   affine_obj=affine_obj)
-
-    if do_transform is None:
-        # determine whether or not transform should be done
-        do_transform = _check_do_transform(df, reference_im, affine_obj)
 
     if not do_transform:
         affine_obj = Affine(1, 0, 0, 0, 1, 0)  # identity transform
