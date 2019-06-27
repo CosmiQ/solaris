@@ -3,6 +3,6 @@ dependencies:
   - python
   - pip
   - gdal
-  - nbsphinx
   - pip:
     - sphinx_bootstrap_theme
+    - nbsphinx
