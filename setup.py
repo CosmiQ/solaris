@@ -70,7 +70,8 @@ setup(name='solaris',
           'make_graphs = solaris.bin.make_graphs:main',
           'make_masks = solaris.bin.make_masks:main',
           'mask_to_polygons = solaris.bin.mask_to_polygons:main',
-          'spacenet_eval = solaris.bin.spacenet_eval:main'
+          'spacenet_eval = solaris.bin.spacenet_eval:main',
+          'solaris_run_ml = solaris.bin.solaris_run_ml:main'
           ]
       }
       )
