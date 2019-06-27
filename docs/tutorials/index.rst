@@ -7,12 +7,8 @@ Solaris Tutorials and Cookbook
   :glob:
   :hidden:
 
-  index
   cli*
-
-  api
-  tutorials/index
-  notebooks/*.ipynb
+  notebooks/*
 
 
 There are two different ways to use ``solaris``:
@@ -61,17 +57,17 @@ analysis of overhead imagery data:
 * The ability to use pre-trained or freshly initialized `SpaceNet <https://www.spacenet.ai>`_ models, as well as your own custom models
 * Model performance evaluation tools for the SpaceNet IoU metric (APLS coming soon!)
 
-The `Python API Reference <../api.html>`_ provides full documentation of
+The `Python API Reference <../api/index.html>`_ provides full documentation of
 everything described above and more. For usage examples to get you started, see
 the tutorials below.
 
-* `Tiling imagery <api_tiling_tutorial.html>`_
-* `Creating training masks <api_masks_tutorial.html>`_
-* `Training a SpaceNet model <api_training_spacenet.html>`_
-* `Inference with a pre-trained SpaceNet model <api_inference_spacenet.html>`_
-* `Training a custom model <api_training_custom.html>`_
-* `Converting pixel masks to vector labels <api_mask_to_vector.html>`_
-* `Scoring your model's performance with the solaris Python API <api_eval.html>`_
+* `Tiling imagery <notebooks/api_tiling_tutorial.ipynb>`_
+* `Creating training masks <notebooks/api_masks_tutorial>`_
+* `Training a SpaceNet model <notebooks/api_training_spacenet>`_
+* `Inference with a pre-trained SpaceNet model <notebooks/api_inference_spacenet>`_
+* `Training a custom model <notebooks/api_training_custom>`_
+* `Converting pixel masks to vector labels <notebooks/api_mask_to_vector>`_
+* `Scoring your model's performance with the solaris Python API <notebooks/api_eval>`_
 
 
 Reference

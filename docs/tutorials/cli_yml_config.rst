@@ -1,9 +1,8 @@
-###################################
 Solaris's Configuration YAML format
-###################################
+===================================
 
 *Coming soon!*
-==============
+
 
 In the meantime, check out the `configuration skeleton file <https://github.com/CosmiQ/solaris/blob/dev/solaris/nets/configs/config_skeleton.yml>`_
 which specifies the elements that must be included. An example configuration file

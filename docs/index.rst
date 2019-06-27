@@ -14,10 +14,9 @@ An open source machine learning pipeline for geospatial imagery
   :glob:
   :hidden:
 
-  index
   installation
   intro
-  api
+  api/index
   tutorials/index
 
 
