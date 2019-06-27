@@ -39,7 +39,7 @@ on creating configuration files and running the CLI can be found below.
 * `Creating the .yml config file <notebooks/creating_the_yaml_config_file.ipynb>`_
 * `Creating reference files to help solaris find your imagery <notebooks/creating_im_reference_csvs.ipynb>`_
 * `Creating training masks with the solaris CLI <notebooks/cli_mask_creation.ipynb>`_
-* `Running a full deep learning pipeline using the solaris CLI <cli_full_tutorial.html>`_
+* `Running a full deep learning pipeline using the solaris CLI <notebooks/cli_ml_pipeline.ipynb>`_
 * `Evaluating prediction quality on SpaceNet data with the solaris CLI <cli_eval.html>`_
 
 If these relatively narrow use cases don't cover your needs, the ``solaris`` python
@@ -66,7 +66,7 @@ the tutorials below.
 * `Inference with a pre-trained SpaceNet model <notebooks/api_inference_spacenet>`_
 * `Training a custom model <notebooks/api_training_custom>`_
 * `Converting pixel masks to vector labels <notebooks/api_mask_to_vector>`_
-* `Scoring your model's performance with the solaris Python API <notebooks/api_eval>`_
+* `Scoring your model's performance with the solaris Python API <notebooks/api_evaluation_tutorial.ipynb>`_
 
 
 Reference
