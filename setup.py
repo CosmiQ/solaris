@@ -1,3 +1,7 @@
+import os
+import sys
+import subprocess
+import logging
 from setuptools import setup, find_packages
 import re
 import os
@@ -12,6 +16,44 @@ def get_version():
         if mo:
             return mo.group(1)
     raise RuntimeError('Unable to find version string in %s.' % (VERSIONFILE,))
+
+
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+log = logging.getLogger()
+
+
+def check_output(cmd):
+    # since subprocess.check_output doesn't exist in 2.6
+    # we wrap it here.
+    try:
+        out = subprocess.check_output(cmd)
+        return out.decode('utf')
+    except AttributeError:
+        # For some reasone check_output doesn't exist
+        # So fall back on Popen
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        return out
+
+
+# check GDAL install
+include_dirs = []
+library_dirs = []
+libraries = []
+extra_link_args = []
+gdal2plus = False
+gdal_output = [None] * 4
+gdalversion = None
+
+try:
+    gdal_version = subprocess.check_output(
+        ['gdal-config', '--version']).decode('utf')
+    gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
+
+except Exception:
+    sys.exit("GDAL must be installed to use `solaris`. See the documentation "
+             "for more info. We recommend installing GDAL within a conda "
+             "environment first, then installing solaris there.")
 
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
