@@ -18,6 +18,7 @@ torchvision==0.3.0
 affine==2.2.2
 albumentations==0.2.3
 rio-tiler==1.2.7
+urllib3==1.24.3
 pyyaml==5.1.1
 pyproj==2.2.0
 rio-cogeo==1.0.0

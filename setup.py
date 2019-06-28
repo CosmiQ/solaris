@@ -32,6 +32,7 @@ else:
                  'rasterio>=1.0.18',
                  'rio-cogeo>-1.0.0',
                  'scipy>=1.2.0',
+                 'urllib3==1.24.3',
                  'scikit-image>=0.14.0',
                  'tensorflow==1.13.1',
                  'torch>=1.1.0',
