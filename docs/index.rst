@@ -30,7 +30,7 @@ User Guide
 
 Reference
 =========
-* `API reference <api.html>`_
+* `API reference <api/index>`_
 
 Index
 =====
@@ -41,3 +41,6 @@ Index
 **License:** `Apache 2.0`__.
 
 .. __: https://github.com/CosmiQ/solaris/blob/master/LICENSE.txt
+
+Follow us at our blog `The DownlinQ <https://medium.com/the-downlinq>`_ or
+`on Twitter <https://twitter.com/cosmiqworks>`_ for updates!

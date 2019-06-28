@@ -71,7 +71,7 @@ the tutorials below.
 
 Reference
 =========
-* `API reference <api/index>`_
+* `API reference <../api/index>`_
 
 Index
 =====
@@ -79,5 +79,5 @@ Index
 * :ref:`modindex`
 
 
-Check back here and `follow us on Twitter <https://twitter.com/CosmiqWorks>`_
-for updates!
+Check back here and `follow us on Twitter <https://twitter.com/CosmiqWorks>`_ or
+on our blog, `The DownlinQ <https://medium.com/the-downlinq>`_ for updates!

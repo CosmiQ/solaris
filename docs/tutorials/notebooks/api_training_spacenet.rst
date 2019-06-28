@@ -1,8 +1,9 @@
-Creating training masks with the ``solaris`` CLI
-================================================
+Training a model with SpaceNet data
+===================================
 
-*Coming soon!*
+*Tutorial coming soon!*
 
+In the meantime, you can check out our `tutorial on running a model using the CLI <cli_ml_pipeline.ipynb>`_
 
 -------------
 

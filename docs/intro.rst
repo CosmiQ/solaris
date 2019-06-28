@@ -68,8 +68,7 @@ geospatial imagery analysis pipeline from raw, un-chipped imagery, through model
 training (if applicable) and prediction, to vector-formatted outputs. If you
 provide ground truth labels over your prediction area, ``solaris`` can generate
 quality metrics for the predictions. See
-`an introduction to the solaris CLI <tutorials/cli.html>`_ or
-`the complete CLI documentation <api/cli.html>`_ for more.
+`an introduction to the solaris CLI <tutorials/cli.html>`_ for more.
 
 
 Python API: Use ``solaris`` to accelerate model development
@@ -89,6 +88,9 @@ to:
 * Convert model outputs to geospatial raster or vector formats
 * Score model performance using standardized, geospatial-specific metrics
 
-The ``solaris`` Python API documentation can be found `here <api.html>`_, and
+The ``solaris`` Python API documentation can be found `here <api/index>`_, and
 `we have provided tutorials for common use cases <tutorials/index.html>`_.
 The open source codebase is available `on GitHub <https://github.com/cosmiq/solaris>`_.
+
+Follow us at our blog `The DownlinQ <https://medium.com/the-downlinq>`_ or
+`on Twitter <https://twitter.com/cosmiqworks>`_ for updates!

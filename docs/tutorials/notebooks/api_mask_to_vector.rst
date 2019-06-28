@@ -1,7 +1,7 @@
-Running an entire analysis pipeline with the ``solaris`` CLI
-============================================================
+Creating vector labels from a predicted mask
+============================================
 
-*Coming soon!*
+*Tutorial coming soon!*
 
 -------------
 
