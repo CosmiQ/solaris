@@ -10,6 +10,20 @@ There are several methods available for installing `solaris <https://github.com/
 
 ----------
 
+Prerequisites
+=============
+
+Regardless of installation method, you'll need Python version 3.6 or greater.
+More details on installing Python can be found
+`here <https://www.python.org/about/gettingstarted/>`_. Additionally, if you
+plan to use the SpaceNet dataset with ``solaris`` (it features prominently in
+many of the tutorials), you'll need `a free Amazon Web Services account <https://aws.amazon.com/>`_
+and the AWS CLI `installed <https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html>`_
+and `configured <https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html>`_.
+If you're just going to work with your own data, you can skip these steps.
+
+--------------
+
 .. _conda-forge:
 
 Installing from ``conda-forge``
@@ -39,7 +53,7 @@ From a terminal, run::
 
   git clone https://github.com/cosmiq/solaris.git
   cd solaris
-  git checkout [branch_name]  # for example, git checkout dev
+  git checkout [branch_name]  # for example, git checkout dev for bleeding-edge
 
 If you have access to a GPU where you're installing ``solaris``, use the following::
 

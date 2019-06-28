@@ -1,5 +1,8 @@
 from solaris.nets.callbacks import KerasTerminateOnMetricNaN, get_callbacks
 from solaris.nets.callbacks import get_lr_schedule
+from solaris.nets.torch_callbacks import TorchEarlyStopping, \
+    TorchModelCheckpoint, TorchTerminateOnNaN, TorchTerminateOnMetricNaN
+
 import tensorflow as tf
 import torch
 import numpy as np
@@ -72,47 +75,41 @@ class TestGetCallbacksFunction(object):
                      'update_frequency': None
                      },
                     'terminate_on_nan': {},
-                    'terminate_on_metric_nan': {},
-                    'model_checkpoint':
-                    {'filepath': 'sample_path.h5'},
-                    'early_stopping': {},
-                    'csv_logger':
-                    {'filename': 'sample_path.csv'},
-                    'reduce_lr_on_plateau': {}
+                    'terminate_on_metric_nan': {
+                        'stopping_metric': 'accuracy'
+                        },
+                    'model_checkpoint': {
+                        'filepath': 'sample_path.h5'
+                        },
+                    'early_stopping': {}
                     }
                    }
                   }
         result = get_callbacks(framework, config)
-        assert len(result) == 7
+        assert len(result) == 5
         has_lr_sched = False
         has_term_nan = False
         has_term_met_nan = False
         has_mod_ckpt = False
         has_early_stopping = False
-        has_csv_logger = False
-        has_red_lr_plat = False
+
         for callback in result:
             if callback == torch.optim.lr_scheduler.ExponentialLR:
                 has_lr_sched = True
-            elif callback == 'terminate_on_nan':
+            elif isinstance(callback, TorchTerminateOnNaN):
                 has_term_nan = True
-            elif callback == 'terminate_on_metric_nan':
+            elif isinstance(callback, TorchTerminateOnMetricNaN):
                 has_term_met_nan = True
-            elif callback == 'model_checkpoint':
+            elif isinstance(callback, TorchModelCheckpoint):
                 has_mod_ckpt = True
-            elif callback == 'early_stopping':
+            elif isinstance(callback, TorchEarlyStopping):
                 has_early_stopping = True
-            elif callback == 'csv_logger':
-                has_csv_logger = True
-            elif callback == 'reduce_lr_on_plateau':
-                has_red_lr_plat = True
+
         assert has_lr_sched
         assert has_term_nan
         assert has_term_met_nan
         assert has_mod_ckpt
         assert has_early_stopping
-        assert has_csv_logger
-        assert has_red_lr_plat
 
 
 class TestLRSchedulers(object):

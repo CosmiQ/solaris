@@ -5,14 +5,6 @@
 
 .. contents::
 
-``solaris.raster`` class and function list
-------------------------------------------
-
-.. autosummary::
-
-  solaris.raster.image.get_geo_transform
-  solaris.raster.image.stitch_images
-
 
 ``solaris.raster.image`` Image pre- and post-processing
 -------------------------------------------------------

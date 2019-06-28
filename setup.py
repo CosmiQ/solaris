@@ -35,6 +35,7 @@ else:
                  'scikit-image>=0.14.0',
                  'tensorflow==1.13.1',
                  'torch>=1.1.0',
+                 'matplotlib>=3.1.0',
                  'affine>=2.2.2',
                  'albumentations>=0.2.3',
                  'rio-tiler>=1.2.7',
@@ -69,7 +70,8 @@ setup(name='solaris',
           'make_graphs = solaris.bin.make_graphs:main',
           'make_masks = solaris.bin.make_masks:main',
           'mask_to_polygons = solaris.bin.mask_to_polygons:main',
-          'spacenet_eval = solaris.bin.spacenet_eval:main'
+          'spacenet_eval = solaris.bin.spacenet_eval:main',
+          'solaris_run_ml = solaris.bin.solaris_run_ml:main'
           ]
       }
       )

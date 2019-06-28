@@ -2,6 +2,15 @@
 Solaris Tutorials and Cookbook
 ##############################
 
+.. toctree::
+  :maxdepth: 3
+  :glob:
+  :hidden:
+
+  cli*
+  notebooks/*
+
+
 There are two different ways to use ``solaris``:
 
 * :ref:`The Command Line Interface` (Simple use with existing models)
@@ -27,11 +36,10 @@ find your data, you just make basic edits to a configuration file template, then
 ``solaris`` does all the work to make your analysis pipeline fit together. Tutorials
 on creating configuration files and running the CLI can be found below.
 
-* `Creating the .yml config file <cli_yml_config.html>`_
-* `Creating reference files to help solaris find your imagery <cli_im_ref.html>`_
-* `Creating reference files to make training masks <cli_mask_ref.html>`_
-* `Running a full analysis pipeline using the solaris CLI <cli_full_tutorial.html>`_
-* `Creating training masks with the solaris CLI <cli_masks.html>`_
+* `Creating the .yml config file <notebooks/creating_the_yaml_config_file.ipynb>`_
+* `Creating reference files to help solaris find your imagery <notebooks/creating_im_reference_csvs.ipynb>`_
+* `Creating training masks with the solaris CLI <notebooks/cli_mask_creation.ipynb>`_
+* `Running a full deep learning pipeline using the solaris CLI <notebooks/cli_ml_pipeline.ipynb>`_
 * `Evaluating prediction quality on SpaceNet data with the solaris CLI <cli_eval.html>`_
 
 If these relatively narrow use cases don't cover your needs, the ``solaris`` python
@@ -48,21 +56,22 @@ analysis of overhead imagery data:
 * The ability to use pre-trained or freshly initialized `SpaceNet <https://www.spacenet.ai>`_ models, as well as your own custom models
 * Model performance evaluation tools for the SpaceNet IoU metric (APLS coming soon!)
 
-The `Python API Reference <../api.html>`_ provides full documentation of
+The `Python API Reference <../api/index.html>`_ provides full documentation of
 everything described above and more. For usage examples to get you started, see
 the tutorials below.
 
-* `Tiling imagery with solaris <api_tiling_tutorial.html>`_
-* `Creating training masks with solaris <api_masks_tutorial.html>`_
-* `Training a SpaceNet model with solaris <api_training_spacenet.html>`_
-* `Inference with a pre-trained SpaceNet model using solaris <api_inference_spacenet.html>`_
-* `Training a custom model using solaris <api_training_custom.html>`_
-* `Scoring your model's performance with the solaris Python API <api_eval.html>`_
+* `Tiling imagery <notebooks/api_tiling_tutorial.ipynb>`_
+* `Creating training masks <notebooks/api_masks_tutorial.ipynb>`_
+* `Training a SpaceNet model <notebooks/api_training_spacenet>`_
+* `Inference with a pre-trained SpaceNet model <notebooks/api_inference_spacenet>`_
+* `Training a custom model <notebooks/api_training_custom>`_
+* `Converting pixel masks to vector labels <notebooks/api_mask_to_vector>`_
+* `Scoring your model's performance with the solaris Python API <notebooks/api_evaluation_tutorial.ipynb>`_
 
 
 Reference
 =========
-* `API reference <api.html>`_
+* `API reference <../api/index>`_
 
 Index
 =====
@@ -70,5 +79,5 @@ Index
 * :ref:`modindex`
 
 
-Check back here and `follow us on Twitter <https://twitter.com/CosmiqWorks>`_
-for updates!
+Check back here and `follow us on Twitter <https://twitter.com/CosmiqWorks>`_ or
+on our blog, `The DownlinQ <https://medium.com/the-downlinq>`_ for updates!

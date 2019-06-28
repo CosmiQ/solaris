@@ -5,3 +5,4 @@ dependencies:
   - gdal
   - pip:
     - sphinx_bootstrap_theme
+    - nbsphinx
