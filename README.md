@@ -13,19 +13,33 @@
 <a href="https://codecov.io/gh/CosmiQ/solaris"><img align="center" src="https://codecov.io/gh/CosmiQ/solaris/branch/master/graph/badge.svg" /></a>
 </p>
 
-## This package is under active development. Check back soon for updates!
+## This is a beta version of Solaris which may continue to develop. Please report any bugs through issues!
 
+- [Documentation](#documentation)
 - [Installation Instructions](#installation-instructions)
 - [Dependencies](#dependencies)
 - [License](#license)
 ---
+
 This repository provides the source code for the CosmiQ Works `solaris` project, which provides software tools for:
 - Tiling large-format overhead images and vector labels
 - Converting between geospatial raster and vector formats and machine learning-compatible formats
 - Performing semantic and instance segmentation, object detection, and related tasks using deep learning models designed specifically for overhead image analysis
 - Evaluating performance of deep learning model predictions
 
+## Documentation
+The full documentation for `solaris` can be found at https://solaris.readthedocs.io, and includes:
+- A summary of `solaris`
+- Installation instructions
+- API Documentation
+- Tutorials for common uses
+
+The documentation is still being improved, so if a tutorial you need isn't there yet, check back soon or post an issue!
+
 ## Installation Instructions
+
+_coming soon_: One-command installation from conda-forge.
+
 We recommend creating a `conda` environment with the dependencies defined in [environment.yml](./environment.yml) before installing `solaris`. After cloning the repository:
 ```
 cd solaris
@@ -36,7 +50,7 @@ pip install .
 
 #### pip
 
-The package also exists on[ PyPI](https://pypi.org), but note that some of the dependencies, specifically [rtree](https://github.com/Toblerity/) and [gdal](https://www.gdal.org), are challenging to install without anaconda. We therefore recommend installing at least those dependency using `conda` before installing from PyPI.
+The package also exists on[ PyPI](https://pypi.org), but note that some of the dependencies, specifically [rtree](https://github.com/Toblerity/rtree) and [gdal](https://www.gdal.org), are challenging to install without anaconda. We therefore recommend installing at least those dependency using `conda` before installing from PyPI.
 
 ```
 conda install -c conda-forge rtree gdal=2.4.1
@@ -60,7 +74,7 @@ docker pull cosmiqworks/solaris
 See the [readthedocs](https://cw-eval.readthedocs.io/) page. -->
 
 ## Dependencies
-All dependencies can be found in the docker file [Dockerfile](./Dockerfile) or
+All dependencies can be found in the requirements file [./requirements.txt](requirements.txt) or
 [environment.yml](./environment.yml)
 
 ## License
