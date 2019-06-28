@@ -4,6 +4,7 @@ from shapely.geometry import box, Polygon
 import geopandas as gpd
 from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
+from ..utils.geo import gdf_get_projection_unit
 from tqdm import tqdm
 
 
@@ -68,7 +69,7 @@ class VectorTiler(object):
                                        split_multi_geometries,
                                        min_partial_perc)
         for tile_gdf, tb in tqdm(tile_gen):
-            if isinstance(tb[0], float):
+            if self.proj_unit not in ['meter', 'metre']:
                 out_path = os.path.join(
                     self.dest_dir, '{}_{}_{}.json'.format(dest_fname_base,
                                                           np.round(tb[0], 3),
@@ -112,6 +113,8 @@ class VectorTiler(object):
         """
         self.src = _check_gdf_load(src)
         self.src_crs = _check_crs(self.src.crs)
+        self.proj_unit = gdf_get_projection_unit(
+            self.src).strip('"').strip("'")
         if getattr(self, 'dest_crs', None) is None:
             self.dest_crs = self.src_crs
         for tb in tile_bounds:

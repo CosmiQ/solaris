@@ -270,14 +270,6 @@ class RasterTiler(object):
             if not self.is_cog or self.force_load_cog:
                 vrt = self.load_src_vrt()
                 window = vrt.window(*tb)
-                if len(channel_idxs) == 1:
-                    out_shape = (self.dest_tile_size[1],
-                                 self.dest_tile_size[0])
-                else:
-                    out_shape = (len(channel_idxs),
-                                 self.dest_tile_size[1],
-                                 self.dest_tile_size[0])
-                # get image data
                 if self.src.count != 1:
                     tile_data = vrt.read(window=window,
                                          resampling=getattr(Resampling,
