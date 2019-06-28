@@ -1,3 +1,10 @@
+|
+|
+
+.. image:: _static/solaris_logo.png
+    :width: 500px
+    :align: center
+    :alt: solaris_logo
 
 ############################################################################################################
 `solaris <https://github.com/cosmiq/solaris>`__ |release| by `CosmiQ Works <https://www.cosmiqworks.org>`__
