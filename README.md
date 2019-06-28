@@ -43,7 +43,20 @@ _coming soon_: One-command installation from conda-forge.
 We recommend creating a `conda` environment with the dependencies defined in [environment.yml](./environment.yml) before installing `solaris`. After cloning the repository:
 ```
 cd solaris
+```
+
+If you're installing on a system with GPU access:
+```
+conda env create -n solaris -f environment-gpu.yml
+```
+Otherwise:
+If you're installing on a system with GPU access:
+```
 conda env create -n solaris -f environment.yml
+```
+
+Finally, regardless of your installation environment:
+```
 conda activate solaris
 pip install .
 ```
