@@ -38,7 +38,7 @@ class TestStitchImages(object):
         restored_im = stitch_images(tiles, idx_refs=tile_inds,
                                     out_width=900, out_height=900)
         expected_result = sol.utils.io.imread(
-            os.path.join(data_dir, 'sample_geotiff.tif'))
+            os.path.join(data_dir, 'sample_geotiff.tif'), make_8bit=True)
 
         assert np.array_equal(restored_im, expected_result)
 

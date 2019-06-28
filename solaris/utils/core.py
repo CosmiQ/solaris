@@ -1,10 +1,14 @@
 import os
 import numpy as np
+from shapely.wkt import loads
+from shapely.geometry import Point
+from shapely.geometry.base import BaseGeometry
 import pandas as pd
 import geopandas as gpd
 import rasterio
 import skimage
-
+from fiona._err import CPLE_OpenFailedError
+from fiona.errors import DriverError
 
 def _check_rasterio_im_load(im):
     """Check if `im` is already loaded in; if not, load it in."""
@@ -44,13 +48,44 @@ def _check_df_load(df):
 def _check_gdf_load(gdf):
     """Check if `gdf` is already loaded in, if not, load from geojson."""
     if isinstance(gdf, str):
-        return gpd.read_file(gdf)
+        try:
+            return gpd.read_file(gdf)
+        except (DriverError, CPLE_OpenFailedError):
+            return gpd.GeoDataFrame()
     elif isinstance(gdf, gpd.GeoDataFrame):
         return gdf
     else:
         raise ValueError(
             "{} is not an accepted GeoDataFrame format.".format(gdf))
 
+
+def _check_geom(geom):
+    """Check if a geometry is loaded in.
+
+    Returns the geometry if it's a shapely geometry object. If it's a wkt
+    string or a list of coordinates, convert to a shapely geometry.
+    """
+    if isinstance(geom, BaseGeometry):
+        return geom
+    elif isinstance(geom, str):  # assume it's a wkt
+        return loads(geom)
+    elif isinstance(geom, list) and len(geom) == 2:  # coordinates
+        return Point(geom)
+
+
+def _check_crs(input_crs):
+    """Convert CRS to the integer format passed by ``solaris``."""
+    if isinstance(input_crs, dict):
+        # assume it's an {'init': 'epsgxxxx'} dict
+        out_crs = int(input_crs['init'].lower().strip('epsg:'))
+    elif isinstance(input_crs, str):
+        # handle PROJ4 strings, epsg strings, wkt strings
+        out_crs = rasterio.crs.CRS.from_string(input_crs).to_epsg()
+    elif isinstance(input_crs, rasterio.crs.CRS):
+        out_crs = input_crs.to_epsg()
+    elif isinstance(input_crs, int):
+        out_crs = input_crs
+    return out_crs
 
 def get_data_paths(path, infer=False):
     """Get a pandas dataframe of images and labels from a csv.
@@ -79,7 +114,6 @@ def get_data_paths(path, infer=False):
         case only the `image` column is returned.)
 
     """
-
     df = pd.read_csv(path)
     if infer:
         return df[['image']]  # no labels in those files

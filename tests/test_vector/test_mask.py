@@ -60,6 +60,23 @@ class TestFootprintMask(object):
         # clean up
         os.remove(os.path.join(data_dir, 'test_out.tif'))
 
+    def test_make_mask_infer_do_transform_true(self):
+        output_mask = footprint_mask(
+            os.path.join(data_dir, 'geotiff_labels.geojson'),
+            reference_im=os.path.join(data_dir, 'sample_geotiff.tif'),
+            out_file=os.path.join(data_dir, 'test_out.tif')
+            )
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, 'sample_fp_mask_from_geojson.tif')
+            )
+        saved_output_mask = skimage.io.imread(os.path.join(data_dir,
+                                                           'test_out.tif'))
+
+        assert np.array_equal(output_mask, truth_mask)
+        assert np.array_equal(saved_output_mask, truth_mask)
+        # clean up
+        os.remove(os.path.join(data_dir, 'test_out.tif'))
+
 
 class TestBoundaryMask(object):
     """Tests for solaris.vector.mask.boundary_mask."""
@@ -229,7 +246,7 @@ class TestRoadMask(object):
         output_mask = road_mask(
             os.path.join(data_dir, 'sample_roads_for_masking.geojson'),
             reference_im=os.path.join(data_dir, 'road_mask_input.tif'),
-            do_transform=True,
+            width=4, meters=True, do_transform=True,
             out_file=os.path.join(data_dir, 'test_out.tif')
             )
         truth_mask = skimage.io.imread(

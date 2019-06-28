@@ -12,25 +12,26 @@ from .metrics import get_metrics
 from ..utils.core import get_data_paths
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
+import tensorflow as tf
 
 
 class Trainer(object):
     """Object for training `solaris` models using PyTorch or Keras."""
 
-    def __init__(self, config):
+    def __init__(self, config, custom_model_dict=None):
         self.config = config
         self.pretrained = self.config['pretrained']
         self.batch_size = self.config['batch_size']
         self.framework = self.config['nn_framework']
         self.model_name = self.config['model_name']
-        self.model_path = self.config['model_path']
-        self.model = get_model(self.model_name, self.nn_framework,
-                               self.model_path)
+        self.model_path = self.config.get('model_path', None)
+        self.model = get_model(self.model_name, self.framework,
+                               self.model_path, custom_model_dict)
         self.train_df, self.val_df = get_train_val_dfs(self.config)
         self.train_datagen = make_data_generator(self.framework, self.config,
                                                  self.train_df, stage='train')
         self.val_datagen = make_data_generator(self.framework, self.config,
-                                               self.train_df, stage='train')
+                                               self.val_df, stage='train')
         self.epochs = self.config['training']['epochs']
         self.optimizer = get_optimizer(self.framework, self.config)
         self.lr = self.config['training']['lr']
@@ -38,6 +39,10 @@ class Trainer(object):
         self.callbacks = get_callbacks(self.framework, self.config)
         self.metrics = get_metrics(self.framework, self.config)
         self.verbose = self.config['training']['verbose']
+        if self.framework in ['torch', 'pytorch']:
+            self.gpu_available = torch.cuda.is_available()
+        elif self.framework == 'keras':
+            self.gpu_available = tf.test.is_gpu_available()
 
         self.is_initialized = False
         self.stop = False
@@ -55,12 +60,19 @@ class Trainer(object):
                                             metrics=self.metrics)
 
         elif self.framework == 'torch':
+            if self.gpu_available:
+                self.model = self.model.cuda()
             # create optimizer
-            self.optimizer = self.optimizer(
-                self.model.parameters(), lr=self.lr,
-                **self.config['training']['opt_args']
+            if self.config['training']['opt_args'] is not None:
+                self.optimizer = self.optimizer(
+                    self.model.parameters(), lr=self.lr,
+                    **self.config['training']['opt_args']
                 )
-            # wrap in lr_scheduler if one was created
+            else:
+                self.optimizer = self.optimizer(
+                    self.model.parameters(), lr=self.lr
+                )
+           # wrap in lr_scheduler if one was created
             for cb in self.callbacks:
                 if isinstance(cb, _LRScheduler):
                     self.optimizer = cb(
@@ -85,16 +97,17 @@ class Trainer(object):
                                      callbacks=self.callbacks)
 
         elif self.framework == 'torch':
+#            tf_sess = tf.Session()
             for epoch in range(self.epochs):
                 if self.verbose:
                     print('Beginning training epoch {}'.format(epoch))
                 # TRAINING
                 self.model.train()
-                for batch_idx, (data, target) in enumerate(self.train_datagen):
-                    data, target = data.cuda(), target.cuda()
+                for batch_idx, batch in enumerate(self.train_datagen):
+                    data = batch['image'].cuda()
+                    target = batch['mask'].cuda().float()
                     self.optimizer.zero_grad()
                     output = self.model(data)
-
                     loss = self.loss(output, target)
                     loss.backward()
                     self.optimizer.step()
@@ -102,25 +115,35 @@ class Trainer(object):
                     if self.verbose and batch_idx % 10 == 0:
 
                         print('    loss at batch {}: {}'.format(
-                            batch_idx, np.round(loss, 3)))
+                            batch_idx, loss))
                         # calculate metrics
-                        for metric in self.metrics:
-                            print('{} score: {}'.format(
-                                metric, metric(target, output)))
+#                        for metric in self.metrics['train']:
+#                            with tf_sess.as_default():
+#                                print('{} score: {}'.format(
+#                                    metric, metric(tf.convert_to_tensor(target.detach().cpu().numpy(), dtype='float64'), tf.convert_to_tensor(output.detach().cpu().numpy(), dtype='float64')).eval()))
                 # VALIDATION
-                self.model.eval()
-                val_loss = []
-                for batch_idx, (data,
-                                target) in enumerate(self.val_datagen):
-                    val_output = self.model(data)
-                    val_loss.append(self.loss(val_output, target))
-                val_loss = np.mean(val_loss)
+                with torch.no_grad():
+                    self.model.eval()
+                    torch.cuda.empty_cache()
+                    val_loss = []
+                    for batch_idx, batch in enumerate(self.val_datagen):
+                        data = batch['image'].cuda()
+                        target = batch['mask'].cuda().float()
+                        val_output = self.model(data)
+                        val_loss.append(self.loss(val_output, target))
+                    val_loss = torch.mean(torch.stack(val_loss))
                 if self.verbose:
                     print()
                     print('    Validation loss at epoch {}: {}'.format(
                         epoch, val_loss))
                     print()
-                check_continue = self._run_torch_callbacks(loss, val_loss)
+#                    for metric in self.metrics['val']:
+#                        with tf_sess.as_default():
+#                            print('validation {} score: {}'.format(
+#                            metric, metric(tf.convert_to_tensor(target.detach().cpu().numpy(), dtype='float64'), tf.convert_to_tensor(output.detach().cpu().numpy(), dtype='float64')).eval()))
+                check_continue = self._run_torch_callbacks(
+                    loss.detach().cpu().numpy(),
+                    val_loss.detach().cpu().numpy())
                 if not check_continue:
                     break
 
@@ -153,7 +176,7 @@ class Trainer(object):
                 elif cb.monitor == 'periodic':
                     cb(self.model)
 
-            return True
+        return True
 
     def save_model(self):
         """Save the final model output."""

@@ -16,65 +16,69 @@ def main():
     parser.add_argument('--source_file', '-s', type=str,
                         help='Full path to file to create mask from.')
     parser.add_argument('--reference_image', '-r', type=str,
-                        help='Full path to a georegistered image in the same' +
-                        ' coordinate system (for conversion to pixels) or in' +
-                        ' the target coordinate system (for conversion to a' +
+                        help='Full path to a georegistered image in the same'
+                        ' coordinate system (for conversion to pixels) or in'
+                        ' the target coordinate system (for conversion to a'
                         ' geographic coordinate reference system).')
     parser.add_argument('--output_path', '-o', type=str,
-                        help='Full path to the output file for the converted' +
+                        help='Full path to the output file for the converted'
                         'footprints.')
     parser.add_argument('--geometry_column', '-g', type=str,
-                        default='geometry', help='The column containing' +
-                        ' footprint polygons to transform. If not provided,' +
+                        default='geometry', help='The column containing'
+                        ' footprint polygons to transform. If not provided,'
                         ' defaults to "geometry".')
     parser.add_argument('--transform', '-t', action='store_true',
-                        default=False, help='Use this flag if the geometries' +
-                        ' are in a georeferenced coordinate system and' +
+                        default=False, help='Use this flag if the geometries'
+                        ' are in a georeferenced coordinate system and'
                         ' need to be converted to pixel coordinates.')
     parser.add_argument('--value', '-v', type=int, default=255,
-                        help='The value to set for labeled pixels in the' +
+                        help='The value to set for labeled pixels in the'
                         ' mask. Defaults to 255.')
     parser.add_argument('--footprint', '-f', action='store_true',
-                        default=False, help='If this flag is set, the mask' +
-                        ' will include filled-in building footprints as a' +
+                        default=False, help='If this flag is set, the mask'
+                        ' will include filled-in building footprints as a'
                         ' channel.')
     parser.add_argument('--edge', '-e', action='store_true',
-                        default=False, help='If this flag is set, the mask' +
+                        default=False, help='If this flag is set, the mask'
                         ' will include the building edges as a channel.')
     parser.add_argument('--edge_width', '-ew', type=int, default=3,
-                        help='Pixel thickness of the edges in the edge mask.' +
+                        help='Pixel thickness of the edges in the edge mask.'
                         ' Defaults to 3 if not provided.')
     parser.add_argument('--edge_type', '-et', type=str, default='inner',
-                        help='Type of edge: either inner or outer. Defaults' +
+                        help='Type of edge: either inner or outer. Defaults'
                         ' to inner if not provided.')
     parser.add_argument('--contact', '-c', action='store_true',
-                        default=False, help='If this flag is set, the mask' +
-                        ' will include contact points between buildings as a' +
+                        default=False, help='If this flag is set, the mask'
+                        ' will include contact points between buildings as a'
                         ' channel.')
     parser.add_argument('--contact_spacing', '-cs', type=int, default=10,
-                        help='Sets the maximum distance between two' +
-                        ' buildings, in source file units, that will be' +
+                        help='Sets the maximum distance between two'
+                        ' buildings, in source file units, that will be'
                         ' identified as a contact. Defaults to 10.')
+    parser.add_argument('--metric_widths', '-m', action='store_true',
+                        default=False, help='Use this flag if any widths '
+                        '(--contact-spacing specifically) should be in metric '
+                        'units instead of pixel units.')
     parser.add_argument('--batch', '-b', action='store_true', default=False,
-                        help='Use this flag if you wish to operate on' +
-                        ' multiple files in batch. In this case,' +
-                        ' --argument-csv must be provided. See help' +
-                        ' for --argument_csv and the codebase docs at' +
-                        ' https://cw-geodata.readthedocs.io for more info.')
+                        help='Use this flag if you wish to operate on'
+                        ' multiple files in batch. In this case,'
+                        ' --argument-csv must be provided. See help'
+                        ' for --argument_csv and the codebase docs at'
+                        ' https://solaris.readthedocs.io for more info.')
     parser.add_argument('--argument_csv', '-a', type=str,
-                        help='The reference file for variable values for' +
-                        ' batch processing. It must contain columns to pass' +
-                        ' the source_file and reference_image arguments, and' +
-                        ' can additionally contain columns providing the' +
-                        ' footprint_column and decimal_precision arguments' +
-                        ' if you wish to define them differently for items' +
-                        ' in the batch. These columns must have the same' +
-                        ' names as the corresponding arguments. See the ' +
-                        ' usage recipes at https://cw-geodata.readthedocs.io' +
+                        help='The reference file for variable values for'
+                        ' batch processing. It must contain columns to pass'
+                        ' the source_file and reference_image arguments, and'
+                        ' can additionally contain columns providing the'
+                        ' footprint_column and decimal_precision arguments'
+                        ' if you wish to define them differently for items'
+                        ' in the batch. These columns must have the same'
+                        ' names as the corresponding arguments. See the '
+                        ' usage recipes at https://solaris.readthedocs.io'
                         ' for examples.')
     parser.add_argument('--workers', '-w', type=int, default=1,
-                        help='The number of parallel processing workers to' +
-                        ' use. This should not exceed the number of CPU' +
+                        help='The number of parallel processing workers to'
+                        ' use. This should not exceed the number of CPU'
                         ' cores available.')
 
     args = parser.parse_args()
@@ -140,6 +144,7 @@ def main():
         arg_df['output_path'] = [args.output_path]
         arg_df['geometry_column'] = [args.geometry_column]
         arg_df['transform'] = [args.transform]
+        arg_df['metric'] = [args.metric_widths]
         arg_df['value'] = [args.value]
         arg_df['edge_width'] = [args.edge_width]
         arg_df['edge_type'] = [args.edge_type]
@@ -167,8 +172,9 @@ def main():
 
     else:
         with Pool(processes=args.workers) as pool:
-            result = tqdm(pool.map(_func_wrapper, zip(repeat(df_to_px_mask),
-                                                      arg_dict_list)))
+            result = tqdm(pool.starmap(_func_wrapper,
+                                       zip(repeat(df_to_px_mask),
+                                           arg_dict_list)))
             pool.close()
 
 

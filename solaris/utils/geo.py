@@ -1,14 +1,403 @@
-from .core import _check_gdf_load
+import os
+from .core import _check_df_load, _check_gdf_load, _check_rasterio_im_load
+from .core import _check_geom, _check_crs
 import numpy as np
 import pandas as pd
-from affine import Affine
 import geopandas as gpd
+from affine import Affine
 import rasterio
+from rasterio.crs import CRS
+from rasterio.vrt import WarpedVRT
+from rasterio.warp import calculate_default_transform, Resampling
+from rasterio.warp import transform_bounds
+from shapely.affinity import affine_transform
 from shapely.errors import WKTReadingError
 from shapely.wkt import loads
+from shapely.geometry import Point, Polygon, LineString
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
 from shapely.ops import cascaded_union
+from fiona.transform import transform
+import osr
+import gdal
 from warnings import warn
+
+
+def reproject(input_object, input_crs=None,
+              target_crs=None, target_object=None, dest_path=None,
+              resampling_method='cubic'):
+    """Reproject a dataset (df, gdf, or image) to a new coordinate system.
+
+    This function takes a georegistered image or a dataset of vector geometries
+    and converts them to a new coordinate reference system. If no target CRS
+    is provided, the data will be converted to the appropriate UTM zone by
+    default. To convert a pixel-coordinate dataset to geographic coordinates or
+    vice versa, use :func:`solaris.vector.polygon.georegister_px_df` or
+    :func:`solaris.vector.polygon.geojson_to_px_gdf` instead.
+
+    Arguments
+    ---------
+    input_object : `str` or :class:`rasterio.DatasetReader` or :class:`gdal.Dataset` or :class:`geopandas.GeoDataFrame`
+        An object to transform to a new CRS. If a string, it must be a path
+        to a georegistered image or vector dataset (e.g. a .GeoJSON). If the
+        object itself does not contain georeferencing information, the
+        coordinate reference system can be provided with `input_crs`.
+    input_crs : int, optional
+        The EPSG code integer for the input data's CRS. If provided and a CRS
+        is also associated with `input_object`, this argument's value has
+        precedence.
+    target_crs : int, optional
+        The EPSG code for the output projection. If values are not provided
+        for this argument or `target_object`, the input data will be
+        re-projected into the appropriate UTM zone. If both `target_crs` and
+        `target_object` are provided, `target_crs` takes precedence (and a
+        warning is raised).
+    target_object : str, optional
+        An object in the desired destination CRS. If neither this argument nor
+        `target_crs` is provided, the input will be projected into the
+        appropriate UTM zone. `target_crs` takes precedence if both it and
+        `target_object` are provided.
+    dest_path : str, optional
+        The path to save the output to (if desired). This argument is only
+        required if the input is a :class:`gdal.Dataset`; otherwise, it is
+        optional.
+    resampling_method : str, optional
+        The resampling method to use during reprojection of raster data. **Only
+        has an effect if the input is a :class:`rasterio.DatasetReader` !**
+        Possible values are
+        ``['cubic' (default), 'bilinear', 'nearest', 'average']``.
+
+    Returns
+    -------
+    output : :class:`rasterio.DatasetReader` or :class:`gdal.Dataset` or :class:`geopandas.GeoDataFrame`
+        An output in the same format as `input_object`, but reprojected
+        into the destination CRS.
+    """
+    input_data, input_type = _parse_geo_data(input_object)
+    if input_crs is None:
+        input_crs = get_crs(input_data)
+    else:
+        input_crs = _check_crs(input_crs)
+    if target_object is not None:
+        target_data, _ = _parse_geo_data(target_object)
+    else:
+        target_data = None
+    # get CRS from target_object if it's not provided
+    if target_crs is None and target_data is not None:
+        target_crs = get_crs(target_data)
+
+    if target_crs is not None:
+        target_crs = _check_crs(target_crs)
+        output = _reproject(input_data, input_type, input_crs, target_crs,
+                            dest_path, resampling_method)
+    else:
+        output = reproject_to_utm(input_data, input_type, input_crs,
+                                  dest_path, resampling_method)
+    return output
+
+
+def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
+               resampling_method='bicubic'):
+
+    if input_type == 'vector':
+        output = input_data.to_crs(epsg=target_crs)
+        if dest_path is not None:
+            output.to_file(dest_path, driver='GeoJSON')
+
+    elif input_type == 'raster':
+
+        if isinstance(input_data, rasterio.DatasetReader):
+            transform, width, height = calculate_default_transform(
+                CRS.from_epsg(input_crs), CRS.from_epsg(target_crs),
+                input_data.width, input_data.height, *input_data.bounds
+                )
+            kwargs = input_data.meta.copy()
+            kwargs.update({'crs': target_crs,
+                           'transform': transform,
+                           'width': width,
+                           'height': height})
+
+            if dest_path is not None:
+                with rasterio.open(dest_path, 'w', **kwargs) as dst:
+                    for band_idx in range(1, input_data.count + 1):
+                        rasterio.warp.reproject(
+                            source=rasterio.band(input_data, band_idx),
+                            destination=rasterio.band(dst, band_idx),
+                            src_transform=input_data.transform,
+                            src_crs=input_data.crs,
+                            dst_transform=transform,
+                            dst_crs=CRS.from_epsg(target_crs),
+                            resampling=getattr(Resampling, resampling_method)
+                        )
+                output = rasterio.open(dest_path)
+                input_data.close()
+
+            else:
+                output = np.zeros(shape=(height, width, input_data.count))
+                for band_idx in range(1, input_data.count + 1):
+                    rasterio.warp.reproject(
+                        source=rasterio.band(input_data, band_idx),
+                        destination=output[:, :, band_idx-1],
+                        src_transform=input_data.transform,
+                        src_crs=input_data.crs,
+                        dst_transform=transform,
+                        dst_crs=CRS.from_epsg(target_crs),
+                        resampling=getattr(Resampling, resampling_method)
+                    )
+
+        elif isinstance(input_data, gdal.Dataset):
+            if dest_path is not None:
+                gdal.Warp(dest_path, input_data,
+                          dstSRS='EPSG:' + str(target_crs))
+                output = gdal.Open(dest_path)
+            else:
+                raise ValueError('An output path must be provided for '
+                                 'reprojecting GDAL datasets.')
+    return output
+
+
+def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
+                     resampling_method='bicubic'):
+    """Convert an input to a UTM CRS (after determining the correct UTM zone).
+
+    """
+    if input_crs is None:
+        input_crs = get_crs(input_data)
+    if input_crs is None:
+        raise ValueError('An input CRS must be provided by input_data or'
+                         ' input_crs.')
+    input_crs = _check_crs(input_crs)
+
+    bounds = get_bounds(input_data, crs=4326)  # need in wkt84 for UTM zone
+    midpoint = [(bounds[1] + bounds[3])/2., (bounds[0] + bounds[2])/2.]
+    utm_epsg = latlon_to_utm_epsg(*midpoint)
+
+    output = _reproject(input_data, input_type=input_type, input_crs=input_crs,
+                        target_crs=utm_epsg, dest_path=dest_path,
+                        resampling_method=resampling_method)
+    # cleanup
+    if os.path.isfile('tmp'):
+        os.remove('tmp')
+
+    return output
+
+
+def get_bounds(input, crs=None):
+    """Get the ``[left, bottom, right, top]`` bounds in any CRS.
+
+    Arguments
+    ---------
+    geo_obj : a georeferenced raster or vector dataset.
+    crs : int, optional
+        The EPSG code for the CRS the bounds should be returned in. If not
+        provided, the bounds will be returned in the same crs as `geo_obj`.
+
+    Returns
+    -------
+    bounds : list
+        ``[left, bottom, right, top]`` bounds in the input crs (if `crs` is
+        ``None``) or in `crs` if it was provided.
+    """
+    input_data, input_type = _parse_geo_data(input)
+    if input_type == 'vector':
+        bounds = list(input_data.geometry.total_bounds)
+    elif input_type == 'raster':
+        if isinstance(input_data, rasterio.DatasetReader):
+            bounds = list(input_data.bounds)
+        elif isinstance(input_data, gdal.Dataset):
+            input_gt = input_data.GetGeoTransform()
+            min_x = input_gt[0]
+            max_x = min_x + input_gt[1]*input_data.RasterXSize
+            max_y = input_gt[3]
+            min_y = max_y + input_gt[5]*input_data.RasterYSize
+
+            bounds = [min_x, min_y, max_x, max_y]
+
+    if crs is not None:
+        crs = _check_crs(crs)
+        src_crs = get_crs(input_data)
+    # transform bounds to desired CRS
+    bounds = transform_bounds(CRS.from_epsg(src_crs),
+                              CRS.from_epsg(crs),
+                              *bounds)
+
+    return bounds
+
+
+def get_crs(obj):
+    """Get a coordinate reference system from any georegistered object."""
+    if isinstance(obj, gpd.GeoDataFrame):
+        return int(obj.crs['init'].lstrip('epsg:'))
+    elif isinstance(obj, rasterio.DatasetReader):
+        return int(obj.crs['init'].lstrip('epsg:'))
+    elif isinstance(obj, gdal.Dataset):
+        # rawr
+        return int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
+            'AUTHORITY', 1))
+    else:
+        raise TypeError("solaris doesn't know how to extract a crs from an "
+                        "object of type {}".format(type(obj)))
+
+
+def _parse_geo_data(input):
+    if isinstance(input, str):
+        if input.lower().endswith('json') or input.lower().endswith('csv'):
+            input_type = 'vector'
+            input_data = _check_df_load(input)
+        elif input.lower().endswith('tif') or input.lower().endswith('tiff'):
+            input_type = 'raster'
+            input_data = _check_rasterio_im_load(input)
+    else:
+        input_data = input
+        if isinstance(input_data, pd.DataFrame):
+            input_type = 'vector'
+        elif isinstance(
+                input_data, rasterio.DatasetReader
+                ) or isinstance(
+                input_data, gdal.Dataset
+                ):
+            input_type = 'raster'
+        else:
+            raise ValueError('The input format {} is not compatible with '
+                             'solaris.'.format(type(input)))
+    return input_data, input_type
+
+
+def reproject_geometry(input_geom, input_crs=None, target_crs=None,
+                       affine_obj=None):
+    """Reproject a geometry or coordinate into a new CRS.
+
+    Arguments
+    ---------
+    input_geom : `str`, `list`, or `Shapely <https://shapely.readthedocs.io>`_ geometry
+        A geometry object to re-project. This can be a 2-member ``list``, in
+        which case `input_geom` is assumed to coorespond to ``[x, y]``
+        coordinates in `input_crs`. It can also be a Shapely geometry object or
+        a wkt string.
+    input_crs : int, optional
+        The coordinate reference system for `input_geom`'s coordinates, as an
+        EPSG :class:`int`. Required unless `affine_transform` is provided.
+    target_crs : int, optional
+        The target coordinate reference system to re-project the geometry into.
+        If not provided, the appropriate UTM zone will be selected by default,
+        unless `affine_transform` is provided (and therefore CRSs are ignored.)
+    affine_transform : :class:`affine.Affine`, optional
+        An :class:`affine.Affine` object (or a ``[a, b, c, d, e, f]`` list to
+        convert to that format) to use for transformation. Has no effect unless
+        `input_crs` **and** `target_crs` are not provided.
+
+    Returns
+    -------
+    output_geom : Shapely geometry
+        A shapely geometry object:
+        - in `target_crs`, if one was provided;
+        - in the appropriate UTM zone, if `input_crs` was provided and
+          `target_crs` was not;
+        - with `affine_transform` applied to it if neither `input_crs` nor
+          `target_crs` were provided.
+    """
+    input_geom = _check_geom(input_geom)
+
+    input_coords = _get_coords(input_geom)
+
+    if input_crs is not None:
+        input_crs = _check_crs(input_crs)
+        if target_crs is None:
+            latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
+            target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
+        target_crs = _check_crs(target_crs)
+        xformed_coords = transform('EPSG:' + str(input_crs),
+                                   'EPSG:' + str(target_crs),
+                                   *input_coords)
+        # create a new instance of the same geometry class as above with the
+        # new coordinates
+        output_geom = input_geom.__class__(list(zip(*xformed_coords)))
+
+    else:
+        if affine_obj is None:
+            raise ValueError('If an input CRS is not provided, '
+                             'affine_transform is required to complete the '
+                             'transformation.')
+        elif isinstance(affine_obj, Affine):
+            affine_obj = affine_to_list(affine_obj)
+
+        output_geom = affine_transform(input_geom, affine_obj)
+
+    return output_geom
+
+
+def gdf_get_projection_unit(vector_file):
+    """Get the projection unit for a vector_file or gdf.
+
+    Arguments
+    ---------
+    vector_file : :py:class:`geopandas.GeoDataFrame` or geojson/shapefile
+        A vector file or gdf with georeferencing
+
+    Notes
+    -----
+    If vector file is already in UTM coords, the projection WKT is complex:
+        https://www.spatialreference.org/ref/epsg/wgs-84-utm-zone-11n/html/
+    In this case, return the second instance of 'UNIT'.
+
+    Returns
+    -------
+    unit : String
+        The unit i.e. meter, metre, or degree, of the projection
+    """
+    c = _check_gdf_load(vector_file)
+    crs = _check_crs(c.crs)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(crs)
+    WKT = srs.ExportToWkt()
+    # get count of 'UNIT'
+    if WKT.count('UNIT') == 1:
+        # simple geo format
+        unit = WKT.split("UNIT[")[1].split(",")[0]
+    elif WKT.count('UNIT') == 2:
+        # complex geo format, return the second instance of 'UNIT'
+        unit = WKT.split("UNIT[")[2].split(",")[0]
+    else:
+        print("Unknown units in {}".format(vector_file))
+        return
+
+    return unit
+
+
+def raster_get_projection_unit(image):
+    """Get the projection unit for a vector_file.
+
+    Arguments
+    ---------
+    image : raster image, GeoTIFF or other format
+        A raster file with georeferencing
+
+    Notes
+    -----
+    If raster is already in UTM coords, the projection WKT is complex:
+        https://www.spatialreference.org/ref/epsg/wgs-84-utm-zone-11n/html/
+    In this case, return the second instance of 'UNIT'.
+
+    Returns
+    -------
+    unit : String
+        The unit i.e. meters or degrees, of the projection
+    """
+    c = _check_rasterio_im_load(image)
+    crs = _check_crs(c.crs)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(crs)
+    WKT = srs.ExportToWkt()
+    # get count of 'UNIT'
+    if WKT.count('UNIT') == 1:
+        # simple geo format
+        unit = WKT.split("UNIT[")[1].split(",")[0]
+    elif WKT.count('UNIT') == 2:
+        # complex geo format, return the second instance of 'UNIT'
+        unit = WKT.split("UNIT[")[2].split(",")[0]
+    else:
+        print("Unknown units in {}".format(image))
+        return
+    return unit
 
 
 def list_to_affine(xform_mat):
@@ -31,6 +420,13 @@ def list_to_affine(xform_mat):
         return Affine.from_gdal(*xform_mat)
     else:
         return Affine(*xform_mat)
+
+
+def affine_to_list(affine_obj):
+    """Convert a :class:`affine.Affine` instance to a list for Shapely."""
+    return [affine_obj.a, affine_obj.b,
+            affine_obj.d, affine_obj.e,
+            affine_obj.xoff, affine_obj.yoff]
 
 
 def geometries_internal_intersection(polygons):
@@ -206,263 +602,111 @@ def _reduce_geom_precision(geom, precision=2):
     return shape(geojson)
 
 
-def _check_wkt_load(x):
-    """Check if an object is a loaded polygon or not. If not, load it."""
-    if isinstance(x, str):
-        try:
-            x = loads(x)
-        except WKTReadingError:
-            warn('{} is not a WKT-formatted string.'.format(x))
+def latlon_to_utm_epsg(latitude, longitude, return_proj4=False):
+    """Get the WGS84 UTM EPSG code based on a latitude and longitude value.
 
-    return x
+    Arguments
+    ---------
+    latitude : numeric
+        The latitude value for the coordinate.
+    longitude : numeric
+        The longitude value for the coordinate.
+    return_proj4 : bool, optional
+        Should the proj4 string be returned as well as the EPSG code? Defaults
+        to no (``False``)
+
+    Returns
+    -------
+    epsg : int
+        The integer corresponding to the EPSG code for the relevant UTM zone
+        in WGS 84.
+    proj4 : str
+        The proj4 string for the CRS. Only returned if ``return_proj4=True``.
+    """
+    zone_number, zone_letter = _latlon_to_utm_zone(latitude, longitude)
+
+    if return_proj4:
+        if zone_letter == 'N':
+            direction_indicator = '+north'
+        elif zone_letter == 'S':
+            direction_indicator = '+south'
+        proj = "+proj=utm +zone={} {}".format(zone_number,
+                                              direction_indicator)
+        proj += " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+
+    if zone_letter == 'N':
+        epsg = 32600 + zone_number
+    elif zone_letter == 'S':
+        epsg = 32700 + zone_number
+
+    return (epsg, proj) if return_proj4 else epsg
 
 
+def _latlon_to_utm_zone(latitude, longitude, ns_only=True):
+    """Convert latitude and longitude to a UTM zone ID.
 
-# PRETEND THIS ISN'T HERE AT THE MOMENT
-# class CoordTransformer(object):
-#     """A transformer class to change coordinate space using affine transforms.
-#
-#     Notes
-#     -----
-#     This class will take in an image or geometric object (Shapely or GDAL)
-#     and transform its coordinate space based on `dest_obj` . `dest_obj`
-#     should be an instance of :class:`rasterio.DatasetReader` .
-#
-#     Arguments
-#     ---------
-#     src_obj
-#         A source image or geometric object to transform. The function will
-#         first try to extract georegistration information from this object
-#         if it exists; if it doesn't, it will assume unit (pixel) coords.
-#     dest_obj
-#         Object with a destination coordinate reference system to apply to
-#         `src_obj` . This can be in the form of an ``[a, b, d, e, xoff, yoff]``
-#         `list` , an :class:`affine.Affine` instance, or a source
-#         :class:`geopandas.GeoDataFrame` or geotiff with `crs` metadata to
-#         produce the transform from, or even just a crs string.
-#     src_crs : optional
-#         Source coordinate reference in the form of a :class:`rasterio.crs.CRS`
-#         object or an epsg string. Only needed if the source object provided
-#         does not have CRS metadata attached to it.
-#     src_transform : :class:`affine.Affine` or :class:`list`
-#         The source affine transformation matrix as a :class:`affine.Affine`
-#         object or in an ``[a, b, c, d, xoff, yoff]`` `list`. Required if
-#         `src_obj` is a :class:`numpy.array` .
-#     dest_transform : :class:`affine.Affine` or :class:`list`
-#         The destination affine transformation matrix as a
-#         :class:`affine.Affine` object or in an ``[a, b, c, d, xoff, yoff]``
-#         `list` . Required if `dest_obj` is a :class:`numpy.array` .
-#     """
-#     def __init__(self, src_obj=None, dest_obj=None, src_crs=None,
-#                  src_transform=None, dest_transform=None):
-#         self.src_obj = src_obj
-#         self.src_type = None
-#         self.dest_obj = dest_obj
-#         self.dest_type = None
-#         self.get_obj_types()  # replaces the None values above
-#         self.src_crs = src_crs
-#         if isinstance(self.src_crs, dict):
-#             self.src_crs = self.src_crs['init']
-#         if not self.src_crs:
-#             self.src_crs = self._get_crs(self.src_obj, self.src_type)
-#         self.dest_crs = self._get_crs(self.dest_obj, self.dest_type)
-#         self.src_transform = src_transform
-#         self.dest_transform = dest_transform
-#
-#     def __repr__(self):
-#         print('CoordTransformer for {}'.format(self.src_obj))
-#
-#     def load_src_obj(self, src_obj, src_crs=None):
-#         """Load in a new source object for transformation."""
-#         self.src_obj = src_obj
-#         self.src_type = None  # replaced in self._get_src_crs()
-#         self.src_type = self._get_type(self.src_obj)
-#         self.src_crs = src_crs
-#         if self.src_crs is None:
-#             self.src_crs = self._get_crs(self.src_obj, self.src_type)
-#
-#     def load_dest_obj(self, dest_obj):
-#         """Load in a new destination object for transformation."""
-#         self.dest_obj = dest_obj
-#         self.dest_type = None
-#         self.dest_type = self._get_type(self.dest_obj)
-#         self.dest_crs = self._get_crs(self.dest_obj, self.dest_type)
-#
-#     def load_src_crs(self, src_crs):
-#         """Load in a new source coordinate reference system."""
-#         self.src_crs = self._get_crs(src_crs)
-#
-#     def get_obj_types(self):
-#         if self.src_obj is not None:
-#             self.src_type = self._get_type(self.src_obj)
-#             if self.src_type is None:
-#                 warn('The src_obj type is not compatible with this package.')
-#         if self.dest_obj is not None:
-#             self.dest_type = self._get_type(self.dest_obj)
-#             if self.dest_type is None:
-#                 warn('The dest_obj type is not compatible with this package.')
-#             elif self.dest_type == 'shapely Geometry':
-#                 warn('Shapely geometries cannot provide a destination CRS.')
-#
-#     @staticmethod
-#     def _get_crs(obj, obj_type):
-#         """Get the destination coordinate reference system."""
-#         # get the affine transformation out of dest_obj
-#         if obj_type == "transform matrix":
-#             return Affine(obj)
-#         elif obj_type == 'Affine':
-#             return obj
-#         elif obj_type == 'GeoTIFF':
-#             return rasterio.open(obj).crs
-#         elif obj_type == 'GeoDataFrame':
-#             if isinstance(obj, str):  # if it's a path to a gdf
-#                 return gpd.read_file(obj).crs
-#             else:  # assume it's a GeoDataFrame object
-#                 return obj.crs
-#         elif obj_type == 'epsg string':
-#             if obj.startswith('{init'):
-#                 return rasterio.crs.CRS.from_string(
-#                     obj.lstrip('{init: ').rstrip('}'))
-#             elif obj.lower().startswith('epsg'):
-#                 return rasterio.crs.CRS.from_string(obj)
-#         elif obj_type == 'OGR Geometry':
-#             return get_crs_from_ogr(obj)
-#         elif obj_type == 'shapely Geometry':
-#             raise TypeError('Cannot extract a coordinate system from a ' +
-#                             'shapely.Geometry')
-#         else:
-#             raise TypeError('Cannot extract CRS from this object type.')
-#
-#     @staticmethod
-#     def _get_type(obj):
-#         if isinstance(obj, gpd.GeoDataFrame):
-#             return 'GeoDataFrame'
-#         elif isinstance(obj, str):
-#             if os.path.isfile(obj):
-#                 if os.path.splitext(obj)[1].lower() in ['tif', 'tiff',
-#                                                         'geotiff']:
-#                     return 'GeoTIFF'
-#                 elif os.path.splitext(obj)[1] in ['csv', 'geojson']:
-#                     # assume it can be loaded as a geodataframe
-#                     return 'GeoDataFrame'
-#             else:  # assume it's a crs string
-#                 if obj.startswith('{init'):
-#                     return "epsg string"
-#                 elif obj.lower().startswith('epsg'):
-#                     return "epsg string"
-#                 else:
-#                     raise ValueError('{} is not an accepted crs type.'.format(
-#                         obj))
-#         elif isinstance(obj, ogr.Geometry):
-#             # ugh. Try to get the EPSG code out.
-#             return 'OGR Geometry'
-#         elif isinstance(obj, shapely.Geometry):
-#             return "shapely Geometry"
-#         elif isinstance(obj, list):
-#             return "transform matrix"
-#         elif isinstance(obj, Affine):
-#             return "Affine transform"
-#         elif isinstance(obj, np.array):
-#             return "numpy array"
-#         else:
-#             return None
-#
-#     def transform(self, output_loc):
-#         """Transform `src_obj` from `src_crs` to `dest_crs`.
-#
-#         Arguments
-#         ---------
-#         output_loc : `str` or `var`
-#             Object or location to output transformed src_obj to. If it's a
-#             string, it's assumed to be a path.
-#         """
-#         if not self.src_crs or not self.dest_crs:
-#             raise AttributeError('The source or destination CRS is missing.')
-#         if not self.src_obj:
-#             raise AttributeError('The source object to transform is missing.')
-#         if isinstance(output_loc, str):
-#             out_file = True
-#         if self.src_type == 'GeoTIFF':
-#             return rasterio.warp.reproject(rasterio.open(self.src_obj),
-#                                            output_loc,
-#                                            src_transform=self.src_transform,
-#                                            src_crs=self.src_crs,
-#                                            dst_trasnform=self.dest_transform,
-#                                            dst_crs=self.dest_crs,
-#                                            resampling=Resampling.bilinear)
-#         elif self.src_type == 'GeoDataFrame':
-#             if isinstance(self.src_obj, str):
-#                 # load the gdf and transform it
-#                 tmp_src = gpd.read_file(self.src_obj).to_crs(self.dest_crs)
-#             else:
-#                 # just transform it
-#                 tmp_src = self.src_obj.to_crs(self.dest_crs)
-#             if out_file:
-#                 # save to file
-#                 if output_loc.lower().endswith('json'):
-#                     tmp_src.to_file(output_loc, driver="GeoJSON")
-#                 else:
-#                     tmp_src.to_file(output_loc)  # ESRI shapefile
-#                 return
-#             else:
-#                 # assign to the variable and return
-#                 output_loc = tmp_src
-#                 return output_loc
-#         elif self.src_type == 'OGR Geometry':
-#             dest_sr = ogr.SpatialReference().ImportFromEPSG(
-#                 int(self.dest_crs.lstrip('epsg')))
-#             output_loc = self.src_obj.TransformTo(dest_sr)
-#             return output_loc
-#         elif self.src_type == 'shapely Geometry':
-#             if self.dest_type not in [
-#                     'Affine transform', 'transform matrix'
-#                     ] and not self.dest_transform:
-#                 raise ValueError('Transforming shapely objects requires ' +
-#                                  'an affine transformation matrix.')
-#             elif self.dest_type == 'Affine transform':
-#                 output_loc = shapely.affinity.affine_transform(
-#                     self.src_obj, [self.dest_obj.a, self.dest_obj.b,
-#                                    self.dest_obj.d, self.dest_obj.e,
-#                                    self.dest_obj.xoff, self.dest_obj.yoff]
-#                 )
-#                 return output_loc
-#             elif self.dest_type == 'transform matrix':
-#                 output_loc = shapely.affinity.affine_transform(self.src_obj,
-#                                                                self.dest_obj)
-#                 return output_loc
-#             else:
-#                 if isinstance(self.dest_transform, Affine):
-#                     xform_mat = [self.dest_transform.a, self.dest_transform.b,
-#                                  self.dest_transform.d, self.dest_transform.e,
-#                                  self.dest_transform.xoff,
-#                                  self.dest_transform.yoff]
-#                 else:
-#                     xform_mat = self.dest_transform
-#                 output_loc = shapely.affinity.affine_transform(self.src_obj,
-#                                                                xform_mat)
-#                 return output_loc
-#         elif self.src_type == 'numpy array':
-#             return rasterio.warp.reproject(
-#                 self.src_obj, output_loc, src_transform=self.src_transform,
-#                 src_crs=self.src_crs, dst_transform=self.dest_transform,
-#                 dst_crs=self.dest_crs)
-#
-#
-# def get_crs_from_ogr(annoying_OGR_geometry):
-#     """Get a CRS from an :class:`osgeo.ogr.Geometry` object.
-#
-#     Arguments
-#     ---------
-#     annoying_OGR_geometry: :class:`osgeo.ogr.Geometry`
-#         An OGR object which stores crs information in an annoying fashion.
-#
-#     Returns
-#     -------
-#     An extremely clear, easy to work with ``'epsg[number]'`` string.
-#     """
-#     srs = annoying_OGR_geometry.GetSpatialReference()
-#     result_of_ID = srs.AutoIdentifyEPSG()  # if success, returns 0
-#     if result_of_ID == 0:
-#         return 'epsg:' + str(srs.GetAuthorityCode(None))
-#     else:
-#         raise ValueError('Could not determine EPSG code.')
+    This function modified from
+    `the python utm library <https://github.com/Turbo87/utm>`_.
+
+    Arguments
+    ---------
+    latitude : numeric or :class:`numpy.ndarray`
+        The latitude value of a coordinate.
+    longitude : numeric or :class:`numpy.ndarray`
+        The longitude value of a coordinate.
+    ns_only : bool, optional
+        Should the full list of possible zone numbers be used or just the N/S
+        options? Defaults to N/S only (``True``).
+
+    Returns
+    -------
+    zone_number : int
+        The numeric portion of the UTM zone ID.
+    zone_letter : str
+        The string portion of the UTM zone ID. Note that by default this
+        function uses only the N/S designation rather than the full range of
+        possible letters.
+    """
+
+    # If the input is a numpy array, just use the first element
+    # User responsibility to make sure that all points are in one zone
+    if isinstance(latitude, np.ndarray):
+        latitude = latitude.flat[0]
+    if isinstance(longitude, np.ndarray):
+        longitude = longitude.flat[0]
+
+    utm_val = None
+
+    if 56 <= latitude < 64 and 3 <= longitude < 12:
+        utm_val = 32
+
+    elif 72 <= latitude <= 84 and longitude >= 0:
+        if longitude < 9:
+            utm_val = 31
+        elif longitude < 21:
+            utm_val = 33
+        elif longitude < 33:
+            utm_val = 35
+        elif longitude < 42:
+            utm_val = 37
+
+    if latitude < 0:
+        zone_letter = "S"
+    else:
+        zone_letter = "N"
+
+    if not -80 <= latitude <= 84:
+        warn('Warning: UTM projections not recommended for '
+             'latitude {}'.format(latitude))
+    if utm_val is None:
+        utm_val = int((longitude + 180) / 6) + 1
+
+    return utm_val, zone_letter
+
+
+def _get_coords(geom):
+    """Get coordinates from various shapely geometry types."""
+    if isinstance(geom, Point) or isinstance(geom, LineString):
+        return geom.coords.xy
+    elif isinstance(geom, Polygon):
+        return geom.exterior.coords.xy

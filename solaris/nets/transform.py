@@ -28,6 +28,7 @@ Functionality used directly from albumentations:
 - Normalize
 - HueSaturationValue  # NOTE: CAN ONLY HANDLE RGB 3-CHANNEL!
 - RGBShift  # NOTE: CAN ONLY HANDLE RGB 3-CHANNEL!
+- RandomRotate90
 - RandomBrightnessContrast
 - Blur
 - MotionBlur
@@ -57,7 +58,8 @@ from albumentations.augmentations.transforms import Crop, VerticalFlip,       \
     HorizontalFlip, Flip, Transpose, Resize, CenterCrop, RandomCrop, Cutout,  \
     RandomSizedCrop, OpticalDistortion, GridDistortion, ElasticTransform,     \
     Normalize, HueSaturationValue, RGBShift, RandomBrightnessContrast,        \
-    Blur, MotionBlur, MedianBlur, GaussNoise, CLAHE, RandomGamma, ToFloat
+    Blur, MotionBlur, MedianBlur, GaussNoise, CLAHE, RandomGamma, ToFloat,    \
+    RandomRotate90
 from albumentations.core.composition import Compose, OneOf, OneOrOther
 
 
@@ -66,9 +68,37 @@ __all__ = ['Crop', 'VerticalFlip', 'HorizontalFlip', 'Flip', 'Transpose',
            'OpticalDistortion', 'GridDistortion', 'ElasticTransform',
            'Normalize', 'HueSaturationValue', 'RGBShift',
            'RandomBrightnessContrast', 'Blur', 'MotionBlur', 'MedianBlur',
-           'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate',
+           'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate', 'RandomRotate90',
            'RandomScale', 'Cutout', 'Compose', 'OneOf', 'OneOrOther', 'NoOp',
-           'process_aug_dict', 'get_augs', 'build_pipeline']
+           'RandomRotate90', 'process_aug_dict', 'get_augs', 'build_pipeline']
+
+
+class DropChannel(ImageOnlyTransform):
+    """Drop a channel from an input image.
+
+    Arguments
+    ---------
+    idx : int
+        The channel index to drop.
+    axis : int, optional (default: 1)
+        The axis to drop the channel from. Defaults to ``1`` (torch channel
+        axis). Set to ``3`` for TF models where the channel is the last axis
+        of an image.
+    always_apply : bool, optional (default: False)
+        Apply this transformation to every image? Defaults to no (``False``).
+    p : float [0, 1], optional (default: 1.0)
+        Probability that the augmentation is performed to each image. Defaults
+        to ``1.0``.
+    """
+
+    def __init__(self, idx, axis=1, always_apply=False, p=1.0):
+        super().__init__(always_apply, p)
+
+        self.idx = idx
+        self.axis = axis
+
+    def apply(self, im_arr, **params):
+        return np.delete(im_arr, self.idx, self.axis)
 
 
 class Rotate(DualTransform):
@@ -417,5 +447,6 @@ aug_matcher = {
     'blur': Blur, 'motionblur': MotionBlur, 'medianblur': MedianBlur,
     'gaussnoise': GaussNoise, 'clahe': CLAHE, 'randomgamma': RandomGamma,
     'tofloat': ToFloat, 'rotate': Rotate, 'randomscale': RandomScale,
-    'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp
+    'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp,
+    'randomrotate90': RandomRotate90, 'dropchannel': DropChannel
 }

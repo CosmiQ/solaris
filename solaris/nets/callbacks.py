@@ -1,6 +1,7 @@
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras.callbacks import Callback
+from .torch_callbacks import torch_callback_dict
 import torch
 
 
@@ -40,36 +41,52 @@ def get_callbacks(framework, config):
             else:
                 callbacks.append(keras_callbacks[callback](**params))
     elif framework == 'torch':
-        for callback in config['training']['callbacks'].keys():
+        for callback, params in config['training']['callbacks'].items():
             if callback == 'lr_schedule':
                 callbacks.append(get_lr_schedule(framework, config))
             else:
-                callbacks.append(callback)
+                callbacks.append(torch_callback_dict[callback](**params))
 
     return callbacks
 
-  
+
 class KerasTerminateOnMetricNaN(Callback):
     """Callback to stop training if a metric has value NaN or infinity.
 
-    Arguments:
-    ----------
-    metric (str): The name of the metric to be tested for NaN value.
-    checkpoint (['epoch', 'batch']): Should the metric be checked at the end of
-        every epoch (default) or every batch?
-
-    Usage:
-    ------
+    Notes
+    -----
     Instantiate as you would any other keras callback. For example, to end
-    training if a validation metric called `f1_score` reaches value NaN:
-    ```
-    m = Model(inputs, outputs)
-    m.compile()
-    m.fit(X, y, callbacks=[TerminateOnMetricNaN('val_f1_score')])
-    ```
+    training if a validation metric called `f1_score` reaches value NaN::
+
+        m = Model(inputs, outputs)
+        m.compile()
+        m.fit(X, y, callbacks=[TerminateOnMetricNaN('val_f1_score')])
+
+
+    Attributes
+    ----------
+    metric : str, optional
+        Name of the metric being monitored.
+    checkpoint : str, optional
+        One of ``['epoch', 'batch']``: Should the metric be checked at the end
+        of every epoch (default) or every batch?
+
+    Methods
+    -------
+    on_epoch_end : operations to complete at the end of each epoch.
+    on_batch_end : operations to complete at the end of each batch.
     """
 
     def __init__(self, metric=None, checkpoint='epoch'):
+        """
+
+        Parameters
+        ----------
+        metric (str): The name of the metric to be tested for NaN value.
+        checkpoint (['epoch', 'batch']): Should the metric be checked at the end of
+            every epoch (default) or every batch?
+
+        """
         super(KerasTerminateOnMetricNaN, self).__init__()
         self.metric = metric
         self.ckpt = checkpoint
@@ -119,7 +136,7 @@ def get_lr_schedule(framework, config):
     Returns
     -------
     lr_scheduler : :class:`tensorflow.keras.callbacks.LearningRateScheduler` or
-    :module:`torch.optim.lr_schedule` scheduler class
+    ``torch.optim.lr_schedule`` scheduler class
         A scheduler to provide during training. For Keras, this takes the form
         of a callback passed to the optimizer; for PyTorch, it's a class object
         that wraps the optimizer. Because the torch version must wrap the
@@ -170,8 +187,7 @@ def keras_lr_schedule(schedule_type, initial_lr=0.001, update_frequency=1,
         The initial learning rate to use. Defaults to ``0.001`` .
     update_frequency : int, optional
         How frequently should learning rate be reduced (or increased)? Defaults
-        to ``1`` (every epoch). Has no effect if ``schedule_type='arbitrary'``
-        .
+        to ``1`` (every epoch). Has no effect if ``schedule_type='arbitrary'``.
     factor : float, optional
         The magnitude by which learning rate should be changed at each update.
         Use a positive number to increase learning rate and a negative number
@@ -190,13 +206,18 @@ def keras_lr_schedule(schedule_type, initial_lr=0.001, update_frequency=1,
 
     Usage
     -----
-    ``schedule_type='arbitrary' usage is documented in the arguments above.
+    ``schedule_type='arbitrary'`` usage is documented in the arguments above.
     For ``schedule_type='exponential'``, the following equation is applied to
     determine the learning rate at each epoch:
+
     .. math::
+
         lr = initial_lr*e^{factor\times(floor(epoch/update_frequency))}
-    For ``schedule_type='linear', the following equation is applied:
+
+    For ``schedule_type='linear'``, the following equation is applied:
+
     .. math::
+
         lr = initial_lr\times(1+factor\times(floor(epoch/update_frequency)))
 
     """

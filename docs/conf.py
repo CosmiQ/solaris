@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-#
 # Configuration file for the Sphinx documentation builder.
 #
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
+# This file only contains a selection of the most common options. For a full
+# list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
@@ -15,42 +13,55 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
-
-
+import sphinx_bootstrap_theme
 # -- Project information -----------------------------------------------------
 
-project = 'cw-eval'
-copyright = '2018, CosmiQ Works'
-author = 'David Lindenbaum and Nick Weir'
+project = 'solaris'
+copyright = '2019, CosmiQ Works'
+author = 'CosmiQ Works'
 license = 'Apache 2.0'
+import time
+copyright = u'2018-{}, CosmiQ Works: an IQT Lab'.format(time.strftime("%Y"))
 
-# The short X.Y version
-version = '1.0'
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
-
+release = '0.1.0'
+version = '0.1.0'
 
 # -- General configuration ---------------------------------------------------
-
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
+    'sphinx.ext.autosummary',
     'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
+    'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    # 'autoapi.extension',
+    'sphinx.ext.autosectionlabel',
     'nbsphinx'
 ]
+
+# autoapi_type = 'python'
+# autoapi_template_dir = '_templates/'
+# autoapi_dirs = ['../solaris']
+# autoapi_options = ['members', 'undoc-members', 'special-members']
+# autoapi_ignore = ['*data*',
+#                   '*bin*',
+#                   '*migrations*']
+# autoapi_root = 'api'
+
+autodoc_mock_imports = ['shapely', 'fiona', 'pandas', 'geopandas', 'cv2',
+                        'numpy', 'gdal', 'tqdm', 'rtree', 'networkx',
+                        'rasterio', 'scipy', 'skimage', 'tensorflow', 'torch',
+                        'torchvision', 'yaml', 'affine', 'albumentations',
+                        'rio_tiler', 'PIL', 'matplotlib', 'rio_cogeo']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -74,7 +85,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -85,18 +96,29 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'bootstrap'
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
-# html_theme_options = {}
+html_theme_options = {
+    'source_link_position': "footer",
+    'bootswatch_theme': "paper",
+    'bootstrap_version': "3",
+    'navbar_links': [
+                     ("Tutorials", "tutorials/index"),
+                     ("API", "api/index")
+                     ],
+
+    }
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_logo = 'solaris_logo_tiny_black.png'
+
+def setup(app):
+    app.add_stylesheet("custom_styles.css")
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -106,42 +128,12 @@ html_static_path = ['_static']
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-# html_sidebars = {}
-
+html_sidebars = {'**': ['localtoc.html', 'sourcelink.html', 'searchbox.html']}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'cw-evaldoc'
-
-
-# -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
-}
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'cw-eval.tex', 'cw-eval Documentation',
-     'David Lindenbaum and Nick Weir', 'manual'),
-]
+htmlhelp_basename = 'solarisdoc'
 
 
 # -- Options for manual page output ------------------------------------------
@@ -149,7 +141,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'cw-eval', 'cw-eval Documentation',
+    (master_doc, 'solaris', 'solaris Documentation',
      [author], 1)
 ]
 
@@ -160,10 +152,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'cw-eval', 'cw-eval Documentation',
-     author, 'cw-eval',
-     'CosmiQ Works evaluation package for SpaceNet Challenges.',
-     'Miscellaneous'),
+    (master_doc, 'solaris', 'solaris Documentation',
+     author, 'solaris'),
 ]
 
 
@@ -196,10 +186,8 @@ intersphinx_mapping = {
     "pandas": ('http://pandas.pydata.org/pandas-docs/stable/', None),
     "geopandas": ('http://geopandas.org/', None),
     "rtree": ('http://toblerity.org/rtree/', None),
-    "shapely": ('https://shapely.readthedocs.io/en/stable/', None)
+    "shapely": ('https://shapely.readthedocs.io/en/stable/', None),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
+    'PyTorch': ('http://pytorch.org/docs/master/', None)
     }
-
-# -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True

@@ -143,6 +143,25 @@ def flatten_binary_scores(scores, labels, ignore=None):
     return vscores, vlabels
 
 
+class TorchJaccardLoss(torch.nn.modules.Module):
+    # modified from XD_XD's implementation
+    def __init__(self):
+        super(TorchJaccardLoss, self).__init__()
+
+    def forward(self, outputs, targets):
+        eps = 1e-15
+
+        jaccard_target = (targets == 1).float()
+        jaccard_output = torch.sigmoid(outputs)
+        intersection = (jaccard_output * jaccard_target).sum()
+        union = jaccard_output.sum() + jaccard_target.sum()
+        jaccard_score = ((intersection + eps) / (union - intersection + eps))
+        self._stash_jaccard = jaccard_score
+        loss = 1. - jaccard_score
+
+        return loss
+
+
 class TorchStableBCELoss(torch.nn.modules.Module):
     def __init__(self):
         super(TorchStableBCELoss, self).__init__()
@@ -273,6 +292,8 @@ torch_losses = {
     'binary_crossentropy': nn.BCELoss,
     'bce': nn.BCELoss,
     'bceloss': nn.BCELoss,
+    'bcewithlogits': nn.BCEWithLogitsLoss,
+    'bcewithlogitsloss': nn.BCEWithLogitsLoss,
     'hinge': nn.HingeEmbeddingLoss,
     'hingeembeddingloss': nn.HingeEmbeddingLoss,
     'multiclass_hinge': nn.MultiMarginLoss,
@@ -286,5 +307,7 @@ torch_losses = {
     'cosineembeddingloss': nn.CosineEmbeddingLoss,
     'lovaszhinge': torch_lovasz_hinge,
     'focalloss': TorchFocalLoss,
-    'focal': TorchFocalLoss
+    'focal': TorchFocalLoss,
+    'jaccard': TorchJaccardLoss,
+    'jaccardloss': TorchJaccardLoss
 }

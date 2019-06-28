@@ -3,7 +3,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from .transform import process_aug_dict
 from ..utils.core import _check_df_load
-from ..utils.io import imread, scale_for_model
+from ..utils.io import imread, scale_for_model, _check_channel_order
 
 
 def make_data_generator(framework, config, df, stage='train'):
@@ -126,6 +126,7 @@ class KerasSegmentationSequence(keras.utils.Sequence):
             pass  # TODO: IMPLEMENT BBOX LABEL SETUP HERE!
         for i in range(self.batch_size):
             im = imread(self.df['image'].iloc[image_idxs[i]])
+            im = _check_channel_order(im, 'keras')
             if self.config['data_specs']['label_type'] == 'mask':
                 label = imread(self.df['label'].iloc[image_idxs[i]])
                 if not self.config['data_specs']['is_categorical']:
@@ -195,10 +196,13 @@ class TorchDataset(Dataset):
         mask = imread(self.df['label'].iloc[idx])
         if not self.config['data_specs']['is_categorical']:
             mask[mask != 0] = 1
-        sample = {'image': image, 'label': mask}
+        if len(mask.shape) == 2:
+            mask = mask[:, :, np.newaxis]
+        sample = {'image': image, 'mask': mask}
         if self.aug:
             sample = self.aug(**sample)
-
+        sample['image'] = _check_channel_order(sample['image'], 'torch').astype(np.float32)
+        sample['mask'] = _check_channel_order(sample['mask'], 'torch').astype(np.float32)
         return sample
 
 
@@ -244,7 +248,7 @@ class InferenceTiler(object):
         """
         # read in the image if it's a path
         if isinstance(im, str):
-            im = imread(im)
+            im = imread(im, make_8bit=True)
         # determine how many samples will be generated with the sliding window
         src_im_height = im.shape[0]
         src_im_width = im.shape[1]
