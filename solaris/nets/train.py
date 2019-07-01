@@ -41,6 +41,10 @@ class Trainer(object):
         self.verbose = self.config['training']['verbose']
         if self.framework in ['torch', 'pytorch']:
             self.gpu_available = torch.cuda.is_available()
+            if self.gpu_available:
+                self.gpu_count = torch.cuda.device_count()
+            else:
+                self.gpu_count = 0
         elif self.framework == 'keras':
             self.gpu_available = tf.test.is_gpu_available()
 
@@ -62,6 +66,8 @@ class Trainer(object):
         elif self.framework == 'torch':
             if self.gpu_available:
                 self.model = self.model.cuda()
+                if self.gpu_count > 1:
+                    self.model = torch.nn.DataParallel(self.model)
             # create optimizer
             if self.config['training']['opt_args'] is not None:
                 self.optimizer = self.optimizer(
