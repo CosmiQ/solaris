@@ -50,7 +50,6 @@ If you're installing on a system with GPU access:
 conda env create -n solaris -f environment-gpu.yml
 ```
 Otherwise:
-If you're installing on a system with GPU access:
 ```
 conda env create -n solaris -f environment.yml
 ```
