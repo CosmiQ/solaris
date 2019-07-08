@@ -85,6 +85,8 @@ def _check_crs(input_crs):
         out_crs = input_crs.to_epsg()
     elif isinstance(input_crs, int):
         out_crs = input_crs
+    elif input_crs is None:
+        out_crs = input_crs
     return out_crs
 
 def get_data_paths(path, infer=False):
