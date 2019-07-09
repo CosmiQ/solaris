@@ -79,7 +79,7 @@ else:
                  'tensorflow==1.13.1',
                  'torch>=1.1.0',
                  'matplotlib>=3.1.1',
-                 'affine>=2.2.3',
+                 'affine>=2.2.2',
                  'albumentations>=0.3.0',
                  # 'rio-tiler>=1.2.7',
                  'pyyaml>=5.1',
