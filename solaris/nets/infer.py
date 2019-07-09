@@ -35,6 +35,8 @@ class Inferer(object):
         self.stitching_method = self.config['inference'].get(
             'stitching_method', 'average')
         self.output_dir = self.config['inference']['output_dir']
+        if not os.path.isdir(self.output_dir):
+            os.makedirs(self.output_dir)
 
     def __call__(self, infer_df):
         """Run inference.
