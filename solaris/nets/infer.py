@@ -67,6 +67,8 @@ class Inferer(object):
                                                   batch_size=self.batch_size)
 
             elif self.framework in ['torch', 'pytorch']:
+                with torch.no_grad():
+                    self.model.eval()
                 if torch.cuda.is_available():
                     device = torch.device('cuda')
                     self.model = self.model.cuda()

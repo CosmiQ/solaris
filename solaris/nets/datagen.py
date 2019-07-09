@@ -277,7 +277,7 @@ class InferenceTiler(object):
                     subarr = self.aug(image=subarr)['image']
                 output_arr.append(subarr)
                 top_left_corner_idxs.append((y_min, x_min))
-        output_arr = np.stack(output_arr)
+        output_arr = np.stack(output_arr).astype(np.float32)
         if self.framework in ['torch', 'pytorch']:
             output_arr = np.moveaxis(output_arr, 3, 1)
         return output_arr, top_left_corner_idxs, (src_im_height, src_im_width)
