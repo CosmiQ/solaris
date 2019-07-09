@@ -15,9 +15,9 @@ scikit-image==0.15.0
 tensorflow==1.13.1
 torch==1.1.0
 torchvision==0.3.0
-affine==2.2.2
+affine==2.2.3
 albumentations==0.3.0
 urllib3==1.24.3
 pyyaml==5.1.1
-pyproj==2.2.0
+pyproj==2.2.3
 rio-cogeo==1.0.0
