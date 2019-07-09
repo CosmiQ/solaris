@@ -9,6 +9,8 @@ import rasterio
 import skimage
 from fiona._err import CPLE_OpenFailedError
 from fiona.errors import DriverError
+from warnings import warn
+
 
 def _check_rasterio_im_load(im):
     """Check if `im` is already loaded in; if not, load it in."""
@@ -42,7 +44,7 @@ def _check_df_load(df):
     elif isinstance(df, pd.DataFrame):
         return df
     else:
-        raise ValueError("{} is not an accepted DataFrame format.".format(df))
+        raise ValueError(f"{df} is not an accepted DataFrame format.")
 
 
 def _check_gdf_load(gdf):
@@ -51,12 +53,14 @@ def _check_gdf_load(gdf):
         try:
             return gpd.read_file(gdf)
         except (DriverError, CPLE_OpenFailedError):
+            warn(f"GeoDataFrame couldn't be loaded: either {gdf} isn't a valid"
+                 " path or it isn't a valid vector file. Returning an empty"
+                 " GeoDataFrame.")
             return gpd.GeoDataFrame()
     elif isinstance(gdf, gpd.GeoDataFrame):
         return gdf
     else:
-        raise ValueError(
-            "{} is not an accepted GeoDataFrame format.".format(gdf))
+        raise ValueError(f"{gdf} is not an accepted GeoDataFrame format.")
 
 
 def _check_geom(geom):
