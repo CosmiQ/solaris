@@ -277,7 +277,8 @@ class InferenceTiler(object):
                             x_min:x_min + self.width,
                             :]
                 if self.aug is not None:
-                    subarr = self.aug(image=subarr)
+                    subarr = self.aug(image=subarr)['image']
+                    print(subarr)
                 output_arr[len(top_left_corner_idxs), :, :, :] = subarr
                 top_left_corner_idxs.append((y_min, x_min))
         if self.framework in ['torch', 'pytorch']:
