@@ -48,11 +48,12 @@ def _load_model_weights(model, path, framework):
         # pytorch already throws the right error on failed load, so no need
         # to fix exception
         loaded = torch.load(path)
-        if isinstance(loaded, torch.nn.Module):  # if it's a full module
-            return loaded
+        if isinstance(loaded, torch.nn.Module):  # if it's a full model already
+            model.load_state_dict(loaded.state_dict())
         else:
             model.load_state_dict(loaded)
-            return model
+
+        return model
 
 
 def reset_weights(model, framework):
