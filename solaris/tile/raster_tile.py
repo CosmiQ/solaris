@@ -9,7 +9,8 @@ from shapely.geometry import box
 import math
 from rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
-from ..utils.tile import read_cog_tile
+# removing the following until COG functionality is implemented
+# from ..utils.tile import read_cog_tile
 from ..utils.geo import latlon_to_utm_epsg, reproject_geometry, reproject
 from ..utils.geo import raster_get_projection_unit
 from tqdm import tqdm
@@ -267,7 +268,8 @@ class RasterTiler(object):
             self.get_tile_bounds()
 
         for tb in self.tile_bounds:
-            if not self.is_cog or self.force_load_cog:
+            # removing the following line until COG functionality implemented
+            if True:  # not self.is_cog or self.force_load_cog:
                 vrt = self.load_src_vrt()
                 window = vrt.window(*tb)
                 if self.src.count != 1:
@@ -293,15 +295,15 @@ class RasterTiler(object):
                 else:
                     mask = None  # placeholder
 
-            else:
-                tile_data, mask, window, aff_xform = read_cog_tile(
-                    src=self.src,
-                    bounds=tb,
-                    tile_size=self.dest_tile_size,
-                    indexes=channel_idxs,
-                    nodata=self.nodata,
-                    resampling_method=self.resampling
-                    )
+            # else:
+            #     tile_data, mask, window, aff_xform = read_cog_tile(
+            #         src=self.src,
+            #         bounds=tb,
+            #         tile_size=self.dest_tile_size,
+            #         indexes=channel_idxs,
+            #         nodata=self.nodata,
+            #         resampling_method=self.resampling
+            #         )
             profile = self.src.profile
             profile.update(width=self.dest_tile_size[1],
                            height=self.dest_tile_size[0],
