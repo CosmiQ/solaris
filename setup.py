@@ -83,7 +83,7 @@ else:
                  'albumentations>=0.3.0',
                  # 'rio-tiler>=1.2.7',
                  'pyyaml>=5.1',
-                 'pyproj>=2.2.3',
+                 'pyproj>=2.2.1',
                  'torchvision>=0.3.0']
 
 
