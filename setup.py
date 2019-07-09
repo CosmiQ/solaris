@@ -81,7 +81,7 @@ else:
                  'matplotlib>=3.1.0',
                  'affine>=2.2.2',
                  'albumentations>=0.2.3',
-                 'rio-tiler>=1.2.7',
+                 # 'rio-tiler>=1.2.7',
                  'pyyaml>=5.1',
                  'torchvision>=0.3.0']
 
