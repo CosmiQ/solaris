@@ -8,7 +8,7 @@
 
 model_name: xdxd_spacenet4
 
-model_src_path: # leave this blank unless you're using a custom model not
+model_path: # leave this blank unless you're using a custom model not
                 # native to solaris. solaris will automatically find your
                 # model.
 train: true  # set to false for inference only

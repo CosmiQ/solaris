@@ -8,7 +8,7 @@
 
 model_name: # include the name of the model to be used here. See the docs
             # for options.
-model_src_path: # leave this blank unless you're using a custom model not
+model_path: # leave this blank unless you're using a custom model not
                 # native to solaris. solaris will automatically find your
                 # model.
 train: true  # set to false for inference only
@@ -119,3 +119,8 @@ inference:
                        # set to the same size as the input image size for zero
                        # overlap; to average predictions across multiple images,
                        # use a smaller step size.
+  stitching_method:    # the method to use to stitch together tiles used during
+                       # inference. defaults to average if not provided. see
+                       # the documentation for sol.raster.image.stitch_images()
+                       # for more.
+  output_dir:  inference_out # the path to save inference outputs to.
