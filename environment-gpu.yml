@@ -27,8 +27,8 @@ dependencies:
   - torchvision=0.3.0
   - pyyaml=5.1
   - pyproj=2.1.3
+  - affine=2.2.2
   - pip:
-    - affine==2.2.2
     - albumentations==0.2.3
-    - rio-tiler==1.2.7
+#    - rio-tiler==1.2.7
     - rio-cogeo==1.0.0
