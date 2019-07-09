@@ -2,12 +2,11 @@ import os
 from tensorflow import keras
 import torch
 from warnings import warn
+import requests
+import numpy as np
+from tqdm import tqdm
+from ..nets import weights_dir
 from .zoo import model_dict
-
-
-# below dictionary lists models compatible with solaris. alternatively, your
-# own model can be used by using the path to the model as the value for
-# model_name in the config file.
 
 
 def get_model(model_name, framework, model_path=None, pretrained=False,
@@ -30,7 +29,10 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
         try:
             model = _load_model_weights(model, model_path, framework)
         except (OSError, FileNotFoundError):
-            warn(f'The model weights file {model_path} was not found.')
+            warn(f'The model weights file {model_path} was not found.'
+                 ' Attempting to download from the SpaceNet repository.')
+            weight_path = _download_weights(md)
+            model = _load_model_weights(model, weight_path, framework)
 
     return model
 
@@ -87,3 +89,27 @@ def _reset_torch_weights(torch_layer):
     if isinstance(torch_layer, torch.nn.Conv2d) or \
             isinstance(torch_layer, torch.nn.Linear):
         torch_layer.reset_parameters()
+
+
+def _download_weights(model_dict):
+    """Download pretrained weights for a model."""
+    weight_url = model_dict.get('weight_url', None)
+    weight_dest_path = model_dict.get('weight_path', os.path.join(
+            weights_dir, weight_url.split('/')[-1]))
+    if weight_url is None:
+        raise KeyError("Can't find the weights file.")
+    else:
+        r = requests.get(weight_url, stream=True)
+        if r.status_code != 200:
+            raise ValueError('The file could not be downloaded. Check the URL'
+                             ' and network connections.')
+        total_size = int(r.headers.get('content-length', 0))
+        block_size = 1024
+        with open(weight_dest_path, 'wb') as f:
+            for chunk in tqdm(r.iter_content(block_size),
+                              total=np.ceil(total_size//block_size),
+                              unit='KB', unit_scale=False):
+                if chunk:
+                    f.write(chunk)
+
+    return weight_dest_path
