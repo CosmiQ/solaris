@@ -522,8 +522,10 @@ def split_multi_geometries(gdf, obj_id_col=None, group_col=None,
     gdf2 = _check_gdf_load(gdf)
     # drop duplicate columns (happens if loading a csv with geopandas)
     gdf2 = gdf2.loc[:, ~gdf2.columns.duplicated()]
+    if len(gdf2) == 0:
+        return gdf2
     # check if the values in gdf2[geometry] are polygons; if strings, do loads
-    if isinstance(gdf2[geom_col][0], str):
+    if isinstance(gdf2[geom_col].iloc[0], str):
         gdf2[geom_col] = gdf2[geom_col].apply(loads)
     split_geoms_gdf = pd.concat(
         gdf2.apply(_split_multigeom_row, axis=1, geom_col=geom_col).tolist())
