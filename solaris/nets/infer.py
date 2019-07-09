@@ -23,7 +23,7 @@ class Inferer(object):
         else:
             self.model_path = self.config.get('model_path', None)
         self.model = get_model(self.model_name, self.framework,
-                               self.model_path)
+                               self.model_path, pretrained=True)
         self.window_step_x = self.config['inference'].get('window_step_size_x',
                                                           None)
         self.window_step_y = self.config['inference'].get('window_step_size_y',

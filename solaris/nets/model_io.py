@@ -1,6 +1,7 @@
 import os
 from tensorflow import keras
 import torch
+from warnings import warn
 from .zoo import model_dict
 
 
@@ -29,7 +30,7 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
         try:
             model = _load_model_weights(model, model_path, framework)
         except (OSError, FileNotFoundError):
-            pass  # TODO: IMPLEMENT MODEL DOWNLOAD FROM STORAGE HERE
+            warn(f'The model weights file {model_path} was not found.')
 
     return model
 
@@ -46,9 +47,12 @@ def _load_model_weights(model, path, framework):
     elif framework.lower() in ['torch', 'pytorch']:
         # pytorch already throws the right error on failed load, so no need
         # to fix exception
-        model.load_state_dict(path)
-
-    return model
+        loaded = torch.load(path)
+        if isinstance(loaded, torch.nn.Module):  # if it's a full module
+            return loaded
+        else:
+            model.load_state_dict(loaded)
+            return model
 
 
 def reset_weights(model, framework):
