@@ -254,13 +254,10 @@ class InferenceTiler(object):
         src_im_width = im.shape[1]
         y_steps = int(1+np.ceil((src_im_height-self.height)/self.y_step))
         x_steps = int(1+np.ceil((src_im_width-self.width)/self.x_step))
-        n_chips = ((y_steps)*(x_steps))
         if len(im.shape) == 2:  # if there's no channel axis
             im = im[:, :, np.newaxis]  # create one - will be needed for model
-        output_arr = np.empty(shape=(n_chips,
-                                     self.height, self.width,
-                                     im.shape[2]), dtype=im.dtype)
         top_left_corner_idxs = []
+        output_arr = []
         for y in range(y_steps):
             if self.y_step*y + self.height > im.shape[0]:
                 y_min = im.shape[0] - self.height
@@ -278,8 +275,9 @@ class InferenceTiler(object):
                             :]
                 if self.aug is not None:
                     subarr = self.aug(image=subarr)['image']
-                output_arr[len(top_left_corner_idxs), :, :, :] = subarr
+                output_arr.append(subarr)
                 top_left_corner_idxs.append((y_min, x_min))
+        output_arr = np.stack(output_arr)
         if self.framework in ['torch', 'pytorch']:
             output_arr = np.moveaxis(output_arr, 3, 1)
         return output_arr, top_left_corner_idxs, (src_im_height, src_im_width)
