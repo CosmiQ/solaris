@@ -54,7 +54,7 @@ class Inferer(object):
             x_step=self.window_step_x,
             y_step=self.window_step_y,
             augmentations=process_aug_dict(
-                self.config['inference']['inference_augmentation'])
+                self.config['inference_augmentation'])
             )
         for im_path in infer_df['image']:
             inf_input, idx_refs, (

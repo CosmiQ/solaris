@@ -248,7 +248,7 @@ class InferenceTiler(object):
         """
         # read in the image if it's a path
         if isinstance(im, str):
-            im = imread(im, make_8bit=True)
+            im = imread(im)
         # determine how many samples will be generated with the sliding window
         src_im_height = im.shape[0]
         src_im_width = im.shape[1]
@@ -277,7 +277,7 @@ class InferenceTiler(object):
                             x_min:x_min + self.width,
                             :]
                 if self.aug is not None:
-                    subarr = self.aug(image=subarr)
+                    subarr = self.aug(image=subarr)['image']
                 output_arr[len(top_left_corner_idxs), :, :, :] = subarr
                 top_left_corner_idxs.append((y_min, x_min))
         if self.framework in ['torch', 'pytorch']:
