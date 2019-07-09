@@ -19,6 +19,7 @@ dependencies:
   - urllib3=1.24.3
   - networkx=2.3
   - rasterio=1.0.22
+  - requests=2.22.0
   - scipy=1.2.1
   - scikit-image=0.15.0
   - tensorflow-gpu=1.13.1

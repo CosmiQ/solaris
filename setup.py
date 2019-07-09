@@ -81,6 +81,7 @@ else:
                  'matplotlib>=3.1.1',
                  'affine>=2.2.2',
                  'albumentations>=0.3.0',
+                 'requests>=2.22.0',
                  # 'rio-tiler>=1.2.7',
                  'pyyaml>=5.1',
                  'pyproj>=2.2.1',
