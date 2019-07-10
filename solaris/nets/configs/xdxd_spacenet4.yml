@@ -11,12 +11,12 @@ model_name: xdxd_spacenet4
 model_path: # leave this blank unless you're using a custom model not
                 # native to solaris. solaris will automatically find your
                 # model.
-train: true  # set to false for inference only
-infer: false  # set to false for training only
+train: false  # set to false for inference only
+infer: true  # set to false for training only
 
 pretrained: false  # use pretrained weights associated with the model?
 nn_framework:  torch
-batch_size: 4
+batch_size: 12
 
 data_specs:
   width: 512
@@ -40,7 +40,7 @@ data_specs:
   label_type: mask  # one of ['mask', 'bbox']
   is_categorical: false  # are the labels binary (default) or categorical?
   mask_channels: 1  # number of channels in the training mask
-  val_holdout_frac:  # if empty, assumes that separate data ref files define the
+  val_holdout_frac: 0.2 # if empty, assumes that separate data ref files define the
                      # training and validation dataset. If a float between 0 and
                      # 1, indicates the fraction of training data that's held
                      # out for validation (and validation_data_csv will be
@@ -52,12 +52,13 @@ data_specs:
                  # extra columns of the csv files (denoted below), either as
                  # filepaths to additional data to load or as values to include.
                  # NOTE: This is not currently implemented.
-training_data_csv: # TODO # path to the reference csv that defines training data.
+
+training_data_csv: '/path/to/training_df.csv' # path to the reference csv that defines training data.
                     # see the documentation for the specifications of this file.
 validation_data_csv: # TODO # path to the validation ref csv. See the docs. If
                       # val_holdout_frac is specified (under data_specs), then
                       # this argument will be ignored.
-inference_data_csv: # TODO # path to the reference csv that defines inference data.
+inference_data_csv: '/path/to/test_df.csv' # TODO # path to the reference csv that defines inference data.
                      # see the documentation for the specs of this file.
 
 training_augmentation:  # augmentations for use with training data
@@ -74,33 +75,62 @@ training_augmentation:  # augmentations for use with training data
       width: 512
       p: 1.0
     Normalize:
-      mean:  # mean values after dividing by max pixel value
+      mean:
         - 0.006479
         - 0.009328
         - 0.01123
-      std:  # std after dividing by max pixel value
+      std:
         - 0.004986
         - 0.004964
         - 0.004950
-      p: 1.0
       max_pixel_value: 65535.0
+      p: 1.0
+    # include augmentations here. See the documentation for options and
+    # required arguments.
   p: 1.0  # probability of applying the entire training augmentation pipeline.
   shuffle: true  # should the image order be shuffled in each epoch.
 validation_augmentation:  # augmentations for use with validation data
   augmentations:
+    DropChannel:
+      idx: 3
+      axis: 2
     CenterCrop:
       height: 512
       width: 512
       p: 1.0
     Normalize:
+      mean:
+        - 0.006479
+        - 0.009328
+        - 0.01123
+      std:
+        - 0.004986
+        - 0.004964
+        - 0.004950
+      max_pixel_value: 65535.0
       p: 1.0
     # include augmentations here
   p: 1.0 # probability of applying the full validation augmentation pipeline.
-inference_augmentation:  # this is optional. If not provided,
-                         # validation_augmentation will be used instead.
-
+inference_augmentation:
+  augmentations:
+    DropChannel:
+      idx: 3
+      axis: 2
+      p: 1.0
+    Normalize:
+      mean:
+        - 0.006479
+        - 0.009328
+        - 0.01123
+      std:
+        - 0.004986
+        - 0.004964
+        - 0.004950
+      max_pixel_value: 65535.0
+      p: 1.0
+  p: 1.0 # probability of applying the full validation augmentation pipeline.
 training:
-  epochs:  50 # number of epochs. A list can also be provided here indicating
+  epochs:  60 # number of epochs. A list can also be provided here indicating
            # distinct sets of epochs at different learning rates, etc; if so,
            # a list of equal length must be provided in the parameter that varies
            # with the values for each set of epochs.
@@ -112,12 +142,12 @@ training:
   opt_args:  # dictionary of values (e.g. alpha, gamma, momentum) specific to
              # the optimizer.
   loss:
-    bcewithlogits:
-    jaccard:
-
+    bcewithlogits:  # loss function(s). See docs for options. This should be a list of loss
+    jaccard:     # names with sublists of loss function hyperparameters (if applicable).
+         # See the docs for more details and usage examples.
   loss_weights:
-    - bcewithlogits: 1  # (optional) weights to use for each loss function if using
-    - jaccard: 0.25 # loss: composite. This must be a set of key:value pairs where
+    bcewithlogits: 10 # (optional) weights to use for each loss function if using
+    jaccard: 2.5 # loss: composite. This must be a set of key:value pairs where
                  # defining the weight for each sub-loss within the composite.
                  # If using a composite and a value isn't provided here, all
                  # losses will be weighted equally.
@@ -138,9 +168,9 @@ training:
                          # if not provided, only the final model is saved.
   callbacks:
     model_checkpoint:
-      filepath: 'xdxd_sn4_best.pth'
+      filepath: '/path/to/xdxd_best.pth'
       monitor: val_loss
-  model_dest_path: 'xdxd_sn4.pth'  # path to save the trained model output and checkpoint(s)
+  model_dest_path: '/path/to/xdxd.pth'  # path to save the trained model output and checkpoint(s)
                      # to. Should be a filename ending in .h5, .hdf5 for keras
                      # or .pth, .pt for torch. Epoch numbers will be appended
                      # for checkpoints.
@@ -155,3 +185,4 @@ inference:
                        # set to the same size as the input image size for zero
                        # overlap; to average predictions across multiple images,
                        # use a smaller step size.
+  output_dir: '/path/to/inference_out/'
