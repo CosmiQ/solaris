@@ -28,7 +28,7 @@ The command line interface (CLI) is the simplest way to use Solaris. Using the C
 you can run training and/or prediction on overhead imagery using `SpaceNet <https://www.spacenet.ai>`_ models
 without writing a single line of python code.
 
-After `installing Solaris <../installation.html>`_, you can run simple commands from a
+After :doc:`installing Solaris <../installation>`, you can run simple commands from a
 terminal or command prompt for standard operations, from creating training masks
 using vector labels to running an entire deep learning pipeline through
 evaluating model performance. Instead of having to write code to help ``solaris``
@@ -40,7 +40,7 @@ on creating configuration files and running the CLI can be found below.
 * `Creating reference files to help solaris find your imagery <notebooks/creating_im_reference_csvs.ipynb>`_
 * `Creating training masks with the solaris CLI <notebooks/cli_mask_creation.ipynb>`_
 * `Running a full deep learning pipeline using the solaris CLI <notebooks/cli_ml_pipeline.ipynb>`_
-* `Evaluating prediction quality on SpaceNet data with the solaris CLI <cli_eval.html>`_
+* :doc:`Evaluating prediction quality on SpaceNet data with the solaris CLI <cli_eval>`
 
 If these relatively narrow use cases don't cover your needs, the ``solaris`` python
 API can help!
@@ -56,22 +56,22 @@ analysis of overhead imagery data:
 * The ability to use pre-trained or freshly initialized `SpaceNet <https://www.spacenet.ai>`_ models, as well as your own custom models
 * Model performance evaluation tools for the SpaceNet IoU metric (APLS coming soon!)
 
-The `Python API Reference <../api/index.html>`_ provides full documentation of
+The :doc:`Python API Reference <../api/index>` provides full documentation of
 everything described above and more. For usage examples to get you started, see
 the tutorials below.
 
 * `Tiling imagery <notebooks/api_tiling_tutorial.ipynb>`_
 * `Creating training masks <notebooks/api_masks_tutorial.ipynb>`_
-* `Training a SpaceNet model <notebooks/api_training_spacenet>`_
-* `Inference with a pre-trained SpaceNet model <notebooks/api_inference_spacenet>`_
-* `Training a custom model <notebooks/api_training_custom>`_
-* `Converting pixel masks to vector labels <notebooks/api_mask_to_vector>`_
+* :doc:`Training a SpaceNet model <notebooks/api_training_spacenet>`
+* :doc:`Inference with a pre-trained SpaceNet model <notebooks/api_inference_spacenet>`
+* :doc:`Training a custom model <notebooks/api_training_custom>`
+* :doc:`Converting pixel masks to vector labels <notebooks/api_mask_to_vector>`
 * `Scoring your model's performance with the solaris Python API <notebooks/api_evaluation_tutorial.ipynb>`_
 
 
 Reference
 =========
-* `API reference <../api/index>`_
+* :doc:`API reference <../api/index>`
 
 Index
 =====
