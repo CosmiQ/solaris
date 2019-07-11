@@ -1,6 +1,7 @@
 import os
 from .. import weights_dir
-from xdxd_sn4 import XDXD_SpaceNet4_UNetVGG16
+from .xdxd_sn4 import XDXD_SpaceNet4_UNetVGG16
+from .selim_sef_sn4 import SelimSef_SpaceNet4_UNetSCSEResNeXt50
 
 model_dict = {
     'xdxd_spacenet4': {
