@@ -110,7 +110,15 @@ class Trainer(object):
                 # TRAINING
                 self.model.train()
                 for batch_idx, batch in enumerate(self.train_datagen):
-                    data = batch['image'].cuda()
+                    if self.config['data_specs'].get('additional_inputs',
+                                                     None) is not None:
+                        data = []
+                        for i in ['image'].extend(
+                            self.config['data_specs']['additional_inputs']
+                        ):
+                            data.append(batch[i].cuda())
+                    else:
+                        data = batch['image'].cuda()
                     target = batch['mask'].cuda().float()
                     self.optimizer.zero_grad()
                     output = self.model(data)
@@ -133,7 +141,15 @@ class Trainer(object):
                     torch.cuda.empty_cache()
                     val_loss = []
                     for batch_idx, batch in enumerate(self.val_datagen):
-                        data = batch['image'].cuda()
+                        if self.config['data_specs'].get('additional_inputs',
+                                                         None) is not None:
+                            data = []
+                            for i in ['image'].extend(
+                                self.config['data_specs']['additional_inputs']
+                            ):
+                                data.append(batch[i].cuda())
+                        else:
+                            data = batch['image'].cuda()
                         target = batch['mask'].cuda().float()
                         val_output = self.model(data)
                         val_loss.append(self.loss(val_output, target))

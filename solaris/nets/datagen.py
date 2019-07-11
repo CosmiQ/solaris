@@ -199,10 +199,20 @@ class TorchDataset(Dataset):
         if len(mask.shape) == 2:
             mask = mask[:, :, np.newaxis]
         sample = {'image': image, 'mask': mask}
+
         if self.aug:
             sample = self.aug(**sample)
-        sample['image'] = _check_channel_order(sample['image'], 'torch').astype(np.float32)
-        sample['mask'] = _check_channel_order(sample['mask'], 'torch').astype(np.float32)
+        # add in additional inputs (if applicable)
+        additional_inputs = self.config['data_specs'].get('additional_inputs',
+                                                          None)
+        if additional_inputs is not None:
+            for input in additional_inputs:
+                sample[input] = self.df[input].iloc[idx]
+
+        sample['image'] = _check_channel_order(sample['image'],
+                                               'torch').astype(np.float32)
+        sample['mask'] = _check_channel_order(sample['mask'],
+                                              'torch').astype(np.float32)
         return sample
 
 

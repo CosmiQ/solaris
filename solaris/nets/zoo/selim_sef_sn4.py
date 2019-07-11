@@ -4,64 +4,8 @@ from collections import OrderedDict
 import math
 import torch
 from torch import nn
+from torch.utils import model_zoo
 import torch.nn.functional as F
-
-
-ss_encoder_params = {
-
-    'dpn92':
-        {'filters': [64, 336, 704, 1552, 2688 + 27],
-         'decoder_filters': [64, 128, 256, 256],
-         'last_upsample': 64,
-        'init_op': dpn92,
-        'url': 'http://data.lip6.fr/cadene/pretrainedmodels/dpn92_extra-b040e4a9b.pth'},
-    'resnet34':
-        {'filters': [64, 64, 128, 256, 512 + 27],
-         'decoder_filters': [64, 128, 256, 512],
-         'last_upsample': 64,
-         'init_op': partial(resnet.resnet34, in_channels=4),
-         'url': resnet.model_urls['resnet34']},
-    'resnet101':
-        {'filters': [64, 256, 512, 1024, 2048 + 27],
-         'decoder_filters': [64, 128, 256, 256],
-         'last_upsample': 64,
-         'init_op': partial(resnet.resnet101, in_channels=4),
-         'url': resnet.model_urls['resnet101']},
-    'densenet121':
-        {'filters': [64, 256, 512, 1024, 1024 + 27],
-         'decoder_filters': [64, 128, 256, 256],
-         'last_upsample': 64,
-         'url': None,
-         'init_op': densenet121},
-    'densenet169':
-        {'filters': [64, 256, 512, 1280, 1664 + 27],
-         'decoder_filters': [64, 128, 256, 256],
-         'last_upsample': 64,
-         'url': None,
-         'init_op': densenet169},
-    'densenet161':
-        {'filters': [96, 384, 768, 2112, 2208 + 27],
-         'decoder_filters': [64, 128, 256, 256],
-         'last_upsample': 64,
-         'url': None,
-         'init_op': densenet161},
-    'seresnext50':
-        {'filters': [64, 256, 512, 1024, 2048 + 27],
-         'decoder_filters': [64, 128, 256, 384],
-         'init_op': se_resnext50_32x4d,
-         'url': 'http://0data.lip6.fr/cadene/pretrainedmodels/se_resnext50_32x4d-a260b3a4.pth'},
-    'senet154':
-        {'filters': [128, 256, 512, 1024, 2048 + 27],
-         'decoder_filters': [64, 128, 256, 384],
-         'init_op': senet154,
-         'url': 'http://data.lip6.fr/cadene/pretrainedmodels/senet154-c7b49a05.pth'},
-    'seresnext101':
-        {'filters': [64, 256, 512, 1024, 2048 + 27],
-         'decoder_filters': [64, 128, 256, 384],
-         'last_upsample': 64,
-         'init_op': se_resnext101_32x4d,
-         'url': 'http://data.lip6.fr/cadene/pretrainedmodels/se_resnext101_32x4d-3b2fe3d8.pth'},
-}
 
 
 class AbstractModel(nn.Module):
@@ -330,7 +274,18 @@ def se_resnext50_32x4d(num_classes=1000, pretrained='imagenet'):
                   downsample_kernel_size=1, downsample_padding=0,
                   num_classes=num_classes)
     if pretrained is not None:
-        settings = pretrained_settings['se_resnext50_32x4d'][pretrained]
+        settings = {
+            'imagenet': {
+                'url': 'http://data.lip6.fr/cadene/pretrainedmodels/se_resnext50_32x4d-a260b3a4.pth',
+                'input_space': 'RGB',
+                'input_size': [3, 224, 224],
+                'input_range': [0, 1],
+                'mean': [0.485, 0.456, 0.406],
+                'std': [0.229, 0.224, 0.225],
+                'num_classes': 1000
+            }
+        }
+
         initialize_pretrained_model(model, num_classes, settings)
     return model
 
@@ -557,6 +512,63 @@ class ConvSCSEBottleneckNoBn(nn.Module):
     def forward(self, dec, enc):
         x = torch.cat([dec, enc], dim=1)
         return self.seq(x)
+
+
+ss_encoder_params = {
+
+    # 'dpn92':
+    #     {'filters': [64, 336, 704, 1552, 2688 + 27],
+    #      'decoder_filters': [64, 128, 256, 256],
+    #      'last_upsample': 64,
+    #     'init_op': dpn92,
+    #     'url': 'http://data.lip6.fr/cadene/pretrainedmodels/dpn92_extra-b040e4a9b.pth'},
+    # 'resnet34':
+    #     {'filters': [64, 64, 128, 256, 512 + 27],
+    #      'decoder_filters': [64, 128, 256, 512],
+    #      'last_upsample': 64,
+    #      'init_op': partial(resnet.resnet34, in_channels=4),
+    #      'url': resnet.model_urls['resnet34']},
+    # 'resnet101':
+    #     {'filters': [64, 256, 512, 1024, 2048 + 27],
+    #      'decoder_filters': [64, 128, 256, 256],
+    #      'last_upsample': 64,
+    #      'init_op': partial(resnet.resnet101, in_channels=4),
+    #      'url': resnet.model_urls['resnet101']},
+    # 'densenet121':
+    #     {'filters': [64, 256, 512, 1024, 1024 + 27],
+    #      'decoder_filters': [64, 128, 256, 256],
+    #      'last_upsample': 64,
+    #      'url': None,
+    #      'init_op': densenet121},
+    # 'densenet169':
+    #     {'filters': [64, 256, 512, 1280, 1664 + 27],
+    #      'decoder_filters': [64, 128, 256, 256],
+    #      'last_upsample': 64,
+    #      'url': None,
+    #      'init_op': densenet169},
+    # 'densenet161':
+    #     {'filters': [96, 384, 768, 2112, 2208 + 27],
+    #      'decoder_filters': [64, 128, 256, 256],
+    #      'last_upsample': 64,
+    #      'url': None,
+    #      'init_op': densenet161},
+    'seresnext50':
+        {'filters': [64, 256, 512, 1024, 2048 + 27],
+         'decoder_filters': [64, 128, 256, 384],
+         'init_op': se_resnext50_32x4d,
+         'url': 'http://0data.lip6.fr/cadene/pretrainedmodels/se_resnext50_32x4d-a260b3a4.pth'}#,
+    # 'senet154':
+    #     {'filters': [128, 256, 512, 1024, 2048 + 27],
+    #      'decoder_filters': [64, 128, 256, 384],
+    #      'init_op': senet154,
+    #      'url': 'http://data.lip6.fr/cadene/pretrainedmodels/senet154-c7b49a05.pth'},
+    # 'seresnext101':
+    #     {'filters': [64, 256, 512, 1024, 2048 + 27],
+    #      'decoder_filters': [64, 128, 256, 384],
+    #      'last_upsample': 64,
+    #      'init_op': se_resnext101_32x4d,
+    #      'url': 'http://data.lip6.fr/cadene/pretrainedmodels/se_resnext101_32x4d-3b2fe3d8.pth'},
+}
 
 
 class SelimSef_SpaceNet4_UNetSCSEResNeXt50(SS_UNet):

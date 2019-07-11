@@ -58,7 +58,7 @@ class Inferer(object):
             augmentations=process_aug_dict(
                 self.config['inference_augmentation'])
             )
-        for im_path in infer_df['image']:
+        for idx, im_path in enumerate(infer_df['image']):
             inf_input, idx_refs, (
                 src_im_height, src_im_width) = inf_tiler(im_path)
 
@@ -75,6 +75,14 @@ class Inferer(object):
                 else:
                     device = torch.device('cpu')
                 inf_input = torch.from_numpy(inf_input).float().to(device)
+                # add additional input data, if applicable
+                if self.config['data_specs'].get('additional_inputs',
+                                                 None) is not None:
+                    inf_input = [inf_input]
+                    for i in self.config['data_specs']['additional_inputs']:
+                        inf_input.append(
+                            infer_df[i].iloc[idx].to(device))
+
                 subarr_preds = self.model(inf_input)
                 subarr_preds = subarr_preds.cpu().data.numpy()
             stitched_result = stitch_images(subarr_preds,
