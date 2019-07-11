@@ -1,5 +1,4 @@
 import os
-from ..nets import weights_dir
 import torch
 from torch import nn
 from torchvision.models import vgg16
@@ -83,11 +82,3 @@ class XDXD_SN4_DecoderBlock(nn.Module):
 # below dictionary lists models compatible with solaris. alternatively, your
 # own model can be used by using the path to the model as the value for
 # model_name in the config file.
-
-
-model_dict = {
-    'xdxd_spacenet4': {
-        'weight_path': os.path.join(weights_dir,
-                                    'xdxd_spacenet4_solaris_weights.pth'),
-        'weight_url': 'https://s3.amazonaws.com/spacenet-dataset/spacenet-model-weights/spacenet-4/xdxd_spacenet4_solaris_weights.pth',
-        'arch': XDXD_SpaceNet4_UNetVGG16}}
