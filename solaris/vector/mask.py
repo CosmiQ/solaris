@@ -395,26 +395,33 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
     buffered_geoms = buffered_geoms[geom_col]
     # create a single multipolygon that covers all of the intersections
     intersect_poly = geometries_internal_intersection(buffered_geoms)
-    # create a small df containing the intersections to make a footprint from
-    df_for_footprint = pd.DataFrame({'shape_name': ['overlap'],
-                                     'geometry': [intersect_poly]})
-    df_for_footprint['geometry'] = df_for_footprint['geometry'].apply(
-        lambda x: x.buffer(0)
-    )
-    # use `footprint_mask` to create the overlap mask
-    contact_msk = footprint_mask(
-        df_for_footprint, reference_im=reference_im, geom_col='geometry',
-        do_transform=do_transform, affine_obj=affine_obj, shape=shape,
-        out_type=out_type, burn_value=burn_value
-    )
-    footprint_msk = footprint_mask(
-        df, reference_im=reference_im, geom_col=geom_col,
-        do_transform=do_transform, affine_obj=affine_obj, shape=shape,
-        out_type=out_type, burn_value=burn_value
-    )
-    contact_msk[footprint_msk > 0] = 0
-    contact_msk = contact_msk > 0
-    output_arr = contact_msk.astype('uint8')*burn_value
+
+    # handle case where there's no intersection
+    if intersect_poly.is_empty:
+        output_arr = np.zeros(shape=shape, dtype='uint8')
+
+    else:
+        # create a df containing the intersections to make footprints from
+        df_for_footprint = pd.DataFrame({'shape_name': ['overlap'],
+                                         'geometry': [intersect_poly]})
+        # catch bowties
+        df_for_footprint['geometry'] = df_for_footprint['geometry'].apply(
+            lambda x: x.buffer(0)
+        )
+        # use `footprint_mask` to create the overlap mask
+        contact_msk = footprint_mask(
+            df_for_footprint, reference_im=reference_im, geom_col='geometry',
+            do_transform=do_transform, affine_obj=affine_obj, shape=shape,
+            out_type=out_type, burn_value=burn_value
+        )
+        footprint_msk = footprint_mask(
+            df, reference_im=reference_im, geom_col=geom_col,
+            do_transform=do_transform, affine_obj=affine_obj, shape=shape,
+            out_type=out_type, burn_value=burn_value
+        )
+        contact_msk[footprint_msk > 0] = 0
+        contact_msk = contact_msk > 0
+        output_arr = contact_msk.astype('uint8')*burn_value
 
     if out_file:
         meta = reference_im.meta.copy()
