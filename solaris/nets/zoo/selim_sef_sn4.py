@@ -465,7 +465,7 @@ class SENet(nn.Module):
 
 class SCSEModule(nn.Module):
     # according to https://arxiv.org/pdf/1808.08127.pdf concat is better
-    def __init__(self, channels, reduction=16, concat=False):
+    def __init__(self, channels, reduction=16, mode='concat'):
         super(SCSEModule, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.fc1 = nn.Conv2d(channels, channels // reduction, kernel_size=1,
@@ -479,7 +479,7 @@ class SCSEModule(nn.Module):
                                                   stride=1, padding=0,
                                                   bias=False),
                                         nn.Sigmoid())
-        self.concat = concat
+        self.mode = mode
 
     def forward(self, x):
         module_input = x
@@ -493,8 +493,10 @@ class SCSEModule(nn.Module):
 
         spa_se = self.spatial_se(module_input)
         spa_se = module_input * spa_se
-        if self.concat:
+        if self.mode == 'concat':
             return torch.cat([chn_se, spa_se], dim=1)
+        elif self.mode == 'maxout':
+            return torch.max(chn_se, spa_se)
         else:
             return chn_se + spa_se
 
