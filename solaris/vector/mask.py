@@ -398,6 +398,9 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
     # create a small df containing the intersections to make a footprint from
     df_for_footprint = pd.DataFrame({'shape_name': ['overlap'],
                                      'geometry': [intersect_poly]})
+    df_for_footprint['geometry'] = df_for_footprint['geometry'].apply(
+        lambda x: x.buffer(0)
+    )
     # use `footprint_mask` to create the overlap mask
     contact_msk = footprint_mask(
         df_for_footprint, reference_im=reference_im, geom_col='geometry',
