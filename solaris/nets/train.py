@@ -116,7 +116,7 @@ class Trainer(object):
                         data = []
                         for i in ['image'] + self.config[
                                 'data_specs']['additional_inputs']:
-                            data.append(batch[i].cuda())
+                            data.append(torch.Tensor(batch[i]).cuda())
                     else:
                         data = batch['image'].cuda()
                     target = batch['mask'].cuda().float()
@@ -146,7 +146,7 @@ class Trainer(object):
                             data = []
                             for i in ['image'] + self.config[
                                     'data_specs']['additional_inputs']:
-                                data.append(batch[i].cuda())
+                                data.append(torch.Tensor(batch[i]).cuda())
                         else:
                             data = batch['image'].cuda()
                         target = batch['mask'].cuda().float()
