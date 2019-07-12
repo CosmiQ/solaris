@@ -573,10 +573,10 @@ ss_encoder_params = {
 
 class SelimSef_SpaceNet4_UNetSCSEResNeXt50(SS_UNet):
 
-    def __init__(self, seg_classes):
+    def __init__(self):
         self.bottleneck_type = ConvSCSEBottleneckNoBn
         self.first_layer_stride_two = True
-        super().__init__(seg_classes, 4, 'seresnext50')
+        super().__init__(3, 4, 'seresnext50')
 
     def get_encoder(self, encoder, layer):
         if layer == 0:
