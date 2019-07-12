@@ -194,18 +194,18 @@ class SS_UNet(AbstractModel):
                                     num_channels != 3)
 
     def forward(self, x):
-        x, angles = x
+        # x, angles = x
         enc_results = []
         for stage in self.encoder_stages:
             x = stage(x)
             enc_results.append(torch.cat(x, dim=1)
                                if isinstance(x, tuple) else x.clone())
         last_dec_out = enc_results[-1]
-        size = last_dec_out.size(2)
-        last_dec_out = torch.cat([last_dec_out, F.upsample(angles,
-                                                           size=(size, size),
-                                                           mode="nearest")],
-                                 dim=1)
+        # size = last_dec_out.size(2)
+        # last_dec_out = torch.cat([last_dec_out, F.upsample(angles,
+        #                                                    size=(size, size),
+        #                                                    mode="nearest")],
+        #                          dim=1)
         x = last_dec_out
         for idx, bottleneck in enumerate(self.bottlenecks):
             rev_idx = - (idx + 1)
