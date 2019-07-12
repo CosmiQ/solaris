@@ -1,6 +1,7 @@
 """Training code for `solaris` models."""
 
 import numpy as np
+import pandas as pd
 from .model_io import get_model, reset_weights
 from .datagen import make_data_generator
 from .losses import get_loss
@@ -9,7 +10,6 @@ from .callbacks import get_callbacks
 from .torch_callbacks import TorchEarlyStopping, TorchTerminateOnNaN
 from .torch_callbacks import TorchModelCheckpoint
 from .metrics import get_metrics
-from ..utils.core import get_data_paths
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
 import tensorflow as tf
@@ -230,14 +230,14 @@ def get_train_val_dfs(config):
         for training.
     """
 
-    train_df = get_data_paths(config['training_data_csv'])
+    train_df = pd.read_csv(config['training_data_csv'])
 
     if config['data_specs']['val_holdout_frac'] is None:
         if config['validation_data_csv'] is None:
             raise ValueError(
                 "If val_holdout_frac isn't specified in config,"
                 " validation_data_csv must be.")
-        val_df = get_data_paths(config['validation_data_csv'])
+        val_df = pd.read_csv(config['validation_data_csv'])
 
     else:
         val_frac = config['data_specs']['val_holdout_frac']
