@@ -205,9 +205,9 @@ class AbstractModel(nn.Module):
             pretrained_dict = pretrained_dict['state_dict']
             pretrained_dict = {k.replace("module.", ""): v
                                for k, v in pretrained_dict.items()}
-        model_dict = model.state_dict()
+        md = model.state_dict()
         pretrained_dict = {k: v for k, v in pretrained_dict.items()
-                           if k in model_dict}
+                           if k in md}
         if num_channels_changed:
             model.state_dict()[self.first_layer_params_name + '.weight'][
                 :, :3, ...] = pretrained_dict[
