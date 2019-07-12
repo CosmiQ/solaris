@@ -553,7 +553,7 @@ ss_encoder_params = {
     #      'url': None,
     #      'init_op': densenet161},
     'seresnext50':
-        {'filters': [64, 256, 512, 1024, 2048 + 27],
+        {'filters': [64, 256, 512, 1024, 2048],
          'decoder_filters': [64, 128, 256, 384],
          'init_op': se_resnext50_32x4d,
          'url': 'http://0data.lip6.fr/cadene/pretrainedmodels/se_resnext50_32x4d-a260b3a4.pth'}#,
