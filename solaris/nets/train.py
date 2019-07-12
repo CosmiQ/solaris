@@ -129,7 +129,7 @@ class Trainer(object):
                     if self.verbose and batch_idx % 10 == 0:
 
                         print('    loss at batch {}: {}'.format(
-                            batch_idx, loss))
+                            batch_idx, loss), flush=True)
                         # calculate metrics
 #                        for metric in self.metrics['train']:
 #                            with tf_sess.as_default():
