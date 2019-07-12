@@ -114,9 +114,8 @@ class Trainer(object):
                     if self.config['data_specs'].get('additional_inputs',
                                                      None) is not None:
                         data = []
-                        for i in ['image'].extend(
-                            self.config['data_specs']['additional_inputs']
-                        ):
+                        for i in ['image'] + self.config[
+                                'data_specs']['additional_inputs']:
                             data.append(batch[i].cuda())
                     else:
                         data = batch['image'].cuda()
@@ -145,9 +144,8 @@ class Trainer(object):
                         if self.config['data_specs'].get('additional_inputs',
                                                          None) is not None:
                             data = []
-                            for i in ['image'].extend(
-                                self.config['data_specs']['additional_inputs']
-                            ):
+                            for i in ['image'] + self.config[
+                                    'data_specs']['additional_inputs']:
                                 data.append(batch[i].cuda())
                         else:
                             data = batch['image'].cuda()
