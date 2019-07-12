@@ -177,11 +177,13 @@ def resnet34(**kwargs):
 
 
 encoder_params = {
-        {'filters': [64, 64, 128, 256, 512],
-         'decoder_filters': [64, 128, 256, 512],
-         'last_upsample': 64,
-         'init_op': partial(resnet34, in_channels=4),
-         'url': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth'},
+    'resnet34': {
+        'filters': [64, 64, 128, 256, 512],
+        'decoder_filters': [64, 128, 256, 512],
+        'last_upsample': 64,
+        'init_op': partial(resnet34, in_channels=4),
+        'url': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth'
+        },
 }
 
 
