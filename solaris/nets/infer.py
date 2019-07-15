@@ -11,7 +11,7 @@ from ..utils.core import get_data_paths
 class Inferer(object):
     """Object for training `solaris` models using PyTorch or Keras."""
 
-    def __init__(self, config):
+    def __init__(self, config, custom_model_dict=None):
         self.config = config
         self.batch_size = self.config['batch_size']
         self.framework = self.config['nn_framework']
@@ -23,7 +23,8 @@ class Inferer(object):
         else:
             self.model_path = self.config.get('model_path', None)
         self.model = get_model(self.model_name, self.framework,
-                               self.model_path, pretrained=True)
+                               self.model_path, pretrained=True,
+                               custom_model_dict=custom_model_dict)
         self.window_step_x = self.config['inference'].get('window_step_size_x',
                                                           None)
         self.window_step_y = self.config['inference'].get('window_step_size_y',
