@@ -10,4 +10,12 @@ model_dict = {
         'weight_path': os.path.join(weights_dir,
                                     'xdxd_spacenet4_solaris_weights.pth'),
         'weight_url': 'https://s3.amazonaws.com/spacenet-dataset/spacenet-model-weights/spacenet-4/xdxd_spacenet4_solaris_weights.pth',
-        'arch': XDXD_SpaceNet4_UNetVGG16}}
+        'arch': XDXD_SpaceNet4_UNetVGG16},
+    'selimsef_spacenet4_resnet34unet': {
+        'weight_path': os.path.join(
+            weights_dir, 'selimsef_spacenet4_resnet34unet_solaris_weights.pth'
+            ),
+        'weight_url': 'https://s3.amazonaws.com/spacenet-dataset/spacenet-model-weights/spacenet-4/selimsef_spacenet4_resnet34unet_solaris_weights.pth',
+        'arch': SelimSef_SpaceNet4_ResNet34UNet
+    }
+}

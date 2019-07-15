@@ -211,63 +211,6 @@ def densenet121(pretrained=True, **kwargs):
     return model
 
 
-def densenet169(pretrained=True, **kwargs):
-    r"""Densenet-169 model from
-    `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 32, 32),
-                     **kwargs)
-    if pretrained:
-        # '.'s are no longer allowed in module names, but pervious _DenseLayer
-        # has keys 'norm.1', 'relu.1', 'conv.1', 'norm.2', 'relu.2', 'conv.2'.
-        # They are also in the checkpoints in model_urls. This pattern is used
-        # to find such keys.
-        pattern = re.compile(
-            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
-        state_dict = model_zoo.load_url(model_urls['densenet169'])
-        for key in list(state_dict.keys()):
-            res = pattern.match(key)
-            if res:
-                new_key = res.group(1) + res.group(2)
-                state_dict[new_key] = state_dict[key]
-                del state_dict[key]
-        model.state_dict()['features.conv0.weight'][:, :3, ...] = state_dict['features.conv0.weight'].data
-
-        pretrained_dict = {k: v for k, v in state_dict.items() if k != 'features.conv0.weight'}
-        model.load_state_dict(pretrained_dict, strict=False)
-    return model
-
-
-def densenet201(pretrained=True, **kwargs):
-    r"""Densenet-201 model from
-    `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 48, 32),
-                     **kwargs)
-    if pretrained:
-        # '.'s are no longer allowed in module names, but pervious _DenseLayer
-        # has keys 'norm.1', 'relu.1', 'conv.1', 'norm.2', 'relu.2', 'conv.2'.
-        # They are also in the checkpoints in model_urls. This pattern is used
-        # to find such keys.
-        pattern = re.compile(
-            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
-        state_dict = model_zoo.load_url(model_urls['densenet201'])
-        for key in list(state_dict.keys()):
-            res = pattern.match(key)
-            if res:
-                new_key = res.group(1) + res.group(2)
-                state_dict[new_key] = state_dict[key]
-                del state_dict[key]
-        model.load_state_dict(state_dict)
-    return model
-
-
 def densenet161(pretrained=True, **kwargs):
     r"""Densenet-161 model from
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
@@ -304,8 +247,7 @@ encoder_params = {
         'filters': [64, 64, 128, 256, 512],
         'decoder_filters': [64, 128, 256, 512],
         'last_upsample': 64,
-        'init_op': partial(resnet34, in_channels=4),
-        'url': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth'
+        'init_op': partial(resnet34, in_channels=4)
         },
     'densenet161':
         {'filters': [96, 384, 768, 2112, 2208],

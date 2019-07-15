@@ -79,7 +79,7 @@ class Trainer(object):
                 self.optimizer = self.optimizer(
                     self.model.parameters(), lr=self.lr
                 )
-           # wrap in lr_scheduler if one was created
+            # wrap in lr_scheduler if one was created
             for cb in self.callbacks:
                 if isinstance(cb, _LRScheduler):
                     self.optimizer = cb(
@@ -204,7 +204,8 @@ class Trainer(object):
         if self.framework == 'keras':
             self.model.save(self.config['training']['model_dest_path'])
         elif self.framework == 'torch':
-            torch.save(self.model, self.config['training']['model_dest_path'])
+            if isinstance(self.model, nn.DataParallel):
+                torch.save(self.model.module, self.config['training']['model_dest_path'])
 
 
 def get_train_val_dfs(config):
