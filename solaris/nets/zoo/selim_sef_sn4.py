@@ -510,7 +510,7 @@ class SelimSef_SpaceNet4_ResNet34UNet(EncoderDecoder):
             return encoder.layer4
 
 
-class SelimSef_SpaceNet4_DenseNet121Unet(EncoderDecoder):
+class SelimSef_SpaceNet4_DenseNet121UNet(EncoderDecoder):
     def __init__(self):
         self.first_layer_stride_two = True
         super().__init__(3, 3, 'densenet121')
@@ -538,7 +538,7 @@ class SelimSef_SpaceNet4_DenseNet121Unet(EncoderDecoder):
                                  nn.ReLU())
 
 
-class SelimSef_SpaceNet4_DenseNet161Unet(EncoderDecoder):
+class SelimSef_SpaceNet4_DenseNet161UNet(EncoderDecoder):
     def __init__(self):
         self.first_layer_stride_two = True
         super().__init__(3, 3, 'densenet161')

@@ -121,3 +121,4 @@ dmypy.json
 # Project-specific
 sandbox.ipynb
 solaris/nets/weights
+model_weights
