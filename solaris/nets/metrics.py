@@ -11,10 +11,16 @@ def get_metrics(framework, config):
     # TODO: enable passing kwargs to these metrics. This will require
     # writing a wrapper function that'll receive the inputs from the model
     # and pass them along with the kwarg to the metric function.
-    for m in config['training']['metrics']['training']:
-        training_metrics.append(metric_dict[m])
-    for m in config['training']['metrics']['validation']:
-        validation_metrics.append(metric_dict[m])
+    if config['training']['metrics'].get('training', []) is None:
+        training_metrics = []
+    else:
+        for m in config['training']['metrics'].get('training', []):
+            training_metrics.append(metric_dict[m])
+    if config['training']['metrics'].get('validation', []) is None:
+        validation_metrics = []
+    else:
+        for m in config['training']['metrics'].get('validation', []):
+            validation_metrics.append(metric_dict[m])
 
     return {'train': training_metrics, 'val': validation_metrics}
 

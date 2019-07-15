@@ -1,6 +1,7 @@
 """Training code for `solaris` models."""
 
 import numpy as np
+import pandas as pd
 from .model_io import get_model, reset_weights
 from .datagen import make_data_generator
 from .losses import get_loss
@@ -9,7 +10,6 @@ from .callbacks import get_callbacks
 from .torch_callbacks import TorchEarlyStopping, TorchTerminateOnNaN
 from .torch_callbacks import TorchModelCheckpoint
 from .metrics import get_metrics
-from ..utils.core import get_data_paths
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
 import tensorflow as tf
@@ -26,7 +26,8 @@ class Trainer(object):
         self.model_name = self.config['model_name']
         self.model_path = self.config.get('model_path', None)
         self.model = get_model(self.model_name, self.framework,
-                               self.model_path, custom_model_dict)
+                               self.model_path, self.pretrained,
+                               custom_model_dict)
         self.train_df, self.val_df = get_train_val_dfs(self.config)
         self.train_datagen = make_data_generator(self.framework, self.config,
                                                  self.train_df, stage='train')
@@ -78,7 +79,7 @@ class Trainer(object):
                 self.optimizer = self.optimizer(
                     self.model.parameters(), lr=self.lr
                 )
-           # wrap in lr_scheduler if one was created
+            # wrap in lr_scheduler if one was created
             for cb in self.callbacks:
                 if isinstance(cb, _LRScheduler):
                     self.optimizer = cb(
@@ -110,7 +111,14 @@ class Trainer(object):
                 # TRAINING
                 self.model.train()
                 for batch_idx, batch in enumerate(self.train_datagen):
-                    data = batch['image'].cuda()
+                    if self.config['data_specs'].get('additional_inputs',
+                                                     None) is not None:
+                        data = []
+                        for i in ['image'] + self.config[
+                                'data_specs']['additional_inputs']:
+                            data.append(torch.Tensor(batch[i]).cuda())
+                    else:
+                        data = batch['image'].cuda()
                     target = batch['mask'].cuda().float()
                     self.optimizer.zero_grad()
                     output = self.model(data)
@@ -121,7 +129,7 @@ class Trainer(object):
                     if self.verbose and batch_idx % 10 == 0:
 
                         print('    loss at batch {}: {}'.format(
-                            batch_idx, loss))
+                            batch_idx, loss), flush=True)
                         # calculate metrics
 #                        for metric in self.metrics['train']:
 #                            with tf_sess.as_default():
@@ -133,7 +141,14 @@ class Trainer(object):
                     torch.cuda.empty_cache()
                     val_loss = []
                     for batch_idx, batch in enumerate(self.val_datagen):
-                        data = batch['image'].cuda()
+                        if self.config['data_specs'].get('additional_inputs',
+                                                         None) is not None:
+                            data = []
+                            for i in ['image'] + self.config[
+                                    'data_specs']['additional_inputs']:
+                                data.append(torch.Tensor(batch[i]).cuda())
+                        else:
+                            data = batch['image'].cuda()
                         target = batch['mask'].cuda().float()
                         val_output = self.model(data)
                         val_loss.append(self.loss(val_output, target))
@@ -189,7 +204,8 @@ class Trainer(object):
         if self.framework == 'keras':
             self.model.save(self.config['training']['model_dest_path'])
         elif self.framework == 'torch':
-            torch.save(self.model, self.config['training']['model_dest_path'])
+            if isinstance(self.model, nn.DataParallel):
+                torch.save(self.model.module, self.config['training']['model_dest_path'])
 
 
 def get_train_val_dfs(config):
@@ -213,14 +229,14 @@ def get_train_val_dfs(config):
         for training.
     """
 
-    train_df = get_data_paths(config['training_data_csv'])
+    train_df = pd.read_csv(config['training_data_csv'])
 
     if config['data_specs']['val_holdout_frac'] is None:
         if config['validation_data_csv'] is None:
             raise ValueError(
                 "If val_holdout_frac isn't specified in config,"
                 " validation_data_csv must be.")
-        val_df = get_data_paths(config['validation_data_csv'])
+        val_df = pd.read_csv(config['validation_data_csv'])
 
     else:
         val_frac = config['data_specs']['val_holdout_frac']

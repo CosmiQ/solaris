@@ -11,7 +11,7 @@ from ..utils.core import get_data_paths
 class Inferer(object):
     """Object for training `solaris` models using PyTorch or Keras."""
 
-    def __init__(self, config):
+    def __init__(self, config, custom_model_dict=None):
         self.config = config
         self.batch_size = self.config['batch_size']
         self.framework = self.config['nn_framework']
@@ -23,7 +23,8 @@ class Inferer(object):
         else:
             self.model_path = self.config.get('model_path', None)
         self.model = get_model(self.model_name, self.framework,
-                               self.model_path, pretrained=True)
+                               self.model_path, pretrained=True,
+                               custom_model_dict=custom_model_dict)
         self.window_step_x = self.config['inference'].get('window_step_size_x',
                                                           None)
         self.window_step_y = self.config['inference'].get('window_step_size_y',
@@ -58,7 +59,7 @@ class Inferer(object):
             augmentations=process_aug_dict(
                 self.config['inference_augmentation'])
             )
-        for im_path in infer_df['image']:
+        for idx, im_path in enumerate(infer_df['image']):
             inf_input, idx_refs, (
                 src_im_height, src_im_width) = inf_tiler(im_path)
 
@@ -75,6 +76,14 @@ class Inferer(object):
                 else:
                     device = torch.device('cpu')
                 inf_input = torch.from_numpy(inf_input).float().to(device)
+                # add additional input data, if applicable
+                if self.config['data_specs'].get('additional_inputs',
+                                                 None) is not None:
+                    inf_input = [inf_input]
+                    for i in self.config['data_specs']['additional_inputs']:
+                        inf_input.append(
+                            infer_df[i].iloc[idx].to(device))
+
                 subarr_preds = self.model(inf_input)
                 subarr_preds = subarr_preds.cpu().data.numpy()
             stitched_result = stitch_images(subarr_preds,

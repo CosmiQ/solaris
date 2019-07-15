@@ -1,0 +1,198 @@
+################################################################################
+################# SOLARIS MODEL CONFIGURATION SKELETON #########################
+################################################################################
+
+# This skeleton lays out the required instructions for running a model using
+# solaris. See the full documentation at [INCLUDE DOC LINK HERE] for details on
+# options, required arguments, and sample usage.
+
+model_name: selimsef_scse50unet_spacenet4
+
+model_path: # leave this blank unless you're using a custom model not
+                # native to solaris. solaris will automatically find your
+                # model.
+train: true  # set to false for inference only
+infer: false  # set to false for training only
+
+pretrained: false  # use pretrained weights associated with the model?
+nn_framework:  torch
+batch_size: 8
+
+data_specs:
+  width: 384
+  height:  384
+  image_type: zscore # format of images read into the neural net. options
+                     # are 'normalized', 'zscore', '8bit', '16bit'.
+  rescale: false  # should image pixel values be rescaled before pre-processing?
+                  # If so, the image will be rescaled to the pixel range defined
+                  # by rescale_min and rescale_max below.
+  rescale_minima: auto  # the minimum values to use in rescaling (if
+                        # rescale=true). If 'auto', the minimum pixel intensity
+                        # in each channel of the image will be subtracted. If
+                        # a single value is provided, that value will be set to
+                        # zero for each channel in the input image.
+                        # if a list of values are provided, then minima in the
+                        # separate channels (in that order) will be set to that
+                        # value PRIOR to any augmentation.
+  rescale_maxima: auto  # same as rescale_minima, but for the maximum value for
+                        # each channel in the image.
+  additional_inputs:  # a list of additional columns in the training CSV (and
+    - angle           # validation CSV if applicable) That will be passed to
+                      # the model. Those values will not be augmented.
+                      # This list MUST be in the same order as the additional
+                      # input values are expected by the model.
+  channels: 4 # number of channels in the input imagery.
+  label_type: mask  # one of ['mask', 'bbox']
+  is_categorical: false  # are the labels binary (default) or categorical?
+  mask_channels: 3  # number of channels in the training mask
+  val_holdout_frac: 0.2 # if empty, assumes that separate data ref files define the
+                     # training and validation dataset. If a float between 0 and
+                     # 1, indicates the fraction of training data that's held
+                     # out for validation (and validation_data_csv will be
+                     # ignored)
+  data_workers:  # number of cpu threads to use for loading and preprocessing
+                 # input images.
+#  other_inputs:  # this can provide a list of additional inputs to pass to the
+                 # neural net for training. These inputs should be specified in
+                 # extra columns of the csv files (denoted below), either as
+                 # filepaths to additional data to load or as values to include.
+                 # NOTE: This is not currently implemented.
+
+training_data_csv: '/path/to/training_df.csv'
+validation_data_csv:
+inference_data_csv: '/path/to/test_df.csv' # TODO # path to the reference csv that defines inference data.
+                     # see the documentation for the specs of this file.
+
+training_augmentation:  # augmentations for use with training data
+  augmentations:
+    RandomScale:
+      scale_limit:
+        - 0.5
+        - 1.5
+      interpolation: nearest
+    RandomCrop:
+      height: 384
+      width: 384
+      p: 1.0
+    Rotate:
+      limit:
+        - 5
+        - 6
+      border_mode: constant
+      p: 0.3
+    Normalize:
+      mean:
+        - 0.006479
+        - 0.009328
+        - 0.01123
+        - 0.02082
+      std:
+        - 0.004986
+        - 0.004964
+        - 0.004950
+        - 0.004878
+      max_pixel_value: 65535.0
+      p: 1.0
+    # include augmentations here. See the documentation for options and
+    # required arguments.
+  p: 1.0  # probability of applying the entire training augmentation pipeline.
+  shuffle: true  # should the image order be shuffled in each epoch.
+
+validation_augmentation:  # augmentations for use with validation data
+  augmentations:
+    CenterCrop:
+      height: 384
+      width: 384
+      p: 1.0
+    Normalize:
+      mean:
+        - 0.006479
+        - 0.009328
+        - 0.01123
+        - 0.02082
+      std:
+        - 0.004986
+        - 0.004964
+        - 0.004950
+        - 0.004878
+      max_pixel_value: 65535.0
+      p: 1.0
+  p: 1.0
+
+inference_augmentation:
+  augmentations:
+    Normalize:
+      mean:
+        - 0.006479
+        - 0.009328
+        - 0.01123
+        - 0.02082
+      std:
+        - 0.004986
+        - 0.004964
+        - 0.004950
+        - 0.004878
+      max_pixel_value: 65535.0
+      p: 1.0
+  p: 1.0
+training:
+  epochs:  52 # number of epochs. A list can also be provided here indicating
+           # distinct sets of epochs at different learning rates, etc; if so,
+           # a list of equal length must be provided in the parameter that varies
+           # with the values for each set of epochs.
+  steps_per_epoch:  # optional argument defining # steps/epoch. If not provided,
+                    # each epoch will include the number of steps needed to go
+                    # through the entire training dataset.
+  optimizer: AdamW # optimizer function name. see docs for options.
+  lr: 2e-4 # learning rate.
+  opt_args:  # dictionary of values (e.g. alpha, gamma, momentum) specific to
+    weight_decay: 0.0001
+  loss:
+    focal:  # loss function(s). See docs for options. This should be a list of loss
+    dice:     # names with sublists of loss function hyperparameters (if applicable).
+         # See the docs for more details and usage examples.
+  loss_weights:
+    focal: 1 # (optional) weights to use for each loss function if using
+    dice: 1 # loss: composite. This must be a set of key:value pairs where
+                 # defining the weight for each sub-loss within the composite.
+                 # If using a composite and a value isn't provided here, all
+                 # losses will be weighted equally.
+  metrics:  # metrics to monitor on the training and validation sets.
+    training:      # training set metrics.
+    validation:  # validation set metrics.
+  checkpoint_frequency: 10 # how frequently should checkpoints be saved?
+                         # this can be an int, in which case every n epochs
+                         # a checkpoint will be made, or a list, in which case
+                         # checkpoints will be saved on those specific epochs.
+                         # if not provided, only the final model is saved.
+  callbacks:
+    lr_schedule:
+      schedule_type: 'arbitrary'
+      schedule_dict:
+        milestones:
+          - 1
+          - 5
+          - 15
+          - 30
+          - 40
+          - 50
+        gamma: 0.5
+    model_checkpoint:
+      filepath: 'selimsef_best.pth'
+      monitor: val_loss
+  model_dest_path: 'selimsef.pth'  # path to save the trained model output and checkpoint(s)
+                     # to. Should be a filename ending in .h5, .hdf5 for keras
+                     # or .pth, .pt for torch. Epoch numbers will be appended
+                     # for checkpoints.
+  verbose: true  # verbose text output during training
+
+inference:
+  window_step_size_x:  # size of each step for the sliding window for inference.
+                       # set to the same size as the input image size for zero
+                       # overlap; to average predictions across multiple images,
+                       # use a smaller step size.
+  window_step_size_y:  # size of each step for the sliding window for inference.
+                       # set to the same size as the input image size for zero
+                       # overlap; to average predictions across multiple images,
+                       # use a smaller step size.
+  output_dir: 'inference_out/'
