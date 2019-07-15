@@ -277,28 +277,6 @@ class AbstractModel(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-    def initialize_encoder(self, model, model_url, num_channels_changed=False):
-        if os.path.isfile(model_url):
-            pretrained_dict = torch.load(model_url)
-        else:
-            pretrained_dict = model_zoo.load_url(model_url)
-        if 'state_dict' in pretrained_dict:
-            pretrained_dict = pretrained_dict['state_dict']
-            pretrained_dict = {k.replace("module.", ""): v
-                               for k, v in pretrained_dict.items()}
-        md = model.state_dict()
-        pretrained_dict = {k: v for k, v in pretrained_dict.items()
-                           if k in md}
-        if num_channels_changed:
-            model.state_dict()[self.first_layer_params_name + '.weight'][
-                :, :3, ...] = pretrained_dict[
-                    self.first_layer_params_name + '.weight'].data
-            skip_layers = [self.first_layer_params_name,
-                           self.first_layer_params_name + ".weight"]
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if
-                               not any(k.startswith(s) for s in skip_layers)}
-        model.load_state_dict(pretrained_dict, strict=False)
-
     @property
     def first_layer_params_name(self):
         return 'conv1'
@@ -346,10 +324,6 @@ class EncoderDecoder(AbstractModel):
         self.encoder_stages = nn.ModuleList([self.get_encoder(encoder, idx)
                                              for idx in
                                              range(len(self.filters))])
-        if encoder_params[encoder_name]['url'] is not None:
-            self.initialize_encoder(encoder,
-                                    encoder_params[encoder_name]['url'],
-                                    num_channels != 3)
 
     # noinspection PyCallingNonCallable
     def forward(self, x):
