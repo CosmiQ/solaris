@@ -25,6 +25,7 @@ install:
   # annoying workaround to `conda env create python=$TRAVIS_PYTHON_VERSION` not working
   - sed -i -E 's/(python=)(.*)/\1'$TRAVIS_PYTHON_VERSION'/' ./environment.yml
   - conda env create -n solaris -f environment.yml
+  - conda list -n solaris
   - source activate solaris
   - python --version
   - pip install -q -e .[test]
