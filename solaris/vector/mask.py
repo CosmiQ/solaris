@@ -693,7 +693,7 @@ def preds_to_binary(pred_arr, channel_scaling=None, bg_threshold=0):
     pred_arr = _check_skimage_im_load(pred_arr).copy()
 
     if len(pred_arr.shape) == 3:
-        if pred_arr.shape[0] > pred_arr.shape[-1]:
+        if pred_arr.shape[0] < pred_arr.shape[-1]:
             pred_arr = np.moveaxis(pred_arr, 0, -1)
         if channel_scaling is None:  # if scale values weren't provided
             channel_scaling = np.ones(shape=(pred_arr.shape[-1]),
