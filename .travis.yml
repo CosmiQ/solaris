@@ -32,7 +32,9 @@ install:
   - pip install codecov pytest pytest-cov
 # command to run tests
 script:
-  - python -m pytest --cov=./
+  - for d in */ ; do
+      pytest $d --cov=./
+    done
 
 after_success:
   - codecov
