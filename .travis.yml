@@ -30,12 +30,13 @@ install:
   - source activate solaris
   - python --version
   - pip install -q -e .[test]
-  - pip install codecov pytest pytest-cov
+  - conda install pytest=4.6.2 -c conda-forge
+  - pip install codecov pytest-cov
 # command to run tests
 script:
-  # - for d in ./tests/*/ ; do
-  #     pytest $d --cov=./ ;
-  #   done
+  - for d in ./tests/*/ ; do
+      pytest $d --cov=./ ;
+    done
 
 after_success:
   - codecov
