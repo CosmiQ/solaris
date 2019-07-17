@@ -18,7 +18,7 @@ dependencies:
   - rtree=0.8.3
   - urllib3=1.24.3
   - networkx=2.3
-  - rasterio=1.0.21
+  - rasterio=1.0.23
   - scipy=1.2.1
   - scikit-image=0.15.0
   - tensorflow=1.13.1
