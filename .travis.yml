@@ -1,6 +1,7 @@
 language: python
 sudo: required
 dist: xenial
+cache: false
 python:
   - "3.6"
   - "3.7"
@@ -19,20 +20,24 @@ install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
   # Useful for debugging any issues with conda
+  - conda update conda -c conda-forge
   - conda info -a
   # switch python version spec in environment.yml to match TRAVIS_PYTHON_VERSION
   # annoying workaround to `conda env create python=$TRAVIS_PYTHON_VERSION` not working
   - sed -i -E 's/(python=)(.*)/\1'$TRAVIS_PYTHON_VERSION'/' ./environment.yml
   - conda env create -n solaris -f environment.yml
+  - conda list -n solaris
   - source activate solaris
   - python --version
   - pip install -q -e .[test]
-  - pip install codecov pytest pytest-cov
+  - conda install pytest=4.6.2 -c conda-forge
+  - pip install codecov pytest-cov
 # command to run tests
 script:
-  - pytest --cov=./
+  - for d in ./tests/*/ ; do
+      pytest $d --cov=./ ;
+    done
 
 after_success:
   - codecov
