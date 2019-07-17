@@ -5,6 +5,7 @@ import geopandas as gpd
 from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
 from ..utils.geo import gdf_get_projection_unit, split_multi_geometries
+from ..utils.geo import reproject_geometry
 from tqdm import tqdm
 
 
@@ -34,7 +35,7 @@ class VectorTiler(object):
         if self.verbose or self.super_verbose:
             print('Initialization done.')
 
-    def tile(self, src, tile_bounds, geom_type='Polygon',
+    def tile(self, src, tile_bounds, tile_bounds_crs=None, geom_type='Polygon',
              split_multi_geoms=True, min_partial_perc=0.0,
              dest_fname_base='geoms', obj_id_col=None,
              output_ext='.geojson'):
@@ -49,6 +50,11 @@ class VectorTiler(object):
             A :class:`list` made up of ``[left, bottom, right, top]`` sublists
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
+        tile_bounds_crs : int, optional
+            The EPSG code for the CRS that the tile bounds are in. If not
+            provided, it's assumed that the CRS is the same as in `src`. This
+            argument must be provided if the bound coordinates and `src` are
+            not in the same CRS, otherwise tiling will not occur correctly.
         geom_type : str, optional (default: "Polygon")
             The type of geometries contained within `src`. Defaults to
             ``"Polygon"``, can also be ``"LineString"``.
@@ -96,9 +102,9 @@ class VectorTiler(object):
             else:
                 save_empty_geojson(out_path, self.dest_crs)
 
-    def tile_generator(self, src, tile_bounds, geom_type='Polygon',
-                       split_multi_geoms=True, min_partial_perc=0.0,
-                       obj_id_col=None):
+    def tile_generator(self, src, tile_bounds, tile_bounds_crs=None,
+                       geom_type='Polygon', split_multi_geoms=True,
+                       min_partial_perc=0.0, obj_id_col=None):
         """Generate `src` vector data tiles bounded by `tile_bounds`.
 
         Arguments
@@ -110,6 +116,11 @@ class VectorTiler(object):
             A :class:`list` made up of ``[left, bottom, right, top]`` sublists
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
+        tile_bounds_crs : int, optional
+            The EPSG code for the CRS that the tile bounds are in. If not
+            provided, it's assumed that the CRS is the same as in `src`. This
+            argument must be provided if the bound coordinates and `src` are
+            not in the same CRS, otherwise tiling will not occur correctly.
         geom_type : str, optional (default: "Polygon")
             The type of geometries contained within `src`. Defaults to
             ``"Polygon"``, can also be ``"LineString"``.
@@ -142,6 +153,11 @@ class VectorTiler(object):
             print("Num tiles:", len(tile_bounds))
 
         self.src_crs = _check_crs(self.src.crs)
+        # check if the tile bounds and vector are in the same crs
+        if tile_bounds_crs is not None:
+            tile_bounds_crs = _check_crs(tile_bounds_crs)
+            if self.src_crs != tile_bounds_crs:
+                reproject_bounds = True  # used to transform tb for clip_gdf()
         self.proj_unit = gdf_get_projection_unit(
             self.src).strip('"').strip("'")
         if getattr(self, 'dest_crs', None) is None:
@@ -149,8 +165,16 @@ class VectorTiler(object):
         for i, tb in enumerate(tile_bounds):
             if self.super_verbose:
                 print("\n", i, "/", len(tile_bounds))
-            tile_gdf = clip_gdf(self.src, tb, min_partial_perc,
-                                geom_type, verbose=self.super_verbose)
+            if reproject_bounds:
+                tile_gdf = clip_gdf(self.src,
+                                    reproject_geometry(box(*tb),
+                                                       tile_bounds_crs,
+                                                       self.src_crs),
+                                    min_partial_perc,
+                                    geom_type, verbose=self.super_verbose)
+            else:
+                tile_gdf = clip_gdf(self.src, tb, min_partial_perc, geom_type,
+                                    verbose=self.super_verbose)
             if self.src_crs != self.dest_crs:
                 tile_gdf = tile_gdf.to_crs(epsg=self.dest_crs)
             if split_multi_geoms:
