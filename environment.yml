@@ -28,3 +28,5 @@ dependencies:
   - affine=2.2.2
   - albumentations>0.2.3
   - rio-cogeo=1.0.0
+  pip:
+    pyproj==2.2.1
