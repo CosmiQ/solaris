@@ -104,17 +104,17 @@ class TestReproject(object):
 
         os.remove(os.path.join(data_dir, 'tmp.tiff'))
 
-    def test_reproject_gdf(self):
-        input_data = os.path.join(data_dir, 'gt.geojson')
-        output = reproject(input_data, target_crs=4326,
-                           dest_path=os.path.join(data_dir, 'tmp.json'))
-        expected_result = gpd.read_file(os.path.join(data_dir,
-                                                     'gt_epsg4326.json'))
-        out_geoms = cascaded_union(output.geometry)
-        exp_geoms = cascaded_union(expected_result.geometry)
-
-        assert out_geoms.intersection(exp_geoms).area/out_geoms.area > 0.99999
-        os.remove(os.path.join(data_dir, 'tmp.json'))
+    # def test_reproject_gdf(self):
+    #     input_data = os.path.join(data_dir, 'gt.geojson')
+    #     output = reproject(input_data, target_crs=4326,
+    #                        dest_path=os.path.join(data_dir, 'tmp.json'))
+    #     expected_result = gpd.read_file(os.path.join(data_dir,
+    #                                                  'gt_epsg4326.json'))
+    #     out_geoms = cascaded_union(output.geometry)
+    #     exp_geoms = cascaded_union(expected_result.geometry)
+    #
+    #     assert out_geoms.intersection(exp_geoms).area/out_geoms.area > 0.99999
+    #     os.remove(os.path.join(data_dir, 'tmp.json'))
 
     def test_reproject_gdf_utm_default(self):
         input_data = os.path.join(data_dir, 'gt_epsg4326.json')
