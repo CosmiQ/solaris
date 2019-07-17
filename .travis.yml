@@ -21,6 +21,7 @@ install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   # Useful for debugging any issues with conda
+  - conda update conda -c conda-forge
   - conda info -a
   # switch python version spec in environment.yml to match TRAVIS_PYTHON_VERSION
   # annoying workaround to `conda env create python=$TRAVIS_PYTHON_VERSION` not working
