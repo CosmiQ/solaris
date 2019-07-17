@@ -64,7 +64,7 @@ else:
     inst_reqs = ['shapely>=1.6.4',
                  'fiona>=1.8.6',
                  'pandas>=0.24.2',
-                 'geopandas>=0.5.0',
+                 'geopandas>=0.4.1',
                  'opencv-python==4.1.0.25',
                  'numpy>=1.16.4',
                  'tqdm>=4.32.2',
@@ -80,11 +80,10 @@ else:
                  'torch>=1.1.0',
                  'matplotlib>=3.1.1',
                  'affine>=2.2.2',
-                 'albumentations>=0.3.0',
+                 'albumentations>=0.2.3',
                  'requests>=2.22.0',
                  # 'rio-tiler>=1.2.7',
                  'pyyaml>=5.1',
-                 'pyproj>=2.2.1',
                  'torchvision>=0.3.0']
 
 
