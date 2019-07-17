@@ -72,7 +72,7 @@ else:
                  'rtree>=0.8.3',
                  'networkx>=2.3',
                  'rasterio>=1.0.18',
-                 'rio-cogeo>-1.0.0',
+                 'rio-cogeo>=1.0.0',
                  'scipy>=1.3.0',
                  'urllib3==1.24.3',
                  'scikit-image>=0.15.0',
