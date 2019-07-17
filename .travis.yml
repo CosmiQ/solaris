@@ -1,6 +1,7 @@
 language: python
 sudo: required
 dist: xenial
+cache: false
 python:
   - "3.6"
   - "3.7"
