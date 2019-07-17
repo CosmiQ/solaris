@@ -26,7 +26,7 @@ dependencies:
   - pytorch=1.1.0
   - torchvision=0.3.0
   - pyyaml=5.1
-  - pyproj=1.9.6
+  - pyproj=1.9.5.1
   - affine=2.2.2
   - pip:
     - albumentations==0.2.3
