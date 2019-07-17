@@ -33,7 +33,7 @@ install:
 # command to run tests
 script:
   - for d in */ ; do
-      pytest $d --cov=./
+      pytest $d --cov=./;
     done
 
 after_success:
