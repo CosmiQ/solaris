@@ -156,8 +156,13 @@ class VectorTiler(object):
         # check if the tile bounds and vector are in the same crs
         if tile_bounds_crs is not None:
             tile_bounds_crs = _check_crs(tile_bounds_crs)
-            if self.src_crs != tile_bounds_crs:
-                reproject_bounds = True  # used to transform tb for clip_gdf()
+        else:
+            tile_bounds_crs = self.src_crs
+        if self.src_crs != tile_bounds_crs:
+            reproject_bounds = True  # used to transform tb for clip_gdf()
+        else:
+            reproject_bounds = False
+
         self.proj_unit = gdf_get_projection_unit(
             self.src).strip('"').strip("'")
         if getattr(self, 'dest_crs', None) is None:
