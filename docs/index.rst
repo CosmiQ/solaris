@@ -32,14 +32,14 @@ An open source machine learning pipeline for geospatial imagery
 
 User Guide
 ==========
-* `What is solaris? <intro>`_
-* `Installation <installation>`_
-* `Pretrained models available in solaris <pretrained_models>`_
-* `Tutorials and recipes <tutorials/index>`_
+* :ref:`What is solaris? <intro>`
+* :ref:`Installation <installation>`
+* :ref:`Pretrained models available in solaris <pretrained_models>`
+* :ref:`Tutorials and recipes <tutorials_index>`
 
 Reference
 =========
-* `API reference <api/index>`_
+* :ref:`API reference <api_index>`
 
 Index
 =====

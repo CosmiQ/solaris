@@ -1,3 +1,5 @@
+.. _pretrained_models:
+
 ##########################################
 Pretrained models available in ``solaris``
 ##########################################
@@ -6,8 +8,7 @@ Pretrained models available in ``solaris``
 `the SpaceNet challenges <https://spacenet.ai>`_.  See the table below for a
 summary. Note that the model name in the first column should be used as the
 ``"model_name"`` argument in
-`the config file <tutorials/notebooks/creating_the_yaml_config_file.html>`_
- if you wish to use that model with ``solaris``. Note that we re-trained the
+`the config file <tutorials/notebooks/creating_the_yaml_config_file.html>`_ if you wish to use that model with ``solaris``. Note that we re-trained the
  competitors' models for compatibility with ``solaris`` and the training parameters,
  inputs, and performance may vary slightly from their original models.
 
