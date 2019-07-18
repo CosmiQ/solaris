@@ -1,14 +1,11 @@
 import os
 import numpy as np
-import pandas as pd
 import geopandas as gpd
-from affine import Affine
-from shapely.geometry import Polygon
 import skimage
-import rasterio
 from solaris.data import data_dir
 from solaris.vector.mask import footprint_mask, boundary_mask, \
-    contact_mask, df_to_px_mask, mask_to_poly_geojson, road_mask
+    contact_mask, df_to_px_mask, mask_to_poly_geojson, road_mask, \
+    preds_to_binary
 
 
 class TestFootprintMask(object):
@@ -236,6 +233,27 @@ class TestMaskToGDF(object):
         truth_gdf = gpd.read_file(os.path.join(data_dir,
                                                'gdf_from_mask_2.geojson'))
         assert truth_gdf[['geometry', 'value']].equals(gdf)
+
+    def test_flatten_multichannel_mask(self):
+        anarr = np.array([[[0, 0, 0, 1],
+                           [0, 0, 1, 0],
+                           [0, 0, 0, 1],
+                           [0, 0, 0, 0]],
+                          [[1, 1, 0, 0],
+                           [1, 1, 1, 0],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 1]],
+                          [[1, 0, 0, 1],
+                           [0, 1, 0, 1],
+                           [0, 1, 1, 0],
+                           [0, 0, 0, 0]]], dtype='float')
+        scaling_vector = [0.25, 1., 2.]
+        result = preds_to_binary(anarr, scaling_vector, bg_threshold=0.5)
+        assert np.array_equal(result,
+                              np.array([[255, 255, 0, 255],
+                                        [255, 255, 255, 255],
+                                        [0, 255, 255, 0],
+                                        [0, 0, 0, 255]], dtype='uint8'))
 
 
 class TestRoadMask(object):
