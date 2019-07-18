@@ -80,8 +80,8 @@ class VectorTiler(object):
         output_ext : str, optional, (default: geojson)
             Extension of output files, can be 'geojson' or 'json'.
         """
-        tile_gen = self.tile_generator(src, tile_bounds, geom_type,
-                                       split_multi_geoms,
+        tile_gen = self.tile_generator(src, tile_bounds, tile_bounds_crs,
+                                       geom_type, split_multi_geoms,
                                        min_partial_perc,
                                        obj_id_col=obj_id_col)
         for tile_gdf, tb in tqdm(tile_gen):
