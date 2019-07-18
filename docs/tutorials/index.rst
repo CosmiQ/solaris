@@ -30,7 +30,7 @@ The command line interface (CLI) is the simplest way to use Solaris. Using the C
 you can run training and/or prediction on overhead imagery using `SpaceNet <https://www.spacenet.ai>`_ models
 without writing a single line of python code.
 
-After `installing Solaris <../installation.html>`_, you can run simple commands from a
+After :doc:`installing Solaris <../installation>`, you can run simple commands from a
 terminal or command prompt for standard operations, from creating training masks
 using vector labels to running an entire deep learning pipeline through
 evaluating model performance. Instead of having to write code to help ``solaris``
@@ -58,7 +58,7 @@ analysis of overhead imagery data:
 * The ability to use pre-trained or freshly initialized `SpaceNet <https://www.spacenet.ai>`_ models, as well as your own custom models
 * Model performance evaluation tools for the SpaceNet IoU metric (APLS coming soon!)
 
-The `Python API Reference <../api/index.html>`_ provides full documentation of
+The :doc:`Python API Reference <../api/index>` provides full documentation of
 everything described above and more. For usage examples to get you started, see
 the tutorials below.
 
@@ -73,7 +73,7 @@ the tutorials below.
 
 Reference
 =========
-* `API reference <../api/index>`_
+* :doc:`API reference <../api/index>`
 
 Index
 =====

@@ -67,14 +67,10 @@ The package also exists on[ PyPI](https://pypi.org), but note that some of the d
 
 ```
 conda install -c conda-forge rtree gdal=2.4.1
-```
-If you don't want to use `conda`, you can [install libspatialindex](https://libspatialindex.org), then `pip install rtree`. Installing GDAL without conda can be very difficult and approaches vary dramatically depending upon the build environment and version, but online resources may help with specific use cases.
-
-Once you have that dependency set up, install as usual using `pip`:
-
-```
 pip install solaris
 ```
+
+If you don't want to use `conda`, you can [install libspatialindex](https://libspatialindex.org), then `pip install rtree`. Installing GDAL without conda can be very difficult and approaches vary dramatically depending upon the build environment and version, but [the rasterio install documentation](https://rasterio.readthedocs.io/en/stable/installation.html) provides OS-specific install instructions. Simply follow their install instructions, replacing `pip install rasterio` with `pip install solaris` at the end.
 
 <!-- #### Docker
 

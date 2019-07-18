@@ -6,7 +6,6 @@ Installing ``solaris``
 
 There are several methods available for installing `solaris <https://github.com/cosmiq/solaris>`_:
 
-* :ref:`conda-forge` **(recommended)**
 * :ref:`github-install`
 * :ref:`pip-only` *use at your own risk!*
 
@@ -25,23 +24,6 @@ and `configured <https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-confi
 If you're just going to work with your own data, you can skip these steps.
 
 --------------
-
-.. _conda-forge:
-
-Installing from ``conda-forge``
-===============================
-**This is the recommended installation method.**
-
-If you have `anaconda`_ installed,
-you can create a new ``conda`` environment and install ``solaris`` there with ease::
-
-  conda create solaris python=3.6 solaris -c conda-forge
-
-We recommend installing ``solaris`` in a new environment to avoid conflicts with
-existing installations of packages (``GDAL`` incompatibility being the usual problem),
-but installing ``solaris`` in an existing environment can work in some cases.
-
-----------
 
 .. _github-install:
 
