@@ -1,35 +1,37 @@
 import os
 from tensorflow import keras
 import torch
+from warnings import warn
+import requests
+import numpy as np
+from tqdm import tqdm
+from ..nets import weights_dir
 from .zoo import model_dict
-
-
-# below dictionary lists models compatible with solaris. alternatively, your
-# own model can be used by using the path to the model as the value for
-# model_name in the config file.
 
 
 def get_model(model_name, framework, model_path=None, pretrained=False,
               custom_model_dict=None):
     """Load a model from a file based on its name."""
-
-    md = model_dict.get(model_name, None)
-    if md is None:  # if the model's not provided by solaris
-        if custom_model_dict is None:
+    if custom_model_dict is not None:
+        md = custom_model_dict
+    else:
+        md = model_dict.get(model_name, None)
+        if md is None:  # if the model's not provided by solaris
             raise ValueError(f"{model_name} can't be found in solaris and no "
                              "custom_model_dict was provided. Check your "
                              "model_name in the config file and/or provide a "
                              "custom_model_dict argument to Trainer().")
-        else:
-            md = custom_model_dict
-    if model_path is None:
+    if model_path is None or custom_model_dict is not None:
         model_path = md.get('weight_path')
     model = md.get('arch')()
     if model is not None and pretrained:
         try:
             model = _load_model_weights(model, model_path, framework)
         except (OSError, FileNotFoundError):
-            pass  # TODO: IMPLEMENT MODEL DOWNLOAD FROM STORAGE HERE
+            warn(f'The model weights file {model_path} was not found.'
+                 ' Attempting to download from the SpaceNet repository.')
+            weight_path = _download_weights(md)
+            model = _load_model_weights(model, weight_path, framework)
 
     return model
 
@@ -46,9 +48,13 @@ def _load_model_weights(model, path, framework):
     elif framework.lower() in ['torch', 'pytorch']:
         # pytorch already throws the right error on failed load, so no need
         # to fix exception
-        model.load_state_dict(path)
+        loaded = torch.load(path)
+        if isinstance(loaded, torch.nn.Module):  # if it's a full model already
+            model.load_state_dict(loaded.state_dict())
+        else:
+            model.load_state_dict(loaded)
 
-    return model
+        return model
 
 
 def reset_weights(model, framework):
@@ -82,3 +88,27 @@ def _reset_torch_weights(torch_layer):
     if isinstance(torch_layer, torch.nn.Conv2d) or \
             isinstance(torch_layer, torch.nn.Linear):
         torch_layer.reset_parameters()
+
+
+def _download_weights(model_dict):
+    """Download pretrained weights for a model."""
+    weight_url = model_dict.get('weight_url', None)
+    weight_dest_path = model_dict.get('weight_path', os.path.join(
+            weights_dir, weight_url.split('/')[-1]))
+    if weight_url is None:
+        raise KeyError("Can't find the weights file.")
+    else:
+        r = requests.get(weight_url, stream=True)
+        if r.status_code != 200:
+            raise ValueError('The file could not be downloaded. Check the URL'
+                             ' and network connections.')
+        total_size = int(r.headers.get('content-length', 0))
+        block_size = 1024
+        with open(weight_dest_path, 'wb') as f:
+            for chunk in tqdm(r.iter_content(block_size),
+                              total=np.ceil(total_size//block_size),
+                              unit='KB', unit_scale=False):
+                if chunk:
+                    f.write(chunk)
+
+    return weight_dest_path

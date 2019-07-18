@@ -27,6 +27,11 @@ def parse(path):
         raise ValueError('"inference_data_csv" must be provided if "infer".')
     if config['training']['lr'] is not None:
         config['training']['lr'] = float(config['training']['lr'])
+
     # TODO: IMPLEMENT UPDATING VALUES BASED ON EMPTY ELEMENTS HERE!
+
+    if config['validation_augmentation'] is not None \
+            and config['inference_augmentation'] is None:
+        config['inference_augmentation'] = config['validation_augmentation']
 
     return config

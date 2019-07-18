@@ -24,8 +24,8 @@ import time
 copyright = u'2018-{}, CosmiQ Works: an IQT Lab'.format(time.strftime("%Y"))
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.1'
-version = '0.1.1'
+release = '0.1.2'
+version = '0.1.2'
 
 # -- General configuration ---------------------------------------------------
 
@@ -128,7 +128,7 @@ def setup(app):
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-html_sidebars = {'**': ['localtoc.html', 'sourcelink.html', 'searchbox.html']}
+html_sidebars = {'**': ['custom_sidebar.html', 'sourcelink.html', 'searchbox.html']}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

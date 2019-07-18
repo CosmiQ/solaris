@@ -15,6 +15,7 @@ from shapely.errors import WKTReadingError
 from shapely.wkt import loads
 from shapely.geometry import Point, Polygon, LineString
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
+from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
 from fiona.transform import transform
 import osr
@@ -462,6 +463,8 @@ def geometries_internal_intersection(polygons):
     # first, filter down to the ones that have _some_ intersection with others
     intersect_lists = intersect_lists[
         intersect_lists.apply(lambda x: len(x) > 1)]
+    if len(intersect_lists) == 0:  # if there are no real intersections
+        return GeometryCollection()  # same result as failed union below
     # the below is a royal pain to follow. what it does is create a dataframe
     # with two columns: 'gs_idx' and 'intersectors'. 'gs_idx' corresponds to
     # a polygon's original index in gs, and 'intersectors' gives a list of

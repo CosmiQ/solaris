@@ -199,10 +199,20 @@ class TorchDataset(Dataset):
         if len(mask.shape) == 2:
             mask = mask[:, :, np.newaxis]
         sample = {'image': image, 'mask': mask}
+
         if self.aug:
             sample = self.aug(**sample)
-        sample['image'] = _check_channel_order(sample['image'], 'torch').astype(np.float32)
-        sample['mask'] = _check_channel_order(sample['mask'], 'torch').astype(np.float32)
+        # add in additional inputs (if applicable)
+        additional_inputs = self.config['data_specs'].get('additional_inputs',
+                                                          None)
+        if additional_inputs is not None:
+            for input in additional_inputs:
+                sample[input] = self.df[input].iloc[idx]
+
+        sample['image'] = _check_channel_order(sample['image'],
+                                               'torch').astype(np.float32)
+        sample['mask'] = _check_channel_order(sample['mask'],
+                                              'torch').astype(np.float32)
         return sample
 
 
@@ -248,19 +258,16 @@ class InferenceTiler(object):
         """
         # read in the image if it's a path
         if isinstance(im, str):
-            im = imread(im, make_8bit=True)
+            im = imread(im)
         # determine how many samples will be generated with the sliding window
         src_im_height = im.shape[0]
         src_im_width = im.shape[1]
         y_steps = int(1+np.ceil((src_im_height-self.height)/self.y_step))
         x_steps = int(1+np.ceil((src_im_width-self.width)/self.x_step))
-        n_chips = ((y_steps)*(x_steps))
         if len(im.shape) == 2:  # if there's no channel axis
             im = im[:, :, np.newaxis]  # create one - will be needed for model
-        output_arr = np.empty(shape=(n_chips,
-                                     self.height, self.width,
-                                     im.shape[2]), dtype=im.dtype)
         top_left_corner_idxs = []
+        output_arr = []
         for y in range(y_steps):
             if self.y_step*y + self.height > im.shape[0]:
                 y_min = im.shape[0] - self.height
@@ -277,9 +284,10 @@ class InferenceTiler(object):
                             x_min:x_min + self.width,
                             :]
                 if self.aug is not None:
-                    subarr = self.aug(image=subarr)
-                output_arr[len(top_left_corner_idxs), :, :, :] = subarr
+                    subarr = self.aug(image=subarr)['image']
+                output_arr.append(subarr)
                 top_left_corner_idxs.append((y_min, x_min))
+        output_arr = np.stack(output_arr).astype(np.float32)
         if self.framework in ['torch', 'pytorch']:
             output_arr = np.moveaxis(output_arr, 3, 1)
         return output_arr, top_left_corner_idxs, (src_im_height, src_im_width)

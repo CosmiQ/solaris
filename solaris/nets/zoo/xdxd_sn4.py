@@ -1,3 +1,4 @@
+import os
 import torch
 from torch import nn
 from torchvision.models import vgg16
@@ -78,7 +79,6 @@ class XDXD_SN4_DecoderBlock(nn.Module):
     def forward(self, x):
         return self.block(x)
 
-
-model_dict = {'xdxd_spacenet4': {'weight_path': None,
-                                 'arch': XDXD_SpaceNet4_UNetVGG16}
-              }
+# below dictionary lists models compatible with solaris. alternatively, your
+# own model can be used by using the path to the model as the value for
+# model_name in the config file.

@@ -1,3 +1,5 @@
+.. _tutorials_index:
+
 ##############################
 Solaris Tutorials and Cookbook
 ##############################
@@ -40,7 +42,7 @@ on creating configuration files and running the CLI can be found below.
 * `Creating reference files to help solaris find your imagery <notebooks/creating_im_reference_csvs.ipynb>`_
 * `Creating training masks with the solaris CLI <notebooks/cli_mask_creation.ipynb>`_
 * `Running a full deep learning pipeline using the solaris CLI <notebooks/cli_ml_pipeline.ipynb>`_
-* :doc:`Evaluating prediction quality on SpaceNet data with the solaris CLI <cli_eval>`
+* `Evaluating prediction quality on SpaceNet data with the solaris CLI <notebooks/cli_spacenet_evaluation.ipynb>`_
 
 If these relatively narrow use cases don't cover your needs, the ``solaris`` python
 API can help!
@@ -62,10 +64,10 @@ the tutorials below.
 
 * `Tiling imagery <notebooks/api_tiling_tutorial.ipynb>`_
 * `Creating training masks <notebooks/api_masks_tutorial.ipynb>`_
-* :doc:`Training a SpaceNet model <notebooks/api_training_spacenet>`
-* :doc:`Inference with a pre-trained SpaceNet model <notebooks/api_inference_spacenet>`
-* :doc:`Training a custom model <notebooks/api_training_custom>`
-* :doc:`Converting pixel masks to vector labels <notebooks/api_mask_to_vector>`
+* `Training a SpaceNet model <notebooks/api_training_spacenet.ipynb>`_
+* `Inference with a pre-trained SpaceNet model <notebooks/api_inference_spacenet.ipynb>`_
+* `Training a custom model <notebooks/api_training_custom.ipynb>`_
+* `Converting pixel masks to vector labels <notebooks/api_mask_to_vector.ipynb>`_
 * `Scoring your model's performance with the solaris Python API <notebooks/api_evaluation_tutorial.ipynb>`_
 
 

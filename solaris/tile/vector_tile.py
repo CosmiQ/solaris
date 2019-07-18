@@ -5,6 +5,7 @@ import geopandas as gpd
 from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
 from ..utils.geo import gdf_get_projection_unit, split_multi_geometries
+from ..utils.geo import reproject_geometry
 from tqdm import tqdm
 
 
@@ -20,8 +21,8 @@ class VectorTiler(object):
     """
 
     def __init__(self, dest_dir=None, dest_crs=None, output_format='GeoJSON',
-                 verbose=False):
-        if verbose:
+                 verbose=False, super_verbose=False):
+        if verbose or super_verbose:
             print('Preparing the tiler...')
         self.dest_dir = dest_dir
         if not os.path.isdir(self.dest_dir):
@@ -30,12 +31,14 @@ class VectorTiler(object):
             self.dest_crs = _check_crs(dest_crs)
         self.output_format = output_format
         self.verbose = verbose
-        if self.verbose:
+        self.super_verbose = super_verbose
+        if self.verbose or self.super_verbose:
             print('Initialization done.')
 
-    def tile(self, src, tile_bounds, geom_type='Polygon',
+    def tile(self, src, tile_bounds, tile_bounds_crs=None, geom_type='Polygon',
              split_multi_geoms=True, min_partial_perc=0.0,
-             dest_fname_base='geoms', obj_id_col=None):
+             dest_fname_base='geoms', obj_id_col=None,
+             output_ext='.geojson'):
         """Tile `src` into vector data tiles bounded by `tile_bounds`.
 
         Arguments
@@ -47,6 +50,11 @@ class VectorTiler(object):
             A :class:`list` made up of ``[left, bottom, right, top]`` sublists
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
+        tile_bounds_crs : int, optional
+            The EPSG code for the CRS that the tile bounds are in. If not
+            provided, it's assumed that the CRS is the same as in `src`. This
+            argument must be provided if the bound coordinates and `src` are
+            not in the same CRS, otherwise tiling will not occur correctly.
         geom_type : str, optional (default: "Polygon")
             The type of geometries contained within `src`. Defaults to
             ``"Polygon"``, can also be ``"LineString"``.
@@ -69,30 +77,34 @@ class VectorTiler(object):
             a unique identifier for each geometry (e.g. the ``"BuildingId"``
             column in many SpaceNet datasets.) See
             :func:`solaris.utils.geo.split_multi_geometries` for more.
+        output_ext : str, optional, (default: geojson)
+            Extension of output files, can be 'geojson' or 'json'.
         """
-        tile_gen = self.tile_generator(src, tile_bounds, geom_type,
-                                       split_multi_geoms,
+        tile_gen = self.tile_generator(src, tile_bounds, tile_bounds_crs,
+                                       geom_type, split_multi_geoms,
                                        min_partial_perc,
                                        obj_id_col=obj_id_col)
         for tile_gdf, tb in tqdm(tile_gen):
             if self.proj_unit not in ['meter', 'metre']:
                 out_path = os.path.join(
-                    self.dest_dir, '{}_{}_{}.json'.format(dest_fname_base,
-                                                          np.round(tb[0], 3),
-                                                          np.round(tb[1], 3)))
+                    self.dest_dir, '{}_{}_{}{}'.format(dest_fname_base,
+                                                       np.round(tb[0], 3),
+                                                       np.round(tb[3], 3),
+                                                       output_ext))
             else:
                 out_path = os.path.join(
-                    self.dest_dir, '{}_{}_{}.json'.format(dest_fname_base,
-                                                          int(tb[0]),
-                                                          int(tb[1])))
+                    self.dest_dir, '{}_{}_{}{}'.format(dest_fname_base,
+                                                       int(tb[0]),
+                                                       int(tb[3]),
+                                                       output_ext))
             if len(tile_gdf) > 0:
                 tile_gdf.to_file(out_path, driver='GeoJSON')
             else:
                 save_empty_geojson(out_path, self.dest_crs)
 
-    def tile_generator(self, src, tile_bounds, geom_type='Polygon',
-                       split_multi_geoms=True, min_partial_perc=0.0,
-                       obj_id_col=None):
+    def tile_generator(self, src, tile_bounds, tile_bounds_crs=None,
+                       geom_type='Polygon', split_multi_geoms=True,
+                       min_partial_perc=0.0, obj_id_col=None):
         """Generate `src` vector data tiles bounded by `tile_bounds`.
 
         Arguments
@@ -104,6 +116,11 @@ class VectorTiler(object):
             A :class:`list` made up of ``[left, bottom, right, top]`` sublists
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
+        tile_bounds_crs : int, optional
+            The EPSG code for the CRS that the tile bounds are in. If not
+            provided, it's assumed that the CRS is the same as in `src`. This
+            argument must be provided if the bound coordinates and `src` are
+            not in the same CRS, otherwise tiling will not occur correctly.
         geom_type : str, optional (default: "Polygon")
             The type of geometries contained within `src`. Defaults to
             ``"Polygon"``, can also be ``"LineString"``.
@@ -132,14 +149,37 @@ class VectorTiler(object):
             boundaries contained by `tile_gdf`.
         """
         self.src = _check_gdf_load(src)
+        if self.verbose:
+            print("Num tiles:", len(tile_bounds))
+
         self.src_crs = _check_crs(self.src.crs)
+        # check if the tile bounds and vector are in the same crs
+        if tile_bounds_crs is not None:
+            tile_bounds_crs = _check_crs(tile_bounds_crs)
+        else:
+            tile_bounds_crs = self.src_crs
+        if self.src_crs != tile_bounds_crs:
+            reproject_bounds = True  # used to transform tb for clip_gdf()
+        else:
+            reproject_bounds = False
+
         self.proj_unit = gdf_get_projection_unit(
             self.src).strip('"').strip("'")
         if getattr(self, 'dest_crs', None) is None:
             self.dest_crs = self.src_crs
-        for tb in tile_bounds:
-            tile_gdf = clip_gdf(self.src, tb, min_partial_perc,
-                                geom_type)
+        for i, tb in enumerate(tile_bounds):
+            if self.super_verbose:
+                print("\n", i, "/", len(tile_bounds))
+            if reproject_bounds:
+                tile_gdf = clip_gdf(self.src,
+                                    reproject_geometry(box(*tb),
+                                                       tile_bounds_crs,
+                                                       self.src_crs),
+                                    min_partial_perc,
+                                    geom_type, verbose=self.super_verbose)
+            else:
+                tile_gdf = clip_gdf(self.src, tb, min_partial_perc, geom_type,
+                                    verbose=self.super_verbose)
             if self.src_crs != self.dest_crs:
                 tile_gdf = tile_gdf.to_crs(epsg=self.dest_crs)
             if split_multi_geoms:
@@ -178,7 +218,7 @@ def search_gdf_polygon(gdf, tile_polygon):
 
 
 def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
-             use_sindex=True):
+             use_sindex=True, verbose=False):
     """Clip GDF to a provided polygon.
 
     Clips objects within `gdf` to the region defined by
@@ -215,6 +255,8 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
     use_sindex : bool, optional
         Use the `gdf` sindex be used for searching. Improves efficiency
         but requires `libspatialindex <http://libspatialindex.github.io/>`__ .
+    verbose : bool, optional
+        Switch to print relevant values.
 
     Returns
     -------
@@ -227,7 +269,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
         tb = box(*tile_bounds)
     elif isinstance(tile_bounds, Polygon):
         tb = tile_bounds
-    if use_sindex:
+    if use_sindex and (geom_type == "Polygon"):
         gdf = search_gdf_polygon(gdf, tb)
 
     # if geom_type == "LineString":
@@ -238,6 +280,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
             gdf['origarea'] = 0
         else:
             gdf['origarea'] = gdf.area
+
     if 'origlen' in gdf.columns:
         pass
     else:
@@ -256,9 +299,17 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
         cut_gdf = cut_gdf.loc[cut_gdf['partialDec'] > min_partial_perc, :]
         cut_gdf['truncated'] = (cut_gdf['partialDec'] != 1.0).astype(int)
     else:
-        cut_gdf = cut_gdf[cut_gdf.geom_type != "GeometryCollection"]
+        # assume linestrings
+        # remove null
+        cut_gdf = cut_gdf[cut_gdf['geometry'].notnull()]
         cut_gdf['partialDec'] = 1
         cut_gdf['truncated'] = 0
+        # cut_gdf = cut_gdf[cut_gdf.geom_type != "GeometryCollection"]
+        if len(cut_gdf) > 0 and verbose:
+            print("clip_gdf() - gdf.iloc[0]:", gdf.iloc[0])
+            print("clip_gdf() - tb:", tb)
+            print("clip_gdf() - gdf_cut:", cut_gdf)
+
     # TODO: IMPLEMENT TRUNCATION MEASUREMENT FOR LINESTRINGS
 
     return cut_gdf

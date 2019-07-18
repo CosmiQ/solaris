@@ -135,7 +135,8 @@ class TorchModelCheckpoint(object):
     """
 
     def __init__(self, filepath='', monitor='loss', verbose=False,
-                 save_best_only=False, mode='auto', period=1):
+                 save_best_only=False, mode='auto', period=1,
+                 weights_only=True):
 
         self.filepath = filepath
         self.monitor = monitor
@@ -143,13 +144,15 @@ class TorchModelCheckpoint(object):
             self.monitor = metric_dict[self.monitor]
         self.verbose = verbose
         self.save_best_only = save_best_only
+        self.period = period
+        self.weights_only = weights_only
         self.mode = mode
         if self.mode == 'auto':
             if self.monitor in ['loss', 'val_loss']:
                 self.mode = 'min'
             else:
                 self.mode = 'max'
-        self.period = period
+
         self.epoch = 0
         self.last_epoch = 0
         self.last_saved_value = None
@@ -200,7 +203,7 @@ class TorchModelCheckpoint(object):
                 metric_value = self.monitor(y_true, y_pred)
                 if self.check_is_best_value(metric_value):
                     self.last_saved_value = metric_value
-                    self.save(model)
+                    self.save(model, self.weights_only)
                     self.last_epoch = self.epoch
 
     def check_is_best_value(self, value):
@@ -212,7 +215,7 @@ class TorchModelCheckpoint(object):
         else:
             return False
 
-    def save(self, model, weights_only=False):
+    def save(self, model, weights_only):
         """Save the model.
 
         Arguments
@@ -225,13 +228,17 @@ class TorchModelCheckpoint(object):
             entire model must be saved to resume training without re-defining
             the model architecture, optimizer, and loss function.
         """
-        save_name = os.path.splitext(self.filepath)[0] + '_{}+{}'.format(
+        save_name = os.path.splitext(self.filepath)[0] + '_epoch{}_{}'.format(
             self.epoch, np.round(self.last_saved_value, 3))
         save_name = save_name + os.path.splitext(self.filepath)[1]
-        if weights_only:
-            torch.save(model.state_dict(), save_name)
+        if isinstance(model, torch.nn.DataParallel):
+            to_save = model.module
         else:
-            torch.save(model, save_name)
+            to_save = model
+        if weights_only:
+            torch.save(to_save.state_dict(), save_name)
+        else:
+            torch.save(to_save, save_name)
 
 
 torch_callback_dict = {
