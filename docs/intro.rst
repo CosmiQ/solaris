@@ -1,3 +1,5 @@
+.. _intro:
+
 
 ##############################
 An introduction to ``solaris``

@@ -1,3 +1,5 @@
+.. _api_index:
+
 .. title:: API reference contents
 
 ###################

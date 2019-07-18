@@ -128,9 +128,9 @@ training:
           - 60
         gamma: 0.5
     model_checkpoint:
-      filepath: 'selimsef_best.pth'
+      filepath: 'selimsef_densenet121_best.pth'
       monitor: val_loss
-  model_dest_path: 'selimsef.pth'
+  model_dest_path: 'selimsef_densenet121.pth'
   verbose: true
 
 inference:

@@ -23,9 +23,9 @@ data_specs:
   val_holdout_frac: 0.2
   data_workers:  12
 
-training_data_csv: '/home/local_data/solaris_test_run/selim_sef_training_df.csv'
+training_data_csv: '/path/to/training_df.csv'
 validation_data_csv:
-inference_data_csv: '/home/local_data/solaris_test_run/test_df.csv'
+inference_data_csv: '/path/to/test_df.csv'
 
 training_augmentation:
   augmentations:
@@ -128,12 +128,12 @@ training:
           - 60
         gamma: 0.5
     model_checkpoint:
-      filepath: '/home/local_data/solaris_test_run/selimsef_resnet34_best.pth'
+      filepath: 'selimsef_resnet34_best.pth'
       monitor: val_loss
-  model_dest_path: '/home/local_data/solaris_test_run/selimsef_resnet34.pth'
+  model_dest_path: 'selimsef_resnet34.pth'
   verbose: true
 
 inference:
   window_step_size_x:
   window_step_size_y:
-  output_dir: 'selim_sef_inference_out/'
+  output_dir: 'inference_out/'
