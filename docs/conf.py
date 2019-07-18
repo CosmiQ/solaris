@@ -128,7 +128,7 @@ def setup(app):
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-html_sidebars = {'**': ['localtoc.html', 'sourcelink.html', 'searchbox.html']}
+html_sidebars = {'**': ['custom_sidebar.html', 'sourcelink.html', 'searchbox.html']}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

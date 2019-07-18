@@ -23,6 +23,7 @@ An open source machine learning pipeline for geospatial imagery
 
   installation
   intro
+  pretrained_models
   api/index
   tutorials/index
 
@@ -31,9 +32,10 @@ An open source machine learning pipeline for geospatial imagery
 
 User Guide
 ==========
-* `What is solaris? <intro.html>`_
-* `Installation <installation.html>`_
-* `Tutorials and recipes <tutorials/index.html>`_
+* `What is solaris? <intro>`_
+* `Installation <installation>`_
+* `Pretrained models available in solaris <pretrained_models>`_
+* `Tutorials and recipes <tutorials/index>`_
 
 Reference
 =========
