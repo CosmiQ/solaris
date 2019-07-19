@@ -217,7 +217,14 @@ class TorchDataset(Dataset):
 
 
 class InferenceTiler(object):
-    """An object to tile fragments of images for inference."""
+    """An object to tile fragments of images for inference.
+
+    This object allows you to pass images of arbitrary size into Solaris for
+    inference, similar to the pre-existing CosmiQ Works tool, BASISS_.
+
+    .. _BASISS: https://github.com/cosmiq/basiss
+
+    """
 
     def __init__(self, framework, width, height, x_step=None, y_step=None,
                  augmentations=None):
