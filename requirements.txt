@@ -19,6 +19,6 @@ affine==2.2.3
 requests==2.22.0
 albumentations==0.3.0
 urllib3==1.24.3
-pyyaml==5.1.1
+pyyaml==5.1.2
 pyproj==2.2.1
 rio-cogeo==1.0.0
