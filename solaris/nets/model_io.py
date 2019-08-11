@@ -43,12 +43,33 @@ def _load_model_weights(model, path, framework):
         try:
             model.load_weights(path)
         except OSError:
-            raise FileNotFoundError("{} doesn't exist.".format(path))
+            # first, check to see if the weights are in the default sol dir
+            default_path = os.path.join(weights_dir, os.path.split(path)[1])
+            try:
+                model.load_weights(default_path)
+            except OSError:
+                # if they can't be found anywhere, raise the error.
+                raise FileNotFoundError("{} doesn't exist.".format(path))
 
     elif framework.lower() in ['torch', 'pytorch']:
         # pytorch already throws the right error on failed load, so no need
         # to fix exception
-        loaded = torch.load(path)
+        if torch.cuda.is_available():
+            try:
+                loaded = torch.load(path)
+            except FileNotFoundError:
+                # first, check to see if the weights are in the default sol dir
+                default_path = os.path.join(weights_dir,
+                                            os.path.split(path)[1])
+                loaded = torch.load(path)
+        else:
+            try:
+                loaded = torch.load(path, map_location='cpu')
+            except FileNotFoundError:
+                default_path = os.path.join(weights_dir,
+                                            os.path.split(path)[1])
+                loaded = torch.load(path, map_location='cpu')
+
         if isinstance(loaded, torch.nn.Module):  # if it's a full model already
             model.load_state_dict(loaded.state_dict())
         else:
