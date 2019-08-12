@@ -101,7 +101,7 @@ class DropChannel(ImageOnlyTransform):
         return np.delete(im_arr, self.idx, self.axis)
 
 
-class SwapChannel(ImageOnlyTransform):
+class SwapChannels(ImageOnlyTransform):
     """Swap channels in an input image.
 
     Arguments
@@ -124,20 +124,20 @@ class SwapChannel(ImageOnlyTransform):
     def __init__(self, first_idx, second_idx, axis=1,
                  always_apply=False, p=1.0):
         super().__init__(always_apply, p)
-        if axis not in [1, 3]:
-            raise ValueError("Solaris can only accommodate axis values of 1 "
-                             "(Torch axis style) or 3 (TensorFlow/Keras axis "
+        if axis not in [0, 2]:
+            raise ValueError("Solaris can only accommodate axis values of 0 "
+                             "(Torch axis style) or 2 (TensorFlow/Keras axis "
                              "style) for SwapChannel.")
         self.first_idx = first_idx
         self.second_idx = second_idx
         self.axis = axis
 
     def apply(self, im_arr, **params):
-        if self.axis == 1:
-            subarr = im_arr[:, self.first_idx, ...].copy()
-            im_arr[:, self.first_idx, ...] = im_arr[:, self.second_idx, ...]
-            im_arr[:, self.second_idx, ...] = subarr
-        elif self.axis == 3:
+        if self.axis == 0:
+            subarr = im_arr[self.first_idx, ...].copy()
+            im_arr[self.first_idx, ...] = im_arr[self.second_idx, ...]
+            im_arr[self.second_idx, ...] = subarr
+        elif self.axis == 2:
             subarr = im_arr[..., self.first_idx].copy()
             im_arr[..., self.first_idx] = im_arr[..., self.second_idx]
             im_arr[..., self.second_idx] = subarr
@@ -493,5 +493,5 @@ aug_matcher = {
     'tofloat': ToFloat, 'rotate': Rotate, 'randomscale': RandomScale,
     'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp,
     'randomrotate90': RandomRotate90, 'dropchannel': DropChannel,
-    'swapchannel': SwapChannel
+    'swapchannels': SwapChannels
 }
