@@ -204,7 +204,7 @@ class Trainer(object):
         if self.framework == 'keras':
             self.model.save(self.config['training']['model_dest_path'])
         elif self.framework == 'torch':
-            if isinstance(self.model, nn.DataParallel):
+            if isinstance(self.model, torch.nn.DataParallel):
                 torch.save(self.model.module, self.config['training']['model_dest_path'])
 
 
