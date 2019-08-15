@@ -101,6 +101,50 @@ class DropChannel(ImageOnlyTransform):
         return np.delete(im_arr, self.idx, self.axis)
 
 
+class SwapChannels(ImageOnlyTransform):
+    """Swap channels in an input image.
+
+    Arguments
+    ---------
+    first_idx : int
+        The first channel in the pair to swap.
+    second_idx : int
+        The second channel in the pair to swap.
+    axis : int, optional (default: 1)
+        The axis to drop the channel from. Defaults to ``1`` (torch channel
+        axis). Set to ``3`` for TF models where the channel is the last axis
+        of an image.
+    always_apply : bool, optional (default: False)
+        Apply this transformation to every image? Defaults to no (``False``).
+    p : float [0, 1], optional (default: 1.0)
+        Probability that the augmentation is performed to each image. Defaults
+        to ``1.0``.
+    """
+
+    def __init__(self, first_idx, second_idx, axis=1,
+                 always_apply=False, p=1.0):
+        super().__init__(always_apply, p)
+        if axis not in [0, 2]:
+            raise ValueError("Solaris can only accommodate axis values of 0 "
+                             "(Torch axis style) or 2 (TensorFlow/Keras axis "
+                             "style) for SwapChannel.")
+        self.first_idx = first_idx
+        self.second_idx = second_idx
+        self.axis = axis
+
+    def apply(self, im_arr, **params):
+        if self.axis == 0:
+            subarr = im_arr[self.first_idx, ...].copy()
+            im_arr[self.first_idx, ...] = im_arr[self.second_idx, ...]
+            im_arr[self.second_idx, ...] = subarr
+        elif self.axis == 2:
+            subarr = im_arr[..., self.first_idx].copy()
+            im_arr[..., self.first_idx] = im_arr[..., self.second_idx]
+            im_arr[..., self.second_idx] = subarr
+
+        return im_arr
+
+
 class Rotate(DualTransform):
     """Array rotation using scipy.ndimage's implementation.
 
@@ -448,5 +492,6 @@ aug_matcher = {
     'gaussnoise': GaussNoise, 'clahe': CLAHE, 'randomgamma': RandomGamma,
     'tofloat': ToFloat, 'rotate': Rotate, 'randomscale': RandomScale,
     'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp,
-    'randomrotate90': RandomRotate90, 'dropchannel': DropChannel
+    'randomrotate90': RandomRotate90, 'dropchannel': DropChannel,
+    'swapchannels': SwapChannels
 }
