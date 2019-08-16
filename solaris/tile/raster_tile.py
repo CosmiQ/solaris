@@ -54,6 +54,10 @@ class RasterTiler(object):
         defined by `src_metric_size`. If not provided either upon
         initialization or when an image is loaded, the image bounds will be
         used; if provided, this value will override image metadata.
+    tile_bounds : `list`-like
+        A `list`-like of ``[left, bottom, right, top]`` coordinates defining
+        the boundaries of the tiles to create. If not provided, they will be
+        generated from the `aoi_bounds` based on `src_tile_size`.
     verbose : bool, optional
         Verbose text output. By default, verbose text is not printed.
 
@@ -104,7 +108,7 @@ class RasterTiler(object):
                  src_tile_size=(900, 900), src_metric_size=False,
                  dest_tile_size=None, dest_metric_size=False,
                  aoi_bounds=None, nodata=None, alpha=None,
-                 force_load_cog=False, resampling='bilinear',
+                 force_load_cog=False, resampling='bilinear', tile_bounds=None,
                  verbose=False):
         # set up attributes
         if verbose:
@@ -127,6 +131,7 @@ class RasterTiler(object):
         self.nodata = nodata
         self.alpha = alpha
         self.aoi_bounds = aoi_bounds
+        self.tile_bounds = tile_bounds
 #        self.cog_output = cog_output
         self.verbose = verbose
         if self.verbose:
