@@ -227,7 +227,9 @@ class Trainer(object):
             self.model.save(self.config['training']['model_dest_path'])
         elif self.framework == 'torch':
             if isinstance(self.model, torch.nn.DataParallel):
-                torch.save(self.model.module, self.config['training']['model_dest_path'])
+                torch.save(self.model.module.state_dict(), self.config['training']['model_dest_path'])
+            else:
+                torch.save(self.model.state_dict(), self.config['training']['model_dest_path'])
 
 
 def get_train_val_dfs(config):
