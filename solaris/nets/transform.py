@@ -457,12 +457,13 @@ def get_augs(aug_dict, meta_augs_list=['oneof', 'oneorother']):
         `list` of augmentations to pass to a ``Compose`` object.
     """
     aug_list = []
-    for aug, params in aug_dict.items():
-        if aug.lower() in meta_augs_list:
-            # recurse into sub-dict
-            aug_list.append(aug_matcher[aug](get_augs(aug_dict[aug])))
-        else:
-            aug_list.append(_get_aug(aug, params))
+    if aug_dict is not None:
+        for aug, params in aug_dict.items():
+            if aug.lower() in meta_augs_list:
+                # recurse into sub-dict
+                aug_list.append(aug_matcher[aug](get_augs(aug_dict[aug])))
+            else:
+                aug_list.append(_get_aug(aug, params))
     return aug_list
 
 
