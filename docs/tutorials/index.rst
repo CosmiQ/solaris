@@ -43,6 +43,7 @@ on creating configuration files and running the CLI can be found below.
 * `Creating training masks with the solaris CLI <notebooks/cli_mask_creation.ipynb>`_
 * `Running a full deep learning pipeline using the solaris CLI <notebooks/cli_ml_pipeline.ipynb>`_
 * `Evaluating prediction quality on SpaceNet data with the solaris CLI <notebooks/cli_spacenet_evaluation.ipynb>`_
+* `Mapping vehicles with the cowc dataset <notebooks/map_vehicles_cowc.ipynb>`_
 
 If these relatively narrow use cases don't cover your needs, the ``solaris`` python
 API can help!

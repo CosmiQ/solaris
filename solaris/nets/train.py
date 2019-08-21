@@ -111,15 +111,26 @@ class Trainer(object):
                 # TRAINING
                 self.model.train()
                 for batch_idx, batch in enumerate(self.train_datagen):
-                    if self.config['data_specs'].get('additional_inputs',
-                                                     None) is not None:
-                        data = []
-                        for i in ['image'] + self.config[
-                                'data_specs']['additional_inputs']:
-                            data.append(torch.Tensor(batch[i]).cuda())
+                    if torch.cuda.is_available():
+                        if self.config['data_specs'].get('additional_inputs',
+                                                         None) is not None:
+                            data = []
+                            for i in ['image'] + self.config[
+                                    'data_specs']['additional_inputs']:
+                                data.append(torch.Tensor(batch[i]).cuda())
+                        else:
+                            data = batch['image'].cuda()
+                        target = batch['mask'].cuda().float()
                     else:
-                        data = batch['image'].cuda()
-                    target = batch['mask'].cuda().float()
+                        if self.config['data_specs'].get('additional_inputs',
+                                                         None) is not None:
+                            data = []
+                            for i in ['image'] + self.config[
+                                    'data_specs']['additional_inputs']:
+                                data.append(torch.Tensor(batch[i]))
+                        else:
+                            data = batch['image']
+                        target = batch['mask'].float()
                     self.optimizer.zero_grad()
                     output = self.model(data)
                     loss = self.loss(output, target)
@@ -141,15 +152,26 @@ class Trainer(object):
                     torch.cuda.empty_cache()
                     val_loss = []
                     for batch_idx, batch in enumerate(self.val_datagen):
-                        if self.config['data_specs'].get('additional_inputs',
-                                                         None) is not None:
-                            data = []
-                            for i in ['image'] + self.config[
-                                    'data_specs']['additional_inputs']:
-                                data.append(torch.Tensor(batch[i]).cuda())
+                        if torch.cuda.is_available():
+                            if self.config['data_specs'].get(
+                                    'additional_inputs', None) is not None:
+                                data = []
+                                for i in ['image'] + self.config[
+                                        'data_specs']['additional_inputs']:
+                                    data.append(torch.Tensor(batch[i]).cuda())
+                            else:
+                                data = batch['image'].cuda()
+                            target = batch['mask'].cuda().float()
                         else:
-                            data = batch['image'].cuda()
-                        target = batch['mask'].cuda().float()
+                            if self.config['data_specs'].get(
+                                    'additional_inputs', None) is not None:
+                                data = []
+                                for i in ['image'] + self.config[
+                                        'data_specs']['additional_inputs']:
+                                    data.append(torch.Tensor(batch[i]))
+                            else:
+                                data = batch['image']
+                            target = batch['mask'].float()
                         val_output = self.model(data)
                         val_loss.append(self.loss(val_output, target))
                     val_loss = torch.mean(torch.stack(val_loss))
@@ -204,8 +226,10 @@ class Trainer(object):
         if self.framework == 'keras':
             self.model.save(self.config['training']['model_dest_path'])
         elif self.framework == 'torch':
-            if isinstance(self.model, nn.DataParallel):
-                torch.save(self.model.module, self.config['training']['model_dest_path'])
+            if isinstance(self.model, torch.nn.DataParallel):
+                torch.save(self.model.module.state_dict(), self.config['training']['model_dest_path'])
+            else:
+                torch.save(self.model.state_dict(), self.config['training']['model_dest_path'])
 
 
 def get_train_val_dfs(config):

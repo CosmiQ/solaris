@@ -68,7 +68,6 @@ else:
                  'opencv-python==4.1.0.25',
                  'numpy>=1.16.4',
                  'tqdm>=4.32.2',
-                 'GDAL>=2.4.0',
                  'rtree>=0.8.3',
                  'networkx>=2.3',
                  'rasterio>=1.0.18',
