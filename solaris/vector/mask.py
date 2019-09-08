@@ -706,7 +706,7 @@ def preds_to_binary(pred_arr, channel_scaling=None, bg_threshold=0):
 
 
 def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
-                         output_path=None, output_type='csv', min_area=40,
+                         output_path=None, output_type='geojson', min_area=40,
                          bg_threshold=0, do_transform=None, simplify=False,
                          tolerance=0.5, **kwargs):
     """Get polygons from an image mask.
@@ -795,6 +795,12 @@ def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
         polygon_gdf['geometry'] = polygon_gdf['geometry'].apply(
             lambda x: x.simplify(tolerance=tolerance)
         )
+    # save output files
+    if output_path is not None:
+        if output_type.lower() == 'geojson':
+            polygon_gdf.to_file(output_path, driver='GeoJSON')
+        elif output_type.lower() == 'csv':
+            polygon_gdf.to_csv(output_path, index=False)
 
     return polygon_gdf
 
