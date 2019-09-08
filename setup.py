@@ -4,7 +4,6 @@ import subprocess
 import logging
 from setuptools import setup, find_packages
 import re
-import os
 
 
 def get_version():
