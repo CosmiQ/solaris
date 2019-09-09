@@ -16,6 +16,8 @@ class Inferer(object):
         self.batch_size = self.config['batch_size']
         self.framework = self.config['nn_framework']
         self.model_name = self.config['model_name']
+        self.categorical = self.config['data_specs']['is_categorical']
+        self.num_clases = self.config['data_specs']['num_classes']
         # check if the model was trained as part of the same pipeline; if so,
         # use the output from that. If not, use the pre-trained model directly.
         if self.config['train']:
@@ -23,7 +25,8 @@ class Inferer(object):
         else:
             self.model_path = self.config.get('model_path', None)
         self.model = get_model(self.model_name, self.framework,
-                               self.model_path, pretrained=True,
+                               self.model_path, self.categorical,
+                               self.num_classes, pretrained=True,
                                custom_model_dict=custom_model_dict)
         self.window_step_x = self.config['inference'].get('window_step_size_x',
                                                           None)

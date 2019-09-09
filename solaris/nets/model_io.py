@@ -31,7 +31,12 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
             warn(f'The model weights file {model_path} was not found.'
                  ' Attempting to download from the SpaceNet repository.')
             weight_path = _download_weights(md)
-            model = _load_model_weights(model, weight_path, framework)
+            if weight_path is not None:
+                model = _load_model_weights(model, weight_path, framework)
+            else:
+                print("No pretrained weights available for this model",
+                      "Please set pretrained to False.")
+                raise FileNotFoundError()
 
     return model
 

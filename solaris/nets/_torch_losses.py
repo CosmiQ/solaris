@@ -73,6 +73,55 @@ class TorchFocalLoss(nn.Module):
         return loss.sum(dim=-1).mean()
 
 
+class TorchFocalLossMultiClass(TorchFocalLoss):
+    """
+    Implementation of Focal Loss[1]_ modified from Catalyst [2]_ .
+
+    Arguments
+    ---------
+    gamma : :class:`int` or :class:`float`
+        Focusing parameter. See [1]_ .
+    alpha : :class:`int` or :class:`float`
+        Normalization factor. See [1]_ .
+
+    References
+    ----------
+    .. [1] https://arxiv.org/pdf/1708.02002.pdf
+    .. [2] https://catalyst-team.github.io/catalyst/
+
+    Compute focal loss for multi-class problem.
+    Ignores targets having -1 label
+    """
+
+    def forward(self, logits, targets):
+        """
+        Args:
+            logits: [bs; num_classes; ...]
+            targets: [bs; ...]
+        """
+        self.ignore = None
+        num_classes = logits.size(1)
+        loss = 0
+        targets = targets.view(-1)
+        logits = logits.view(-1, num_classes)
+
+        # Filter anchors with -1 label from loss computation
+        if self.ignore is not None:
+            not_ignored = targets != self.ignore
+
+        for cls in range(num_classes):
+            cls_label_target = (targets == (cls + 0)).long()
+            cls_label_input = logits[..., cls]
+
+            if self.ignore is not None:
+                cls_label_target = cls_label_target[not_ignored]
+                cls_label_input = cls_label_input[not_ignored]
+
+            loss += self.loss_fn(cls_label_input, cls_label_target)
+
+        return loss
+
+
 def torch_lovasz_hinge(logits, labels, per_image=False, ignore=None):
     """Lovasz Hinge Loss. Implementation edited from Maxim Berman's GitHub.
 
@@ -341,5 +390,6 @@ torch_losses = {
     'jaccard': TorchJaccardLoss,
     'jaccardloss': TorchJaccardLoss,
     'dice': TorchDiceLoss,
-    'diceloss': TorchDiceLoss
+    'diceloss': TorchDiceLoss,
+    'focal_multiclass': TorchFocalLossMultiClass
 }

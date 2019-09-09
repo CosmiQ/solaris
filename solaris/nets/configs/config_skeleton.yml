@@ -40,6 +40,7 @@ data_specs:
   channels:  # number of channels in the input imagery.
   label_type: mask  # one of ['mask', 'bbox']
   is_categorical: false  # are the labels binary (default) or categorical?
+  num_classes: 1 # number of classes
   mask_channels: 1  # number of channels in the training mask
   val_holdout_frac:  # if empty, assumes that separate data ref files define the
                      # training and validation dataset. If a float between 0 and
