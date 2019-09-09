@@ -22,8 +22,7 @@ batch_size:  # size of each batch fed into nn.
 data_specs:
   width: # width of the input images taken in by the neural net.
   height:  # height of the input images taken in by the neural net.
-  image_type: normalized # format of images read into the neural net. options
-                         # are 'normalized', 'zscore', '8bit', '16bit'.
+  dtype:  # dtype of the inputs ingested by the neural net.
   rescale: false  # should image pixel values be rescaled before pre-processing?
                   # If so, the image will be rescaled to the pixel range defined
                   # by rescale_min and rescale_max below.
@@ -38,7 +37,7 @@ data_specs:
   rescale_maxima: auto  # same as rescale_minima, but for the maximum value for
                         # each channel in the image.
   channels:  # number of channels in the input imagery.
-  label_type: mask  # one of ['mask', 'bbox']
+  label_type: mask  # one of ['mask', 'bbox'] (CURRENTLY ONLY MASK IMPLEMENTED)
   is_categorical: false  # are the labels binary (default) or categorical?
   num_classes: 1 # number of classes
   mask_channels: 1  # number of channels in the training mask
