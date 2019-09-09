@@ -11,6 +11,7 @@ batch_size: 42
 data_specs:
   width: 384
   height:  384
+  dtype:
   image_type: zscore
   rescale: false
   rescale_minima: auto

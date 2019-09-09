@@ -22,6 +22,7 @@ class TestDataGenerator(object):
                   {'height': 30,
                    'width': 30,
                    'channels': 1,
+                   'dtype': None,
                    'label_type': 'mask',
                    'mask_channels': 1,
                    'is_categorical': False
@@ -59,6 +60,7 @@ class TestDataGenerator(object):
                   {'height': 30,
                    'width': 30,
                    'channels': 1,
+                   'dtype': None,
                    'label_type': 'mask',
                    'mask_channels': 1,
                    'is_categorical': False
