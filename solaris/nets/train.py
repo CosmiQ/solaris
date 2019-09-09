@@ -26,7 +26,7 @@ class Trainer(object):
         self.model_name = self.config['model_name']
         self.model_path = self.config.get('model_path', None)
         self.categorical = self.config['data_specs']['is_categorical']
-        self.num_clases = self.config['data_specs']['num_classes']
+        self.num_classes = self.config['data_specs']['num_classes']
         self.model = get_model(self.model_name, self.framework,
                                self.model_path, self.pretrained, self.categorical,
                                self.num_classes, custom_model_dict)
