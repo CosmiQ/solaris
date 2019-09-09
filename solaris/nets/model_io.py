@@ -22,7 +22,7 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
                              "model_name in the config file and/or provide a "
                              "custom_model_dict argument to Trainer().")
     if model_path is None or custom_model_dict is not None:
-        model_path = model_dict.get('weight_path')
+        model_path = md.get('weight_path')
     if is_categorical:
         print(md)
         model = md.get('arch')(num_classes=num_classes)
