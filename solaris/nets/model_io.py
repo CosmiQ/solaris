@@ -10,7 +10,7 @@ from .zoo import model_dict
 
 
 def get_model(model_name, framework, model_path=None, pretrained=False,
-              custom_model_dict=None):
+              custom_model_dict=None, is_categorical=False, num_classes=None):
     """Load a model from a file based on its name."""
     if custom_model_dict is not None:
         md = custom_model_dict
@@ -23,7 +23,10 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
                              "custom_model_dict argument to Trainer().")
     if model_path is None or custom_model_dict is not None:
         model_path = md.get('weight_path')
-    model = md.get('arch')()
+    if is_categorical:
+        model = md.get('arch')(num_classes=num_classes)
+    else:
+        model = md.get('arch')()
     if model is not None and pretrained:
         try:
             model = _load_model_weights(model, model_path, framework)
@@ -35,9 +38,8 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
                 model = _load_model_weights(model, weight_path, framework)
             else:
                 print("No pretrained weights available for this model",
-                      "Please set pretrained to False.")
+                      "Please set pretrained to false in yml file.")
                 raise FileNotFoundError()
-
     return model
 
 
