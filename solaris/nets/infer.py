@@ -1,6 +1,7 @@
 import os
 import skimage
 import torch
+from warnings import warn
 from .model_io import get_model
 from .transform import process_aug_dict
 from .datagen import InferenceTiler
@@ -19,7 +20,13 @@ class Inferer(object):
         # check if the model was trained as part of the same pipeline; if so,
         # use the output from that. If not, use the pre-trained model directly.
         if self.config['train']:
+            warn('Because the configuration specifies both training and '
+                 'inference, solaris is switching the model weights path '
+                 'to the training output path.')
             self.model_path = self.config['training']['model_dest_path']
+            if custom_model_dict is not None:
+                custom_model_dict['weight_path'] = self.config[
+                    'training']['model_dest_path']
         else:
             self.model_path = self.config.get('model_path', None)
         self.model = get_model(self.model_name, self.framework,
