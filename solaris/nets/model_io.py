@@ -24,9 +24,9 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
     if model_path is None or custom_model_dict is not None:
         model_path = model_dict.get('weight_path')
     if is_categorical:
-        model = model_dict.get('arch')(num_classes=num_classes)
+        model = md.get('arch')(num_classes=num_classes)
     else:
-        model = model_dict.get('arch')()
+        model = md.get('arch')()
     if model is not None and pretrained:
         try:
             model = _load_model_weights(model, model_path, framework)
