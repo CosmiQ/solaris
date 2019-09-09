@@ -3,7 +3,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from .transform import process_aug_dict
 from ..utils.core import _check_df_load
-from ..utils.io import imread, scale_for_model, _check_channel_order
+from ..utils.io import imread, _check_channel_order
 
 
 def make_data_generator(framework, config, df, stage='train'):
@@ -133,18 +133,15 @@ class KerasSegmentationSequence(keras.utils.Sequence):
                     label[label != 0] = 1
                 aug_result = self.aug(image=im, mask=label)
                 # if image shape is 2D, convert to 3D
-                scaled_im = scale_for_model(
-                    aug_result['image'],
-                    self.config['data_specs'].get('image_type')
-                    )
-                if len(scaled_im.shape) == 2:
-                    scaled_im = scaled_im[:, :, np.newaxis]
-                X[i, :, :, :] = scaled_im
+                if len(aug_result.shape) == 2:
+                    aug_result = aug_result[:, :, np.newaxis]
+                X[i, :, :, :] = aug_result
                 if len(aug_result['mask'].shape) == 2:
                     aug_result['mask'] = aug_result['mask'][:, :, np.newaxis]
                 y[i, :, :, :] = aug_result['mask']
             else:
-                pass  # TODO: IMPLEMENT BBOX LABEL LOADING HERE!
+                raise NotImplementedError(
+                    'Usage of non-mask labels is not implemented yet.')
 
         return X, y
 
@@ -181,6 +178,16 @@ class TorchDataset(Dataset):
         self.config = config
         self.batch_size = self.config['batch_size']
         self.n_batches = int(np.floor(len(self.df)/self.batch_size))
+
+        if config['data_specs']['dtype'] is None:
+            self.dtype = np.float32  # default
+        else:
+            try:
+                self.dtype = getattr(np, config['data_specs']['dtype'])
+            except AttributeError:
+                raise ValueError('The data type {} is not supported'.format(
+                    config['data_specs']['dtype']))
+
         if stage == 'train':
             self.aug = process_aug_dict(self.config['training_augmentation'])
         elif stage == 'validate':
@@ -210,7 +217,7 @@ class TorchDataset(Dataset):
                 sample[input] = self.df[input].iloc[idx]
 
         sample['image'] = _check_channel_order(sample['image'],
-                                               'torch').astype(np.float32)
+                                               'torch').astype(self.dtype)
         sample['mask'] = _check_channel_order(sample['mask'],
                                               'torch').astype(np.float32)
         return sample
