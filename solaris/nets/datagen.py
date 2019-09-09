@@ -133,9 +133,9 @@ class KerasSegmentationSequence(keras.utils.Sequence):
                     label[label != 0] = 1
                 aug_result = self.aug(image=im, mask=label)
                 # if image shape is 2D, convert to 3D
-                if len(aug_result.shape) == 2:
-                    aug_result = aug_result[:, :, np.newaxis]
-                X[i, :, :, :] = aug_result
+                if len(aug_result['image'].shape) == 2:
+                    aug_result['image'] = aug_result['image'][:, :, np.newaxis]
+                X[i, :, :, :] = aug_result['image']
                 if len(aug_result['mask'].shape) == 2:
                     aug_result['mask'] = aug_result['mask'][:, :, np.newaxis]
                 y[i, :, :, :] = aug_result['mask']
