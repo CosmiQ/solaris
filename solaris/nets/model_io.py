@@ -16,17 +16,16 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
         md = custom_model_dict
     else:
         md = model_dict.get(model_name, None)
-        print(md)
         if md is None:  # if the model's not provided by solaris
             raise ValueError(f"{model_name} can't be found in solaris and no "
                              "custom_model_dict was provided. Check your "
                              "model_name in the config file and/or provide a "
                              "custom_model_dict argument to Trainer().")
-    if model_path is None or custom_model_dict is not None:
-        model_path = md.get('weight_path')
     print(md)
     print(model_dict)
     print(model_path)
+    if model_path is None or custom_model_dict is not None:
+        model_path = md.get('weight_path')
     if is_categorical:
         model = md.get('arch')(num_classes=num_classes)
     else:
