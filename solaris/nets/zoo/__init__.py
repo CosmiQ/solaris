@@ -7,7 +7,7 @@ from .selim_sef_sn4 import SelimSef_SpaceNet4_DenseNet161UNet
 from .multiclass_segmentation import MultiClass_Resnet34
 from .multiclass_segmentation import MultiClass_UNet_VGG11
 from .multiclass_segmentation import MultiClass_UNet_VGG16
-from .multiclass_segmentation import LinkNet34
+from .multiclass_segmentation import MultiClass_LinkNet34
 
 model_dict = {
     'xdxd_spacenet4': {
@@ -49,9 +49,9 @@ model_dict = {
         'weight_url': None,
         'arch': MultiClass_UNet_VGG16
         },
-    'linknet34': {
+    'multiclass_linknet34': {
         'weight_path': None,
         'weight_url': None,
-        'arch': LinkNet34
+        'arch': MultiClass_LinkNet34
         }
     }
