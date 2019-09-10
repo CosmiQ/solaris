@@ -408,6 +408,14 @@ def build_pipeline(config):
     return train_aug_pipeline, val_aug_pipeline
 
 
+def _check_augs(augs):
+    """Check if augmentations are loaded in already or not."""
+    if isinstance(augs, dict):
+        return process_aug_dict(augs)
+    elif isinstance(augs, Compose):
+        return augs
+
+
 def process_aug_dict(pipeline_dict, meta_augs_list=['oneof', 'oneorother']):
     """Create a Compose object from an augmentation config dict.
 
