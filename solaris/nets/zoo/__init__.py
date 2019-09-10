@@ -50,4 +50,4 @@ model_dict = {
         'weight_url': None,
         'arch': MultiClass_LinkNet34
         }
-    }
+}
