@@ -415,6 +415,6 @@ torch_losses = {
     'jaccardloss': TorchJaccardLoss,
     'dice': TorchDiceLoss,
     'diceloss': TorchDiceLoss,
-    'focal_multiclass': TorchFocalLossMultiClass
+    'focal_multiclass': TorchFocalLossMultiClass,
     'jaccard_multiclass': Jaccard_Loss_MultiClass
 }
