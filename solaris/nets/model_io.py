@@ -15,7 +15,7 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
     if custom_model_dict is not None:
         md = custom_model_dict
     else:
-        md = model_dict[model_name]
+        md = model_dict.get(model_name, None)
         if md is None:  # if the model's not provided by solaris
             raise ValueError(f"{model_name} can't be found in solaris and no "
                              "custom_model_dict was provided. Check your "
