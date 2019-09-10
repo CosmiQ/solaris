@@ -28,8 +28,8 @@ class Trainer(object):
         self.categorical = self.config['data_specs']['is_categorical']
         self.num_classes = self.config['data_specs']['num_classes']
         self.model = get_model(self.model_name, self.framework,
-                               self.model_path, self.pretrained, self.categorical,
-                               self.num_classes, custom_model_dict)
+                               self.model_path, self.pretrained, custom_model_dict,
+                               self.categorical, self.num_classes)
         self.train_df, self.val_df = get_train_val_dfs(self.config)
         self.train_datagen = make_data_generator(self.framework, self.config,
                                                  self.train_df, stage='train')

@@ -21,9 +21,6 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
                              "custom_model_dict was provided. Check your "
                              "model_name in the config file and/or provide a "
                              "custom_model_dict argument to Trainer().")
-    print(md)
-    print(model_dict)
-    print(model_path)
     if model_path is None or custom_model_dict is not None:
         model_path = md.get('weight_path')
     if is_categorical:

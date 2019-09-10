@@ -247,7 +247,7 @@ class MultiClass_ConvRelu(nn.Module):
 
 class MultiClass_DecoderBlock(nn.Module):
     def __init__(self, in_channels, middle_channels, out_channels, is_deconv=True):
-        super(MultiClass_ConvRelu, self).__init__()
+        super().__init__()
         self.in_channels = in_channels
 
         if is_deconv:
