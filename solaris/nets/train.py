@@ -135,7 +135,10 @@ class Trainer(object):
                         target = batch['mask'].float()
                     self.optimizer.zero_grad()
                     output = self.model(data)
-                    loss = self.loss(output, target)
+                    try:
+                        loss = self.loss(output, target)
+                    except RuntimeError:  # happens with target dtype problems
+                        loss = self.loss(output, target.long())
                     loss.backward()
                     self.optimizer.step()
 
