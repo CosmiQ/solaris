@@ -1,0 +1,43 @@
+name: ubuntu1604-miniconda-build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-16.04
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.6, 3.7]
+
+    steps:
+    - uses: actions/checkout@v1
+    
+    - name: Install miniconda
+      run: |
+        PATH=/opt/conda/bin:$PATH
+        wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh -O ~/miniconda.sh && \
+          /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+          rm ~/miniconda.sh && \
+          /opt/conda/bin/conda clean -tipsy && \
+          ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+          echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+          echo "conda activate base" >> ~/.bashrc
+        TINI_VERSION=v0.16.1
+        wget --quiet https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /usr/bin/tini && chmod +x /usr/bin/tini
+    - name: Install dependencies
+      run: |
+        sed -i -E 's/(python=)(.*)/\1{{ python-version }}/' ./environment.yml  # update python version in environment.yml
+        conda env create -n solaris -f environment.yml
+        conda list -n solaris
+        conda activate solaris
+        python --version
+    - name: Install solaris
+      run: |
+        pip install -q -e .[test]
+    - name: Test with pytest
+      run: |
+        conda install pytest=4.6.2 -c conda-forge
+        pip install codecov pytest-cov
+        python -m pytest --cov=./ && codecov
