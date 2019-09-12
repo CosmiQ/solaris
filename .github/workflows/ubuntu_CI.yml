@@ -18,12 +18,12 @@ jobs:
       run: |
         PATH=/opt/conda/bin:$PATH
         wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh -O ~/miniconda.sh && \
-          /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+          sudo /bin/bash ~/miniconda.sh -b -p /opt/conda && \
           rm ~/miniconda.sh && \
           /opt/conda/bin/conda clean -tipsy && \
           ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-          echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-          echo "conda activate base" >> ~/.bashrc
+          sudo echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+          sudo echo "conda activate base" >> ~/.bashrc
         TINI_VERSION=v0.16.1
         wget --quiet https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /usr/bin/tini && chmod +x /usr/bin/tini
     - name: Install dependencies
