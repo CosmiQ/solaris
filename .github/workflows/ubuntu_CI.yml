@@ -29,15 +29,12 @@ jobs:
         source "/opt/conda/etc/profile.d/conda.sh"
         conda config --set always_yes yes --set changeps1 no
         conda activate
-        sudo conda env create -n test-env python=${{ matrix.python-version }}
-        conda activate test-env && echo "Activation worked?"
-        conda deactivate test-env
     - name: Install dependencies
       run: |
         sed -i -E 's/(python=)(.*)/\1'${{ matrix.python-version }}'/' ./environment.yml  # update python version in environment.yml
         conda env create -n solaris -f environment.yml
         conda list -n solaris
-        /opt/conda/bin/conda activate solaris
+        conda activate solaris
         python --version
     - name: Install solaris
       run: |
