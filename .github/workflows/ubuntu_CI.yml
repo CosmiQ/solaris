@@ -35,11 +35,11 @@ jobs:
         source /opt/conda/etc/profile.d/conda.sh
         conda activate solaris
         python --version
-    - name: Install solaris
+    - name: Install solaris and test with pytest
       run: |
+        source /opt/conda/etc/profile.d/conda.sh
+        conda activate solaris
         pip install -q -e .[test]
-    - name: Test with pytest
-      run: |
         conda install pytest=4.6.2 -c conda-forge
         pip install codecov pytest-cov
         python -m pytest --cov=./ && codecov
