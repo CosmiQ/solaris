@@ -28,6 +28,7 @@ jobs:
         sudo wget --quiet https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /usr/bin/tini && sudo chmod +x /usr/bin/tini
         source "/opt/conda/etc/profile.d/conda.sh"
         conda config --set always_yes yes --set changeps1 no
+        conda activate
     - name: Install dependencies
       run: |
         sed -i -E 's/(python=)(.*)/\1'${{ matrix.python-version }}'/' ./environment.yml  # update python version in environment.yml
