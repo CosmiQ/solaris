@@ -29,7 +29,7 @@ jobs:
         source "/opt/conda/etc/profile.d/conda.sh"
         conda config --set always_yes yes --set changeps1 no
         conda activate
-        conda env create -n test-env python=3.6
+        sudo conda env create -n test-env python=${{ matrix.python-version }}
         conda activate test-env && echo "Activation worked?"
         conda deactivate test-env
     - name: Install dependencies
