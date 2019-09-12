@@ -30,9 +30,9 @@ jobs:
     - name: Install dependencies
       run: |
         sed -i -E 's/(python=)(.*)/\1'${{ matrix.python-version }}'/' ./environment.yml  # update python version in environment.yml
+        source /opt/conda/etc/profile.d/conda.sh
         conda env create -n solaris -f environment.yml
         conda list -n solaris
-        source /opt/conda/etc/profile.d/conda.sh
         conda activate solaris
         python --version
     - name: Install solaris and test with pytest
