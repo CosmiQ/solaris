@@ -22,6 +22,7 @@ jobs:
           sudo /opt/conda/bin/conda clean -tipsy
           sudo ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
           sudo echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
+        source /opt/conda/etc/profile.d/conda.sh
         conda init bash
         conda activate
         TINI_VERSION=v0.16.1
