@@ -38,6 +38,7 @@ Functionality used directly from albumentations:
 - RandomGamma
 - ToFloat
 - NoOp
+- PadIfNeeded
 
 Implemented here:
 - Rotate
@@ -59,7 +60,7 @@ from albumentations.augmentations.transforms import Crop, VerticalFlip,       \
     RandomSizedCrop, OpticalDistortion, GridDistortion, ElasticTransform,     \
     Normalize, HueSaturationValue, RGBShift, RandomBrightnessContrast,        \
     Blur, MotionBlur, MedianBlur, GaussNoise, CLAHE, RandomGamma, ToFloat,    \
-    RandomRotate90
+    RandomRotate90, PadIfNeeded
 from albumentations.core.composition import Compose, OneOf, OneOrOther
 
 
@@ -502,5 +503,5 @@ aug_matcher = {
     'tofloat': ToFloat, 'rotate': Rotate, 'randomscale': RandomScale,
     'cutout': Cutout, 'oneof': OneOf, 'oneorother': OneOrOther, 'noop': NoOp,
     'randomrotate90': RandomRotate90, 'dropchannel': DropChannel,
-    'swapchannels': SwapChannels
+    'swapchannels': SwapChannels, 'padifneeded': PadIfNeeded
 }
