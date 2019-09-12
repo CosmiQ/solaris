@@ -30,16 +30,16 @@ jobs:
     - name: Install dependencies
       run: |
         sed -i -E 's/(python=)(.*)/\1'${{ matrix.python-version }}'/' ./environment.yml  # update python version in environment.yml
-        source /opt/conda/etc/profile.d/conda.sh
-        conda env create -n solaris -f environment.yml
+        sudo source /opt/conda/etc/profile.d/conda.sh
+        sudo conda env create -n solaris -f environment.yml
         conda list -n solaris
         conda activate solaris
         python --version
     - name: Install solaris and test with pytest
       run: |
-        source /opt/conda/etc/profile.d/conda.sh
-        conda activate solaris
-        pip install -q -e .[test]
-        conda install pytest=4.6.2 -c conda-forge
-        pip install codecov pytest-cov
-        python -m pytest --cov=./ && codecov
+        sudo source /opt/conda/etc/profile.d/conda.sh
+        sudo conda activate solaris
+        sudo pip install -q -e .[test]
+        sudo conda install pytest=4.6.2 -c conda-forge
+        sudo pip install codecov pytest-cov
+        sudo python -m pytest --cov=./ && codecov
