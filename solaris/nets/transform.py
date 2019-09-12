@@ -70,7 +70,7 @@ __all__ = ['Crop', 'VerticalFlip', 'HorizontalFlip', 'Flip', 'Transpose',
            'Normalize', 'HueSaturationValue', 'RGBShift',
            'RandomBrightnessContrast', 'Blur', 'MotionBlur', 'MedianBlur',
            'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate', 'RandomRotate90',
-           'RandomScale', 'Cutout', 'Compose', 'OneOf', 'OneOrOther', 'NoOp',
+           'PadIfNeeded', 'RandomScale', 'Cutout', 'Compose', 'OneOf', 'OneOrOther', 'NoOp',
            'RandomRotate90', 'process_aug_dict', 'get_augs', 'build_pipeline']
 
 
