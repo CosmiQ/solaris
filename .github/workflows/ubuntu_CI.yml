@@ -23,7 +23,6 @@ jobs:
           sudo ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
           sudo echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
         source /opt/conda/etc/profile.d/conda.sh
-        conda init bash
         conda activate
         TINI_VERSION=v0.16.1
         sudo wget --quiet https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /usr/bin/tini && sudo chmod +x /usr/bin/tini
