@@ -57,20 +57,48 @@ class TorchFocalLoss(nn.Module):
         loss : :class:`torch.Variable`
             The loss value.
         """
-        if targets.size() != outputs.size():
-            raise ValueError(
-                f"Targets and inputs must be same size. "
-                f"Got ({targets.size()}) and ({outputs.size()})"
-            )
 
-        max_val = (-outputs).clamp(min=0)
-        log_ = ((-max_val).exp() + (-outputs - max_val).exp()).log()
-        loss = outputs - outputs * targets + max_val + log_
+        outputs = outputs.contiguous()
+        targets = targets.contiguous()
+        eps = 1e-8
+        targets = targets.view(-1).float()  # flattened
+        outputs = outputs.view(-1)  # flattened
+        outputs = torch.clamp(outputs, eps, 1. - eps)
+        targets = torch.clamp(targets, eps, 1. - eps)
+        pt_1 = (1 - targets) * (1 - outputs) * (1 - self.alpha)
+        pt_2 = targets * outputs * self.alpha
+        pt = pt_1 + pt_2
 
-        invprobs = F.logsigmoid(-outputs * (targets * 2.0 - 1.0))
-        loss = self.alpha*(invprobs * self.gamma).exp() * loss
-
-        return loss.sum(dim=-1).mean()
+        return (-(1. - pt) ** self.gamma * torch.log(pt)).mean()
+    # def forward(self, outputs, targets):
+    #     """Calculate the loss function between `outputs` and `targets`.
+    #
+    #     Arguments
+    #     ---------
+    #     outputs : :class:`torch.Tensor`
+    #         The output tensor from a model.
+    #     targets : :class:`torch.Tensor`
+    #         The training target.
+    #
+    #     Returns
+    #     -------
+    #     loss : :class:`torch.Variable`
+    #         The loss value.
+    #     """
+    #     if targets.size() != outputs.size():
+    #         raise ValueError(
+    #             f"Targets and inputs must be same size. "
+    #             f"Got ({targets.size()}) and ({outputs.size()})"
+    #         )
+    #
+    #     max_val = (-outputs).clamp(min=0)
+    #     log_ = ((-max_val).exp() + (-outputs - max_val).exp()).log()
+    #     loss = outputs - outputs * targets + max_val + log_
+    #
+    #     invprobs = F.logsigmoid(-outputs * (targets * 2.0 - 1.0))
+    #     loss = self.alpha*(invprobs * self.gamma).exp() * loss
+    #
+    #     return loss.sum(dim=-1).mean()
 
 
 def torch_lovasz_hinge(logits, labels, per_image=False, ignore=None):
