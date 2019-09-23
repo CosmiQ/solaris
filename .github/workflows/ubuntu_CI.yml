@@ -39,7 +39,7 @@ jobs:
       run: |
         source /opt/conda/etc/profile.d/conda.sh
         sudo conda activate solaris
-        sudo pip install -q -e .[test]
+        sudo pip install -q -e .[test] -vvv
         sudo conda install pytest=4.6.2 -c conda-forge
         sudo pip install codecov pytest-cov
         sudo python -m pytest --cov=./ && codecov
