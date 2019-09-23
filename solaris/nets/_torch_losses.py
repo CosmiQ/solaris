@@ -36,10 +36,11 @@ class TorchFocalLoss(nn.Module):
     .. [2] https://catalyst-team.github.io/catalyst/
     """
 
-    def __init__(self, gamma=2, alpha=0.75):
+    def __init__(self, gamma=2, reduce=True, logits=False):
         super().__init__()
         self.gamma = gamma
-        self.alpha = alpha
+        self.reduce = reduce
+        self.logits = logits
 
     # TODO refactor
     def forward(self, outputs, targets):
@@ -57,20 +58,47 @@ class TorchFocalLoss(nn.Module):
         loss : :class:`torch.Variable`
             The loss value.
         """
-        if targets.size() != outputs.size():
-            raise ValueError(
-                f"Targets and inputs must be same size. "
-                f"Got ({targets.size()}) and ({outputs.size()})"
-            )
 
-        max_val = (-outputs).clamp(min=0)
-        log_ = ((-max_val).exp() + (-outputs - max_val).exp()).log()
-        loss = outputs - outputs * targets + max_val + log_
+        if self.logits:
+            BCE_loss = F.binary_cross_entropy_with_logits(outputs, targets)
+        else:
+            BCE_loss = F.binary_cross_entropy(outputs, targets)
+        pt = torch.exp(-BCE_loss)
+        F_loss = (1-pt)**self.gamma * BCE_loss
+        if self.reduce:
+            return torch.mean(F_loss)
+        else:
+            return F_loss
 
-        invprobs = F.logsigmoid(-outputs * (targets * 2.0 - 1.0))
-        loss = self.alpha*(invprobs * self.gamma).exp() * loss
-
-        return loss.sum(dim=-1).mean()
+    # def forward(self, outputs, targets):
+    #     """Calculate the loss function between `outputs` and `targets`.
+    #
+    #     Arguments
+    #     ---------
+    #     outputs : :class:`torch.Tensor`
+    #         The output tensor from a model.
+    #     targets : :class:`torch.Tensor`
+    #         The training target.
+    #
+    #     Returns
+    #     -------
+    #     loss : :class:`torch.Variable`
+    #         The loss value.
+    #     """
+    #     if targets.size() != outputs.size():
+    #         raise ValueError(
+    #             f"Targets and inputs must be same size. "
+    #             f"Got ({targets.size()}) and ({outputs.size()})"
+    #         )
+    #
+    #     max_val = (-outputs).clamp(min=0)
+    #     log_ = ((-max_val).exp() + (-outputs - max_val).exp()).log()
+    #     loss = outputs - outputs * targets + max_val + log_
+    #
+    #     invprobs = F.logsigmoid(-outputs * (targets * 2.0 - 1.0))
+    #     loss = self.alpha*(invprobs * self.gamma).exp() * loss
+    #
+    #     return loss.sum(dim=-1).mean()
 
 
 def torch_lovasz_hinge(logits, labels, per_image=False, ignore=None):
