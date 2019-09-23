@@ -36,10 +36,11 @@ class TorchFocalLoss(nn.Module):
     .. [2] https://catalyst-team.github.io/catalyst/
     """
 
-    def __init__(self, gamma=2, alpha=0.75):
+    def __init__(self, gamma=2, reduce=True, logits=False):
         super().__init__()
         self.gamma = gamma
-        self.alpha = alpha
+        self.reduce = reduce
+        self.logits = logits
 
     # TODO refactor
     def forward(self, outputs, targets):
@@ -58,18 +59,17 @@ class TorchFocalLoss(nn.Module):
             The loss value.
         """
 
-        outputs = outputs.contiguous()
-        targets = targets.contiguous()
-        eps = 1e-8
-        targets = targets.view(-1).float()  # flattened
-        outputs = outputs.view(-1)  # flattened
-        outputs = torch.clamp(outputs, eps, 1. - eps)
-        targets = torch.clamp(targets, eps, 1. - eps)
-        pt_1 = (1 - targets) * (1 - outputs) * (1 - self.alpha)
-        pt_2 = targets * outputs * self.alpha
-        pt = pt_1 + pt_2
+        if self.logits:
+            BCE_loss = F.binary_cross_entropy_with_logits(outputs, targets)
+        else:
+            BCE_loss = F.binary_cross_entropy(outputs, targets)
+        pt = torch.exp(-BCE_loss)
+        F_loss = (1-pt)**self.gamma * BCE_loss
+        if self.reduce:
+            return torch.mean(F_loss)
+        else:
+            return F_loss
 
-        return (-(1. - pt) ** self.gamma * torch.log(pt)).mean()
     # def forward(self, outputs, targets):
     #     """Calculate the loss function between `outputs` and `targets`.
     #
