@@ -98,7 +98,15 @@ class TestTorchCustomLosses(object):
         y_pred = torch.tensor([0, 1, 0], dtype=torch.float)
         lf = TorchFocalLoss()
         assert np.abs(
-            lf.forward(y_pred, y_true) - 0.2769237458705902) < epsilon
+            lf.forward(y_pred, y_true) - 18.420681) < epsilon
+
+    def test_torch_focal_loss_same(self):
+        epsilon = 1e-5
+        y_true = torch.tensor([0, 1, 0], dtype=torch.float)
+        y_pred = torch.tensor([0, 1, 0], dtype=torch.float)
+        lf = TorchFocalLoss()
+        assert np.abs(
+            lf.forward(y_pred, y_true) - 0.) < epsilon
 
     def test_torch_lovasz_hinge(self):
         epsilon = 1e-6
