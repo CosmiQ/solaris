@@ -71,7 +71,7 @@ Our codebase is tested by `pytest` unit tests [in the tests directory](https://g
 
 ### Document changes
 
-Every pull request must include an update to the "pre-release" portion of [the changelog]
+Every pull request must include an update to the "Unreleased" portion of [the changelog]
 
    If your change introduces any API modifications, please update
    ``doc/source/api_changes.txt``.
