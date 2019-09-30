@@ -17,7 +17,8 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ## Unreleased
 
 ### Added
-20190930, nrweir: Added changelog
+20190930, nrweir: Added CHANGELOG.md (#259)
+20190930, nrweir: Add contributing guidelines, CONTRIBUTING.md (#260)
 
 ### Removed
 
