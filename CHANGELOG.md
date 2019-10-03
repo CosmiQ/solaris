@@ -19,6 +19,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ### Added
 20190930, nrweir: Added CHANGELOG.md (#259)
 20190930, nrweir: Add contributing guidelines, CONTRIBUTING.md (#260)
+20191003, nrweir: Added `solaris.vector.mask.instance_mask()` (#261)
 
 ### Removed
 
