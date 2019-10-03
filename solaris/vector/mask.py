@@ -907,23 +907,31 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             affine_obj = reference_im.transform
 
     # extract geometries and pair them with burn values
+
     if burn_field:
         if out_type == 'int':
             feature_list = list(zip(df[geom_col],
                                     df[burn_field].astype('uint8')))
         else:
             feature_list = list(zip(df[geom_col],
-                                    df[burn_field].astype('float')))
+                                    df[burn_field].astype('float32')))
     else:
         feature_list = list(zip(df[geom_col], [burn_value]*len(df)))
+
+    if out_type == 'int':
+        output_arr = np.empty(shape=(shape[0], shape[1],
+                                     len(feature_list)), dtype='uint8')
+    else:
+        output_arr = np.empty(shape=(shape[0], shape[1],
+                                     len(feature_list)), dtype='float32')
     # initialize the output array
-    output_arr = np.empty(shape=(shape[0], shape[1], len(feature_list)))
+
     for idx, feat in enumerate(feature_list):
         output_arr[:, :, idx] = features.rasterize([feat], out_shape=shape,
                                                    transform=affine_obj)
     if out_file:
         meta = reference_im.meta.copy()
-        meta.update(count=1)
+        meta.update(count=output_arr.shape[-1])
         if out_type == 'int':
             meta.update(dtype='uint8')
         with rasterio.open(out_file, 'w', **meta) as dst:
