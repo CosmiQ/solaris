@@ -715,3 +715,22 @@ def _get_coords(geom):
         return geom.coords.xy
     elif isinstance(geom, Polygon):
         return geom.exterior.coords.xy
+
+
+def bbox_corners_to_coco(bbox):
+    """Convert bbox from ``[minx, miny, maxx, maxy]`` to coco format.
+
+    COCO formats bounding boxes as ``[minx, miny, width, height]``.
+
+    Arguments
+    ---------
+    bbox : :class:`list`-like of numerics
+        A 4-element list of the form ``[minx, miny, maxx, maxy]``.
+
+    Returns
+    -------
+    coco_bbox : list
+        ``[minx, miny, width, height]`` shape.
+    """
+
+    return [bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]]
