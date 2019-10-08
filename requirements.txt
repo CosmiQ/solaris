@@ -15,7 +15,7 @@ scikit-image==0.15.0
 tensorflow==1.13.1
 torch==1.1.0
 torchvision==0.3.0
-affine==2.2.3
+affine==2.3.0
 requests==2.22.0
 albumentations==0.3.0
 urllib3==1.24.3
