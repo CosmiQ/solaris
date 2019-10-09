@@ -391,8 +391,8 @@ class Evaluator():
             for _, pred_row in tqdm(self.proposal_GDF.iterrows()):
                 if pred_row['__max_conf_class'] == class_id or class_id == 'all':
                     pred_poly = pred_row.geometry
-                    iou_GDF = eF.calculate_iou(pred_poly,
-                                               self.ground_truth_GDF_Edit)
+                    iou_GDF = iou.calculate_iou(pred_poly,
+                                                self.ground_truth_GDF_Edit)
                     # Get max iou
                     if not iou_GDF.empty:
                         max_iou_row = iou_GDF.loc[iou_GDF['iou_score'].idxmax(

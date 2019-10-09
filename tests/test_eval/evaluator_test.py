@@ -51,6 +51,24 @@ class TestEvaluator(object):
         scores = eb.eval_iou(calculate_class_scores=False)
         assert scores == expected_score
 
+    def test_score_proposals_return_gdfs(self):
+        eb = Evaluator(os.path.join(solaris.data.data_dir, 'gt.geojson'))
+        eb.load_proposal(os.path.join(solaris.data.data_dir, 'pred.geojson'))
+        expected_score = [{'class_id': 'all',
+                           'iou_field': 'iou_score_all',
+                           'TruePos': 8,
+                           'FalsePos': 20,
+                           'FalseNeg': 20,
+                           'Precision': 0.2857142857142857,
+                           'Recall': 0.2857142857142857,
+                           'F1Score': 0.2857142857142857}]
+        scores, tp_gdf, fn_gdf, fp_gdf = eb.eval_iou_return_GDFs(
+            calculate_class_scores=False)
+        assert scores == expected_score
+        assert len(tp_gdf) == expected_score[0]['TruePos']
+        assert len(fp_gdf) == expected_score[0]['FalsePos']
+        assert len(fn_gdf) == expected_score[0]['FalseNeg']
+
     def test_iou_by_building(self):
         """Test output of ground truth table with per-building IoU scores"""
         data_folder = solaris.data.data_dir
