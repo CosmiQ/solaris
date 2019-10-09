@@ -70,7 +70,7 @@ the tutorials below.
 * `Training a custom model <notebooks/api_training_custom.ipynb>`_
 * `Converting pixel masks to vector labels <notebooks/api_mask_to_vector.ipynb>`_
 * `Scoring your model's performance with the solaris Python API <notebooks/api_evaluation_tutorial.ipynb>`_
-
+* `Creating COCO-formatted datasets <notebooks/api_coco_tutorial.ipynb>`_
 
 Reference
 =========

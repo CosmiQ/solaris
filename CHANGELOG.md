@@ -20,6 +20,8 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 20190930, nrweir: Added CHANGELOG.md (#259)
 20190930, nrweir: Add contributing guidelines, CONTRIBUTING.md (#260)
 20191003, nrweir: Added `solaris.vector.mask.instance_mask()` (#261)
+20191009, nrweir: Added `solaris.data.coco` and some label utility functions (#265)
+20191009, nrweir: Added `solaris.data.coco` API documentation and a usage tutorial (#266)
 
 ### Removed
 
