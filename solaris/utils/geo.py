@@ -715,3 +715,37 @@ def _get_coords(geom):
         return geom.coords.xy
     elif isinstance(geom, Polygon):
         return geom.exterior.coords.xy
+
+
+def bbox_corners_to_coco(bbox):
+    """Convert bbox from ``[minx, miny, maxx, maxy]`` to coco format.
+
+    COCO formats bounding boxes as ``[minx, miny, width, height]``.
+
+    Arguments
+    ---------
+    bbox : :class:`list`-like of numerics
+        A 4-element list of the form ``[minx, miny, maxx, maxy]``.
+
+    Returns
+    -------
+    coco_bbox : list
+        ``[minx, miny, width, height]`` shape.
+    """
+
+    return [bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]]
+
+
+def polygon_to_coco(polygon):
+    """Convert a geometry to COCO polygon format."""
+    if isinstance(polygon, Polygon):
+        coords = polygon.exterior.coords.xy
+    elif isinstance(polygon, str):  # assume it's WKT
+        coords = loads(polygon).exterior.coords.xy
+    else:
+        raise ValueError('polygon must be a shapely geometry or WKT.')
+    # zip together x,y pairs
+    coords = list(zip(coords[0], coords[1]))
+    coords = [item for coordinate in coords for item in coordinate]
+
+    return coords
