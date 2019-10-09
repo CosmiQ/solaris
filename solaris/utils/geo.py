@@ -734,3 +734,18 @@ def bbox_corners_to_coco(bbox):
     """
 
     return [bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]]
+
+
+def polygon_to_coco(polygon):
+    """Convert a geometry to COCO polygon format."""
+    if isinstance(polygon, Polygon):
+        coords = polygon.exterior.coords.xy
+    elif isinstance(polygon, str):  # assume it's WKT
+        coords = loads(polygon).exterior.coords.xy
+    else:
+        raise ValueError('polygon must be a shapely geometry or WKT.')
+    # zip together x,y pairs
+    coords = list(zip(coords[0], coords[1]))
+    coords = [item for coordinate in coords for item in coordinate]
+
+    return coords

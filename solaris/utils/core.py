@@ -142,21 +142,3 @@ def get_files_recursively(path, traverse_subdirs=False, extension='.tif'):
     else:
         return [f for f in os.listdir(path)
                 if f.endswith(extension)]
-
-
-def get_fname_list(p, recursive=False, extension='.tif'):
-    """Get a list of filenames from p, which can be a dir, fname, or list."""
-
-    if isinstance(p, list):
-        return p
-    elif isinstance(p, str):
-        if os.path.isdir(p):
-            get_files_recursively(p, traverse_subdirs=recursive,
-                                  extension=extension)
-        elif os.path.isfile(p):
-            return [p]
-        else:
-            raise ValueError("If a string is provided, it must be a valid"
-                             " path".)
-    else:
-        raise ValueError("{} is not a string or list.".format(p))
