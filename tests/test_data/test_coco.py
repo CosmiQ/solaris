@@ -41,3 +41,15 @@ class TestGeoJSON2COCO(object):
             expected_dict = json.load(f)
 
         assert expected_dict == coco_dict
+
+    def test_from_directories(self):
+        sample_geojsons = os.path.join(data_dir, 'vectortile_test_expected')
+        sample_images = os.path.join(data_dir, 'rastertile_test_expected')
+        coco_dict = geojson2coco(sample_images,
+                                 sample_geojsons,
+                                 matching_re=r'(\d+_\d+)',
+                                 verbose=0)
+        with open(os.path.join(data_dir, 'coco_sample_3.json'), 'r') as f:
+            expected_dict = json.load(f)
+
+        assert expected_dict == coco_dict

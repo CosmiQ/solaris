@@ -10,6 +10,7 @@ import os
 import pandas as pd
 import geopandas as gpd
 import logging
+import pdb
 
 
 def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
@@ -119,6 +120,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
     logger = logging.getLogger(__name__)
     logger.setLevel(_get_logging_level(int(verbose)))
     logger.debug('Preparing image filename: image ID dict.')
+
     if isinstance(image_src, str):
         if image_src.endswith('json'):
             logger.debug('COCO json provided. Extracting fname:id dict.')
@@ -127,8 +129,11 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                 image_ref = {image['file_name']: image['id']
                              for image in image_ref['images']}
         else:
-            image_list = [image_src]
-            image_ref = dict(zip(image_list, [1]))
+            image_list = _get_fname_list(image_src, recursive=recursive,
+                                         extension=image_ext)
+            image_ref = dict(zip(image_list,
+                                 list(range(1, len(image_list) + 1))
+                                 ))
     elif isinstance(image_src, dict):
         logger.debug('image COCO dict provided. Extracting fname:id dict.')
         if 'images' in image_src.keys():
