@@ -140,5 +140,5 @@ def get_files_recursively(path, traverse_subdirs=False, extension='.tif'):
                           fname.lower().endswith(extension)]
         return path_list
     else:
-        return [f for f in os.listdir(path)
+        return [os.path.join(path, f) for f in os.listdir(path)
                 if f.endswith(extension)]

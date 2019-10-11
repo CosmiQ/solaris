@@ -119,6 +119,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
     logger = logging.getLogger(__name__)
     logger.setLevel(_get_logging_level(int(verbose)))
     logger.debug('Preparing image filename: image ID dict.')
+
     if isinstance(image_src, str):
         if image_src.endswith('json'):
             logger.debug('COCO json provided. Extracting fname:id dict.')
@@ -127,8 +128,11 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                 image_ref = {image['file_name']: image['id']
                              for image in image_ref['images']}
         else:
-            image_list = [image_src]
-            image_ref = dict(zip(image_list, [1]))
+            image_list = _get_fname_list(image_src, recursive=recursive,
+                                         extension=image_ext)
+            image_ref = dict(zip(image_list,
+                                 list(range(1, len(image_list) + 1))
+                                 ))
     elif isinstance(image_src, dict):
         logger.debug('image COCO dict provided. Extracting fname:id dict.')
         if 'images' in image_src.keys():
@@ -215,7 +219,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         curr_gdf = curr_gdf[['image_id', 'label_fname', 'category_str',
                              'geometry']]
         label_df = pd.concat([label_df, curr_gdf], axis='index',
-                             ignore_index=True)
+                             ignore_index=True, sort=False)
 
     logger.info('Finished loading labels.')
     logger.info('Generating COCO-formatted annotations.')
@@ -501,13 +505,12 @@ def _coco_category_name_id_dict_from_json(category_json):
 
 def _get_fname_list(p, recursive=False, extension='.tif'):
     """Get a list of filenames from p, which can be a dir, fname, or list."""
-
     if isinstance(p, list):
         return p
     elif isinstance(p, str):
         if os.path.isdir(p):
-            get_files_recursively(p, traverse_subdirs=recursive,
-                                  extension=extension)
+            return get_files_recursively(p, traverse_subdirs=recursive,
+                                         extension=extension)
         elif os.path.isfile(p):
             return [p]
         else:
