@@ -10,7 +10,6 @@ import os
 import pandas as pd
 import geopandas as gpd
 import logging
-import pdb
 
 
 def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
@@ -220,7 +219,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         curr_gdf = curr_gdf[['image_id', 'label_fname', 'category_str',
                              'geometry']]
         label_df = pd.concat([label_df, curr_gdf], axis='index',
-                             ignore_index=True)
+                             ignore_index=True, sort=False)
 
     logger.info('Finished loading labels.')
     logger.info('Generating COCO-formatted annotations.')
