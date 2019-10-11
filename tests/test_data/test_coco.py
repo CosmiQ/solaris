@@ -52,4 +52,4 @@ class TestGeoJSON2COCO(object):
         with open(os.path.join(data_dir, 'coco_sample_3.json'), 'r') as f:
             expected_dict = json.load(f)
 
-        assert expected_dict == coco_dict -vv
+        assert expected_dict == coco_dict
