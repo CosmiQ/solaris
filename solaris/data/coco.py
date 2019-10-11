@@ -501,13 +501,12 @@ def _coco_category_name_id_dict_from_json(category_json):
 
 def _get_fname_list(p, recursive=False, extension='.tif'):
     """Get a list of filenames from p, which can be a dir, fname, or list."""
-
     if isinstance(p, list):
         return p
     elif isinstance(p, str):
         if os.path.isdir(p):
-            get_files_recursively(p, traverse_subdirs=recursive,
-                                  extension=extension)
+            return get_files_recursively(p, traverse_subdirs=recursive,
+                                         extension=extension)
         elif os.path.isfile(p):
             return [p]
         else:
