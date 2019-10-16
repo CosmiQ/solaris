@@ -73,6 +73,9 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         A pre-set list of categories to use for labels. These categories should
         be formatted per
         `the COCO category specification`_.
+        example:
+        [{'id': 1, 'name': 'Fighter Jet', 'supercategory': 'plane'},
+        {'id': 2, 'name': 'Military Bomber', 'supercategory': 'plane'}, ... ]
     include_other : bool, optional
         If set to ``True``, and `preset_categories` is provided, objects that
         don't fall into the specified categories will not be removed from the
@@ -343,7 +346,7 @@ def df_to_coco_annos(df, output_path=None, geom_col='geometry',
     elif preset_categories is not None and category_col is not None:
         logger.debug('Both preset_categories and category_col have values.')
         logger.debug('Getting list of category names.')
-        category_dict = _coco_category_name_id_dict_from_json(
+        category_dict = _coco_category_name_id_dict_from_list(
             preset_categories)
         category_names = list(category_dict.keys())
         if not include_other:
@@ -515,16 +518,11 @@ def make_coco_image_dict(image_ref, license_id=None):
     return image_records
 
 
-def _coco_category_name_id_dict_from_json(category_json):
-    """Extract ``{category_name: category_id}`` from the COCO JSON."""
-    if isinstance(category_json, str):  # if it's a filepath
-        with open(category_json, "r") as f:
-            category_json = json.load(f)
+def _coco_category_name_id_dict_from_list(category_list):
+    """Extract ``{category_name: category_id}`` from a list."""
     # check if this is a full annotation json or just the categories
-    if 'categories' in category_json.keys():
-        category_json = category_json['categories']
     category_dict = {category['name']: category['id']
-                     for category in category_json}
+                     for category in category_list}
     return category_dict
 
 
