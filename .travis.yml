@@ -21,6 +21,7 @@ install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   # Useful for debugging any issues with conda
+  - conda install pip  # work around miniconda 4.7.12 bug
   - conda update conda -c conda-forge
   - conda info -a
   # switch python version spec in environment.yml to match TRAVIS_PYTHON_VERSION
