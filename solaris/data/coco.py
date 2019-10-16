@@ -68,7 +68,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         termed ``"other"`` in the output json.
     score_attribute : str, optional
         The name of an attribute in the geojson that specifies the prediction
-        cofindence of a model
+        confidence of a model
     preset_categories : :class:`list` of :class:`dict`s, optional
         A pre-set list of categories to use for labels. These categories should
         be formatted per
@@ -152,7 +152,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                      'image fname:id dict with arbitrary ID integers.')
         image_list = _get_fname_list(image_src, recursive=recursive,
                                      extension=image_ext)
-        image_ref = dict(zip(image_list, list(range(1, len(image_list)+1))))
+        image_ref = dict(zip(image_list, list(range(1, len(image_list) + 1))))
 
     logger.debug('Preparing label filename list.')
     label_list = _get_fname_list(label_src, recursive=recursive,
@@ -205,7 +205,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
             curr_gdf = geojson_to_px_gdf(
                 curr_gdf,
                 im_path=match_df.loc[match_df['label_fname'] == gj,
-                                     'image_fname'].values[0], precision=1)
+                                     'image_fname'].values[0])
             curr_gdf['image_id'] = image_ref[match_df.loc[
                 match_df['label_fname'] == gj, 'image_fname'].values[0]]
         # handle case with multiple images, one big geojson
@@ -218,8 +218,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
             logger.debug('Converting to pixel coordinates.')
             # match the two images
             curr_gdf = geojson_to_px_gdf(curr_gdf,
-                                         im_path=list(image_ref.keys())[0],
-                                        precision=2)
+                                         im_path=list(image_ref.keys())[0])
             curr_gdf['image_id'] = list(image_ref.values())[0]
         curr_gdf = curr_gdf.rename(
             columns={tmp_category_attribute: 'category_str'})
