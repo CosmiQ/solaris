@@ -13,7 +13,7 @@ import logging
 
 
 def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
-                 matching_re=None, category_attribute=None,
+                 matching_re=None, category_attribute=None, score_attribute=None,
                  preset_categories=None, include_other=True, info_dict=None,
                  license_dict=None, recursive=False, verbose=0):
     """Generate COCO-formatted labels from one or multiple geojsons and images.
@@ -66,10 +66,16 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         a given instance corresponds to. If not provided, it's assumed that
         only one class of object is present in the dataset, which will be
         termed ``"other"`` in the output json.
+    score_attribute : str, optional
+        The name of an attribute in the geojson that specifies the prediction
+        confidence of a model
     preset_categories : :class:`list` of :class:`dict`s, optional
         A pre-set list of categories to use for labels. These categories should
         be formatted per
         `the COCO category specification`_.
+        example:
+        [{'id': 1, 'name': 'Fighter Jet', 'supercategory': 'plane'},
+        {'id': 2, 'name': 'Military Bomber', 'supercategory': 'plane'}, ... ]
     include_other : bool, optional
         If set to ``True``, and `preset_categories` is provided, objects that
         don't fall into the specified categories will not be removed from the
@@ -146,7 +152,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                      'image fname:id dict with arbitrary ID integers.')
         image_list = _get_fname_list(image_src, recursive=recursive,
                                      extension=image_ext)
-        image_ref = dict(zip(image_list, list(range(1, len(image_list)+1))))
+        image_ref = dict(zip(image_list, list(range(1, len(image_list) + 1))))
 
     logger.debug('Preparing label filename list.')
     label_list = _get_fname_list(label_src, recursive=recursive,
@@ -216,8 +222,12 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
             curr_gdf['image_id'] = list(image_ref.values())[0]
         curr_gdf = curr_gdf.rename(
             columns={tmp_category_attribute: 'category_str'})
-        curr_gdf = curr_gdf[['image_id', 'label_fname', 'category_str',
-                             'geometry']]
+        if score_attribute is not None:
+            curr_gdf = curr_gdf[['image_id', 'label_fname', 'category_str',
+                                 score_attribute, 'geometry']]
+        else:
+            curr_gdf = curr_gdf[['image_id', 'label_fname', 'category_str',
+                                 'geometry']]
         label_df = pd.concat([label_df, curr_gdf], axis='index',
                              ignore_index=True, sort=False)
 
@@ -227,6 +237,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                                     geom_col='geometry',
                                     image_id_col='image_id',
                                     category_col='category_str',
+                                    score_col=score_attribute,
                                     preset_categories=preset_categories,
                                     include_other=include_other,
                                     verbose=verbose)
@@ -270,7 +281,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
 
 
 def df_to_coco_annos(df, output_path=None, geom_col='geometry',
-                     image_id_col=None, category_col=None,
+                     image_id_col=None, category_col=None, score_col=None,
                      preset_categories=None, supercategory_col=None,
                      include_other=True, starting_id=1, verbose=0):
     """Extract COCO-formatted annotations from a pandas ``DataFrame``.
@@ -300,6 +311,9 @@ def df_to_coco_annos(df, output_path=None, geom_col='geometry',
         The name of the column that specifies categories for each object. If
         not provided, all objects will be placed in a single category named
         ``"other"``.
+    score_col : str, optional
+        The name of the column that specifies the ouptut confidence of a model.
+        If not provided, will not be output.
     preset_categories : :class:`list` of :class:`dict`s, optional
         A pre-set list of categories to use for labels. These categories should
         be formatted per
@@ -331,7 +345,7 @@ def df_to_coco_annos(df, output_path=None, geom_col='geometry',
     elif preset_categories is not None and category_col is not None:
         logger.debug('Both preset_categories and category_col have values.')
         logger.debug('Getting list of category names.')
-        category_dict = _coco_category_name_id_dict_from_json(
+        category_dict = _coco_category_name_id_dict_from_list(
             preset_categories)
         category_names = list(category_dict.keys())
         if not include_other:
@@ -380,20 +394,33 @@ def df_to_coco_annos(df, output_path=None, geom_col='geometry',
     temp_df['category_id'] = temp_df[category_col].map(category_dict)
     temp_df['annotation_id'] = list(range(starting_id,
                                           starting_id + len(temp_df)))
+    if score_col is not None:
+        temp_df['score'] = df[score_col]
 
-    def _row_to_coco(row, geom_col, category_id_col, image_id_col):
+    def _row_to_coco(row, geom_col, category_id_col, image_id_col, score_col):
         "get a single annotation record from a row of temp_df."
-        return {'id': row['annotation_id'],
-                'image_id': int(row[image_id_col]),
-                'category_id': int(row[category_id_col]),
-                'segmentation': polygon_to_coco(row[geom_col]),
-                'area': row['area'],
-                'bbox': row['bbox'],
-                'iscrowd': 0}
+        if score_col is None:
+            return {'id': row['annotation_id'],
+                    'image_id': int(row[image_id_col]),
+                    'category_id': int(row[category_id_col]),
+                    'segmentation': [polygon_to_coco(row[geom_col])],
+                    'area': row['area'],
+                    'bbox': row['bbox'],
+                    'iscrowd': 0}
+        else:
+            return {'id': row['annotation_id'],
+                    'image_id': int(row[image_id_col]),
+                    'category_id': int(row[category_id_col]),
+                    'segmentation': [polygon_to_coco(row[geom_col])],
+                    'score': float(row[score_col]),
+                    'area': row['area'],
+                    'bbox': row['bbox'],
+                    'iscrowd': 0}
 
     coco_annotations = temp_df.apply(_row_to_coco, axis=1, geom_col=geom_col,
                                      category_id_col='category_id',
-                                     image_id_col=image_id_col).tolist()
+                                     image_id_col=image_id_col,
+                                     score_col=score_col).tolist()
     coco_categories = coco_categories_dict_from_df(
         temp_df, category_id_col='category_id',
         category_name_col=category_col,
@@ -490,16 +517,11 @@ def make_coco_image_dict(image_ref, license_id=None):
     return image_records
 
 
-def _coco_category_name_id_dict_from_json(category_json):
-    """Extract ``{category_name: category_id}`` from the COCO JSON."""
-    if isinstance(category_json, str):  # if it's a filepath
-        with open(category_json, "r") as f:
-            category_json = json.load(f)
+def _coco_category_name_id_dict_from_list(category_list):
+    """Extract ``{category_name: category_id}`` from a list."""
     # check if this is a full annotation json or just the categories
-    if 'categories' in category_json.keys():
-        category_json = category_json['categories']
     category_dict = {category['name']: category['id']
-                     for category in category_json}
+                     for category in category_list}
     return category_dict
 
 
