@@ -53,4 +53,7 @@ class TestGeoJSON2COCO(object):
             expected_dict = json.load(f)
         # this test had issues due to rounding errors, I therefore lowered the
         # barrier to passing - NW
+        print(expected_dict['annotations'], "Expected")
+        print(coco_dict['annotations'], "COCO)
+        print(len(expected_dict['annotations'], len(coco_dict['annotations'])
         assert len(expected_dict['annotations']) == len(coco_dict['annotations'])
