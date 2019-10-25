@@ -41,3 +41,7 @@ script:
 
 after_success:
   - codecov
+
+jobs:
+    allow_failures:
+        - python: "3.8"
