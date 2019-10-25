@@ -101,7 +101,7 @@ keras_losses = {
     'bce': losses.binary_crossentropy,
     'categorical_crossentropy': losses.categorical_crossentropy,
     'cce': losses.categorical_crossentropy,
-    'cosine': losses.cosine,
+    'cosine': losses.cosine_similarity,
     'hinge': losses.hinge,
     'kullback_leibler_divergence': losses.kullback_leibler_divergence,
     'kld': losses.kullback_leibler_divergence,

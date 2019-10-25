@@ -62,7 +62,7 @@ class Trainer(object):
         if self.framework == 'keras':
             self.model = self.model.compile(optimizer=self.optimizer,
                                             loss=self.loss,
-                                            metrics=self.metrics)
+                                            metrics=self.metrics['train'])
 
         elif self.framework == 'torch':
             if self.gpu_available:
