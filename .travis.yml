@@ -5,6 +5,7 @@ cache: false
 python:
   - "3.6"
   - "3.7"
+  - "3.8"
 
 # command to install dependencies
 install:
@@ -40,3 +41,7 @@ script:
 
 after_success:
   - codecov
+
+jobs:
+    allow_failures:
+        - python: "3.8"
