@@ -1,18 +1,9 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.utils import model_zoo
 from functools import partial
 from collections import OrderedDict
-import os
 import math
-import re
-
-model_urls = {
-    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
-    'densenet121': 'https://download.pytorch.org/models/densenet121-a639ec97.pth',
-    'densenet161': 'https://download.pytorch.org/models/densenet161-8d451a50.pth'
-}
 
 
 def conv3x3(in_planes, out_planes, stride=1):
@@ -190,24 +181,6 @@ def densenet121(pretrained=True, **kwargs):
     """
     model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16),
                      **kwargs)
-    if pretrained:
-        # '.'s are no longer allowed in module names, but pervious _DenseLayer
-        # has keys 'norm.1', 'relu.1', 'conv.1', 'norm.2', 'relu.2', 'conv.2'.
-        # They are also in the checkpoints in model_urls. This pattern is used
-        # to find such keys.
-        pattern = re.compile(
-            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
-        state_dict = model_zoo.load_url(model_urls['densenet121'])
-        for key in list(state_dict.keys()):
-            res = pattern.match(key)
-            if res:
-                new_key = res.group(1) + res.group(2)
-                state_dict[new_key] = state_dict[key]
-                del state_dict[key]
-        model.state_dict()['features.conv0.weight'][:, :3, ...] = state_dict['features.conv0.weight'].data
-
-        pretrained_dict = {k: v for k, v in state_dict.items() if k != 'features.conv0.weight'}
-        model.load_state_dict(pretrained_dict, strict=False)
     return model
 
 
@@ -220,24 +193,6 @@ def densenet161(pretrained=True, **kwargs):
     """
     model = DenseNet(num_init_features=96, growth_rate=48, block_config=(6, 12, 36, 24),
                      **kwargs)
-    if pretrained:
-        # '.'s are no longer allowed in module names, but pervious _DenseLayer
-        # has keys 'norm.1', 'relu.1', 'conv.1', 'norm.2', 'relu.2', 'conv.2'.
-        # They are also in the checkpoints in model_urls. This pattern is used
-        # to find such keys.
-        pattern = re.compile(
-            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
-        state_dict = model_zoo.load_url(model_urls['densenet161'])
-        for key in list(state_dict.keys()):
-            res = pattern.match(key)
-            if res:
-                new_key = res.group(1) + res.group(2)
-                state_dict[new_key] = state_dict[key]
-                del state_dict[key]
-        model.state_dict()['features.conv0.weight'][:, :3, ...] = state_dict['features.conv0.weight'].data
-
-        pretrained_dict = {k: v for k, v in state_dict.items() if k != 'features.conv0.weight'}
-        model.load_state_dict(pretrained_dict, strict=False)
 
     return model
 
