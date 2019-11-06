@@ -127,18 +127,18 @@ def get_data_paths(path, infer=False):
         return df[['image', 'label']]  # remove anything extraneous
 
 
-def get_files_recursively(image_path, traverse_subdirs=False):
+def get_files_recursively(path, traverse_subdirs=False, extension='.tif'):
     """Get files from subdirs of `path`, joining them to the dir."""
     if traverse_subdirs:
-        walker = os.walk(image_path)
-        im_path_list = []
+        walker = os.walk(path)
+        path_list = []
         for step in walker:
             if not step[2]:  # if there are no files in the current dir
                 continue
-            im_path_list += [os.path.join(step[0], fname)
-                             for fname in step[2] if
-                             fname.endswith('.tif')]
-        return im_path_list
+            path_list += [os.path.join(step[0], fname)
+                          for fname in step[2] if
+                          fname.lower().endswith(extension)]
+        return path_list
     else:
-        return [f for f in os.listdir(image_path)
-                if f.endswith('.tif')]
+        return [os.path.join(path, f) for f in os.listdir(path)
+                if f.endswith(extension)]

@@ -14,7 +14,7 @@ Complete submodule documentation
 * `solaris.nets <nets.html>`_: Deep learning model ingestion, creation, training, and inference
 * `solaris.eval <eval.html>`_: Deep learning model performance evaluation
 * `solaris.utils <utils.html>`_: Utility functions for the above toolsets
-
+* `solaris.data <data.html>`_: Data management and format interconversion
 
 Submodule summaries
 ===================
@@ -28,6 +28,7 @@ Submodule summaries
    nets
    eval
    utils
+   data
 
 CLI commands
 ============

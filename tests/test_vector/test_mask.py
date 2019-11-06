@@ -5,7 +5,7 @@ import skimage
 from solaris.data import data_dir
 from solaris.vector.mask import footprint_mask, boundary_mask, \
     contact_mask, df_to_px_mask, mask_to_poly_geojson, road_mask, \
-    preds_to_binary
+    preds_to_binary, instance_mask
 
 
 class TestFootprintMask(object):
@@ -277,3 +277,25 @@ class TestRoadMask(object):
         assert np.array_equal(saved_output_mask, truth_mask)
         # clean up
         os.remove(os.path.join(data_dir, 'test_out.tif'))
+
+
+class TestInstanceMask(object):
+    """Tests for solaris.vector.mask.instance_mask."""
+
+    def test_make_mask_w_ref_image(self):
+        """Test creating a multichannel instance mask with geojson + ref im."""
+        output_mask = instance_mask(
+            os.path.join(data_dir, 'geotiff_labels.geojson'),
+            reference_im=os.path.join(data_dir, 'sample_geotiff.tif'),
+            do_transform=True,
+            out_file=os.path.join(data_dir, 'test_out.tif')
+            )
+        truth_mask = skimage.io.imread(os.path.join(data_dir,
+                                                    'sample_inst_mask.tif'))
+        saved_output_mask = skimage.io.imread(os.path.join(data_dir,
+                                                           'test_out.tif'))
+
+        assert np.array_equal(saved_output_mask, truth_mask)
+        # clean up
+        os.remove(os.path.join(data_dir, 'test_out.tif'))
+        assert np.array_equal(output_mask, truth_mask)
