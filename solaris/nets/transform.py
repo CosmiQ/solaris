@@ -112,8 +112,8 @@ class SwapChannels(ImageOnlyTransform):
     second_idx : int
         The second channel in the pair to swap.
     axis : int, optional (default: 1)
-        The axis to drop the channel from. Defaults to ``1`` (torch channel
-        axis). Set to ``3`` for TF models where the channel is the last axis
+        The axis to drop the channel from. Defaults to ``0`` (torch channel
+        axis). Set to ``2`` for TF models where the channel is the last axis
         of an image.
     always_apply : bool, optional (default: False)
         Apply this transformation to every image? Defaults to no (``False``).
@@ -122,7 +122,7 @@ class SwapChannels(ImageOnlyTransform):
         to ``1.0``.
     """
 
-    def __init__(self, first_idx, second_idx, axis=1,
+    def __init__(self, first_idx, second_idx, axis=0,
                  always_apply=False, p=1.0):
         super().__init__(always_apply, p)
         if axis not in [0, 2]:
