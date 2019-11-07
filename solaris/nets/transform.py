@@ -71,7 +71,7 @@ __all__ = ['Crop', 'VerticalFlip', 'HorizontalFlip', 'Flip', 'Transpose',
            'RandomBrightnessContrast', 'Blur', 'MotionBlur', 'MedianBlur',
            'GaussNoise', 'CLAHE', 'RandomGamma', 'ToFloat', 'Rotate', 'RandomRotate90',
            'PadIfNeeded', 'RandomScale', 'Cutout', 'Compose', 'OneOf', 'OneOrOther', 'NoOp',
-           'RandomRotate90', 'process_aug_dict', 'get_augs', 'build_pipeline']
+           'RandomRotate90', 'SwapChannels', 'process_aug_dict', 'get_augs', 'build_pipeline']
 
 
 class DropChannel(ImageOnlyTransform):
