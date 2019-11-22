@@ -46,7 +46,7 @@ class Inferer(object):
         if not os.path.isdir(self.output_dir):
             os.makedirs(self.output_dir)
 
-    def __call__(self, infer_df):
+    def __call__(self, infer_df=None):
         """Run inference.
 
         Arguments
@@ -54,9 +54,15 @@ class Inferer(object):
         infer_df : :class:`pandas.DataFrame` or `str`
             A :class:`pandas.DataFrame` with a column, ``'image'``, specifying
             paths to images for inference. Alternatively, `infer_df` can be a
-            path to a CSV file containing the same information.
+            path to a CSV file containing the same information.  Defaults to
+            ``None``, in which case the file path specified in the Inferer's
+            configuration dict is used.
 
         """
+
+        if infer_df is None:
+            infer_df = get_infer_df(self.config)
+
         inf_tiler = InferenceTiler(
             self.framework,
             width=self.config['data_specs']['width'],
