@@ -10,13 +10,17 @@ except ImportError:  # py3k
 
 
 class TorchDiceLoss(nn.Module):
-    def __init__(self, weight=None, size_average=True, per_image=False):
+    def __init__(self, weight=None, size_average=True,
+                 per_image=False, logits=False):
         super().__init__()
         self.size_average = size_average
         self.register_buffer('weight', weight)
         self.per_image = per_image
+        self.logits = logits
 
     def forward(self, input, target):
+        if self.logits:
+            input = torch.sigmoid(input)
         return soft_dice_loss(input, target, per_image=self.per_image)
 
 
