@@ -30,6 +30,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ### Changed
 
 ### Fixed
+20191123, dphogan: Fixed issue in mask_to_poly_geojson() with empty GeoDataFrames.
 
 ### Deprecated
 

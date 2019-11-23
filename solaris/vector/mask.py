@@ -2,6 +2,7 @@ from ..utils.core import _check_df_load, _check_geom
 from ..utils.core import _check_skimage_im_load, _check_rasterio_im_load
 from ..utils.geo import gdf_get_projection_unit, reproject
 from ..utils.geo import geometries_internal_intersection
+from ..utils.tile import save_empty_geojson
 from .polygon import georegister_px_df, geojson_to_px_gdf, affine_transform_gdf
 import numpy as np
 from shapely.geometry import shape
@@ -798,7 +799,10 @@ def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
     # save output files
     if output_path is not None:
         if output_type.lower() == 'geojson':
-            polygon_gdf.to_file(output_path, driver='GeoJSON')
+            if len(polygon_gdf) > 0:
+                polygon_gdf.to_file(output_path, driver='GeoJSON')
+            else:
+                save_empty_geojson(output_path, polygon_gdf.crs.to_epsg())
         elif output_type.lower() == 'csv':
             polygon_gdf.to_csv(output_path, index=False)
 
