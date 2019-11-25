@@ -41,3 +41,26 @@ class TestMakeDatasetCSV(object):
 
         assert len(output_df) == 0
         os.remove(os.path.join(data_dir, 'tmp.csv'))
+
+    def test_catch_no_labels(self):
+        # make sure it generates an error if you call the function but don't
+        # give it labels for a training set
+        try:
+            _ = make_dataset_csv(
+                im_dir=os.path.join(data_dir, 'rastertile_test_expected'),
+                ignore_mismatch='skip', stage='train',
+                output_path=os.path.join(data_dir, 'tmp.csv'))
+            assert False
+        except ValueError:
+            assert True
+
+    def test_infer_dataset(self):
+
+        output_df = make_dataset_csv(
+            im_dir=os.path.join(data_dir, 'rastertile_test_expected'),
+            ignore_mismatch='skip', stage='infer',
+            output_path=os.path.join(data_dir, 'tmp.csv'))
+
+        assert len(output_df) == 100
+        assert len(output_df.columns) == 1
+        os.remove(os.path.join(data_dir, 'tmp.csv'))
