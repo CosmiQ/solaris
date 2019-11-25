@@ -22,12 +22,15 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 20191003, nrweir: Added `solaris.vector.mask.instance_mask()` (#261)
 20191009, nrweir: Added `solaris.data.coco` and some label utility functions (#265)
 20191009, nrweir: Added `solaris.data.coco` API documentation and a usage tutorial (#266)
+20191122, dphogan: Added option to take sigmoid of input in TorchDiceLoss (#281)
+20191122, dphogan: Inferer calls now take default DataFrame path from config dictionary (#282)
 
 ### Removed
 
 ### Changed
 
 ### Fixed
+20191123, dphogan: Fixed issue in mask_to_poly_geojson() with empty GeoDataFrames.
 
 ### Deprecated
 
