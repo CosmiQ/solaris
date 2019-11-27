@@ -301,7 +301,6 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
                              'must provide a coordinate reference system.')
     else:
         bbox_crs = _check_crs(bbox_crs)
-        bbox_crs = CRS.from_epsg(bbox_crs)
     bbox = transform_bounds(bbox_crs, gdf.crs, *bbox)
     try:
         intersectors = list(sindex.intersection(bbox))
