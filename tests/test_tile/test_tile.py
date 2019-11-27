@@ -1,5 +1,5 @@
 import os
-import skimage
+import skimage.io
 import numpy as np
 from solaris.tile.raster_tile import RasterTiler
 from solaris.tile.vector_tile import VectorTiler

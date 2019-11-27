@@ -29,4 +29,8 @@ dependencies:
   - affine=2.2.2
   - albumentations>0.2.3
   - rio-cogeo=1.0.0
+<<<<<<< HEAD
   - requests
+=======
+  - requests
+>>>>>>> progress, tiler test passes, other tests fail, need test for proj4 string

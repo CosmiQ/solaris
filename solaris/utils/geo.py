@@ -365,7 +365,7 @@ def gdf_get_projection_unit(vector_file):
 
 
 def raster_get_projection_unit(image):
-    """Get the projection unit for a vector_file.
+    """Get the projection unit for an image.
 
     Arguments
     ---------
