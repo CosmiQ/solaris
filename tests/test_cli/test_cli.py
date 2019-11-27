@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pickle
 import subprocess
-import skimage
+import skimage.io
 from solaris.data import data_dir
 import networkx as nx
 

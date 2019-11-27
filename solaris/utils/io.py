@@ -1,6 +1,6 @@
 """Utility functions for data io."""
 import numpy as np
-import skimage
+import skimage.io
 
 
 def imread(path, make_8bit=False, rescale=False,
