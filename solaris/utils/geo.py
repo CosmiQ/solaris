@@ -218,7 +218,7 @@ def get_bounds(input, crs=None):
         src_crs = get_crs(input_data)
     # transform bounds to desired CRS
     bounds = transform_bounds(CRS.from_epsg(src_crs),
-                              CRS.from_epsg(crs),
+                              crs,
                               *bounds)
 
     return bounds
