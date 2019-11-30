@@ -142,7 +142,7 @@ class RasterTiler(object):
             print('Tiler initialized.')
             print('dest_dir: {}'.format(self.dest_dir))
             if dest_crs is not None:
-                print('dest_crs: {}'.format(self.dest_crs.to_string()))
+                print('dest_crs: {}'.format(self.dest_crs))
             else:
                 print('dest_crs will be inferred from source data.')
             print('src_tile_size: {}'.format(self.src_tile_size))
@@ -165,11 +165,11 @@ class RasterTiler(object):
         if self.verbose:
             print('Tiling complete. Cleaning up...')
         self.src.close()
-        if os.path.exists(os.path.join(self.dest_dir, 'tmp.tif')) and \
-                self.src_crs != _check_crs(self.src.crs):
+        if os.path.exists(os.path.join(self.dest_dir, 'tmp.tif')):
             os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
         if self.verbose:
-            print("Done.")
+            print("Done. CRS returned for vector tiling.")
+        return profile['crs'] # returns the crs to be used for vector tiling
 
     def tile_generator(self, src, dest_dir=None, channel_idxs=None,
                        nodata=None, alpha=None, aoi_bounds=None,
@@ -304,7 +304,7 @@ class RasterTiler(object):
                         dst_height=self.dest_tile_size[0],
                         dst_width=self.dest_tile_size[1])
 
-                if self.dest_crs.to_string() != self.src_crs.to_string() and self.resampling_method is not None:
+                if self.dest_crs != self.src_crs and self.resampling_method is not None:
                     tile_data = np.zeros(shape=(src_data.shape[0], height, width),
                                          dtype=src_data.dtype)
                     rasterio.warp.reproject(
@@ -316,7 +316,7 @@ class RasterTiler(object):
                         dst_crs=self.dest_crs,
                         resampling=getattr(Resampling, self.resampling))
                     
-                elif self.dest_crs.to_string() != self.src_crs.to_string() and self.resampling_method is None:
+                elif self.dest_crs != self.src_crs and self.resampling_method is None:
                     print("Warning: You've set resampling to None but your destination projection differs from the source projection. Using bilinear resampling by default.")
                     tile_data = np.zeros(shape=(src_data.shape[0], height, width),
                                          dtype=src_data.dtype)
