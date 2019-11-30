@@ -158,14 +158,12 @@ class VectorTiler(object):
             tile_bounds_crs = _check_crs(tile_bounds_crs)
         else:
             tile_bounds_crs = self.src_crs
-        if self.src_crs.to_string() != tile_bounds_crs.to_string():
+        if self.src_crs != tile_bounds_crs:
             reproject_bounds = True  # used to transform tb for clip_gdf()
         else:
             reproject_bounds = False
         
         self.proj_unit = self.src_crs.linear_units
-#         self.proj_unit = gdf_get_projection_unit(
-#             self.src).strip('"').strip("'")
         if getattr(self, 'dest_crs', None) is None:
             self.dest_crs = self.src_crs
         for i, tb in enumerate(tile_bounds):
@@ -182,7 +180,7 @@ class VectorTiler(object):
                 tile_gdf = clip_gdf(self.src, tb, min_partial_perc, geom_type,
                                     verbose=self.super_verbose)
             if self.src_crs != self.dest_crs:
-                tile_gdf = tile_gdf.to_crs(epsg=self.dest_crs)
+                tile_gdf = tile_gdf.to_crs(crs=self.dest_crs)
             if split_multi_geoms:
                 split_multi_geometries(tile_gdf, obj_id_col=obj_id_col)
             yield tile_gdf, tb
