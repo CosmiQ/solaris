@@ -108,7 +108,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
 
         if isinstance(input_data, rasterio.DatasetReader):
             transform, width, height = calculate_default_transform(
-                CRS.from_epsg(input_crs), CRS.from_epsg(target_crs),
+                input_crs, target_crs,
                 input_data.width, input_data.height, *input_data.bounds
                 )
             kwargs = input_data.meta.copy()

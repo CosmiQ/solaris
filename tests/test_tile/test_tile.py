@@ -70,19 +70,19 @@ class TestTilers(object):
             os.remove(os.path.join(data_dir, 'rastertile_test_custom_proj_result', f))
         os.rmdir(os.path.join(data_dir, 'rastertile_test_custom_proj_result'))
         vector_tiler = VectorTiler(os.path.join(data_dir,
-                                                'vectortile_test_result'))
-        vector_tiler.tile(os.path.join(data_dir, 'geotiff_labels.geojson'),
+                                                'vectortile_test_custom_proj_result'))
+        vector_tiler.tile(os.path.join(data_dir, 'geotiff_custom_proj_labels.geojson'),
                           raster_tiler.tile_bounds)
         vector_tiling_result_files = os.listdir(os.path.join(
-            data_dir, 'vectortile_test_result'))
+            data_dir, 'vectortile_test_custom_proj_result'))
         assert len(vector_tiling_result_files) == len(os.listdir(os.path.join(
-            data_dir, 'vectortile_test_expected')))
+            data_dir, 'vectortile_test_custom_proj_expected')))
         for f in vector_tiling_result_files:
             result = gpd.read_file(os.path.join(data_dir,
-                                                'vectortile_test_result',
+                                                'vectortile_test_custom_proj_result',
                                                 f))
             expected = gpd.read_file(os.path.join(data_dir,
-                                                  'vectortile_test_expected',
+                                                  'vectortile_test_custom_proj_expected',
                                                   f))
             if len(result) == 0:
                 assert len(expected) == 0
@@ -90,5 +90,5 @@ class TestTilers(object):
                 result = cascaded_union(result.geometry)
                 expected = cascaded_union(expected.geometry)
                 assert result.intersection(expected).area/result.area > 0.99999
-            os.remove(os.path.join(data_dir, 'vectortile_test_result', f))
-        os.rmdir(os.path.join(data_dir, 'vectortile_test_result'))
+            os.remove(os.path.join(data_dir, 'vectortile_test_custom_proj_result', f))
+        os.rmdir(os.path.join(data_dir, 'vectortile_test_custom_proj_result'))
