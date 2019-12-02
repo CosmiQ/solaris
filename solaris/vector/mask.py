@@ -213,7 +213,7 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
                                     df[burn_field].astype('uint8')))
         else:
             feature_list = list(zip(df[geom_col],
-                                    df[burn_field].astype('uint8')))
+                                    df[burn_field].astype('float32')))
     else:
         feature_list = list(zip(df[geom_col], [burn_value]*len(df)))
 
@@ -224,6 +224,7 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         meta.update(count=1)
         if out_type == 'int':
             meta.update(dtype='uint8')
+            meta.update(nodata=0)
         with rasterio.open(out_file, 'w', **meta) as dst:
             dst.write(output_arr, indexes=1)
 
