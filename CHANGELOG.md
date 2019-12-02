@@ -25,6 +25,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 20191122, dphogan: Added option to take sigmoid of input in TorchDiceLoss (#281)
 20191122, dphogan: Inferer calls now take default DataFrame path from config dictionary (#282)
 20191125, nrweir: Added `solaris.utils.data.make_dataset_csv()` (#241)
+20191202, dphogan: Added fixed nodata value of 0 for mask files (#295)
 
 ### Removed
 
