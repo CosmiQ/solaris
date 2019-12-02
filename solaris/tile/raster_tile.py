@@ -1,18 +1,12 @@
 import os
 import rasterio
 from rasterio.warp import Resampling, calculate_default_transform
-from rasterio.io import DatasetReader
 from rasterio.vrt import WarpedVRT
-from rasterio.crs import CRS
-from rasterio import transform
-from shapely.geometry import box
-import math
 from rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
 # removing the following until COG functionality is implemented
 # from ..utils.tile import read_cog_tile
-from ..utils.geo import latlon_to_utm_epsg, reproject_geometry, reproject
-from ..utils.geo import raster_get_projection_unit
+from ..utils.geo import reproject
 from tqdm import tqdm
 import numpy as np
 
@@ -36,10 +30,11 @@ class RasterTiler(object):
         The size of the output tiles in ``(y, x)`` coordinates in pixel units.
     dest_crs : int, optional
         The EPSG code for the CRS that output tiles are in. If not provided,
-        tiles use the crs of `src` by default. Cannot be specified along with project_to_meters.
+        tiles use the crs of `src` by default. Cannot be specified along with 
+        project_to_meters.
     project_to_meters : bool, optional
-        Specifies whether to project to the correct utm zone for the location. Cannot be
-        specified along with dest_crs.
+        Specifies whether to project to the correct utm zone for the location. 
+        Cannot be specified along with dest_crs.
     nodata : int, optional
         The value in `src` that specifies nodata. If this value is not
         provided, solaris will attempt to infer the nodata value from the `src`
@@ -107,8 +102,8 @@ class RasterTiler(object):
         loaded.
     """
 
-    def __init__(self, dest_dir=None, dest_crs=None, project_to_meters=False, channel_idxs=None,
-                 src_tile_size=(900, 900), src_metric_size=False,
+    def __init__(self, dest_dir=None, dest_crs=None, project_to_meters=False,
+                 channel_idxs=None, src_tile_size=(900, 900), src_metric_size=False,
                  dest_tile_size=None, dest_metric_size=False,
                  aoi_bounds=None, nodata=None, alpha=None,
                  force_load_cog=False, resampling=None, tile_bounds=None,
@@ -151,6 +146,7 @@ class RasterTiler(object):
                 print('Resampling is set to {}'.format(self.resampling))
             else:
                 print('Resampling is set to None')
+
     def tile(self, src, dest_dir=None, channel_idxs=None, nodata=None,
              alpha=None, aoi_bounds=None, restrict_to_aoi=False):
 
@@ -168,7 +164,7 @@ class RasterTiler(object):
             os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
         if self.verbose:
             print("Done. CRS returned for vector tiling.")
-        return profile['crs'] # returns the crs to be used for vector tiling
+        return profile['crs']  # returns the crs to be used for vector tiling
 
     def tile_generator(self, src, dest_dir=None, channel_idxs=None,
                        nodata=None, alpha=None, aoi_bounds=None,
@@ -244,9 +240,7 @@ class RasterTiler(object):
         if self.verbose:
             print('Destination CRS: EPSG:{}'.format(self.dest_crs))
         self.src_path = self.src.name
-        self.proj_unit = self.src_crs.linear_units # used to rounding in filename
-#         self.proj_unit = raster_get_projection_unit(
-#             self.src).strip('"').strip("'")
+        self.proj_unit = self.src_crs.linear_units  # used for rounding in filename
         if self.verbose:
             print("Inputs OK.")
         if self.src_metric_size:
@@ -287,7 +281,7 @@ class RasterTiler(object):
                     *tb, transform=self.src.transform,
                     width=self.src_tile_size[1],
                     height=self.src_tile_size[0])
-                
+
                 if self.src.count != 1:
                     src_data = self.src.read(
                         window=window,
@@ -296,12 +290,12 @@ class RasterTiler(object):
                     src_data = self.src.read(
                         window=window,
                         boundless=True)
-                    
+
                 dst_transform, width, height = calculate_default_transform(
-                        self.src.crs, self.dest_crs,
-                        self.src.width, self.src.height, *tb,
-                        dst_height=self.dest_tile_size[0],
-                        dst_width=self.dest_tile_size[1])
+                    self.src.crs, self.dest_crs,
+                    self.src.width, self.src.height, *tb,
+                    dst_height=self.dest_tile_size[0],
+                    dst_width=self.dest_tile_size[1])
 
                 if self.dest_crs != self.src_crs and self.resampling_method is not None:
                     tile_data = np.zeros(shape=(src_data.shape[0], height, width),
@@ -314,7 +308,7 @@ class RasterTiler(object):
                         dst_transform=dst_transform,
                         dst_crs=self.dest_crs,
                         resampling=getattr(Resampling, self.resampling))
-                    
+
                 elif self.dest_crs != self.src_crs and self.resampling_method is None:
                     print("Warning: You've set resampling to None but your destination projection differs from the source projection. Using bilinear resampling by default.")
                     tile_data = np.zeros(shape=(src_data.shape[0], height, width),
@@ -327,14 +321,14 @@ class RasterTiler(object):
                         dst_transform=dst_transform,
                         dst_crs=self.dest_crs,
                         resampling=getattr(Resampling, "bilinear"))
-                    
-                else: # for the case where there is no resampling and no dest_crs specified, no need to reproject or resample
+
+                else:  # for the case where there is no resampling and no dest_crs specified, no need to reproject or resample
 
                     tile_data = src_data
 
                 if self.nodata:
                     mask = np.all(tile_data != nodata,
-                                      axis=0).astype(np.uint8) * 255
+                                  axis=0).astype(np.uint8) * 255
                 elif self.alpha:
                     mask = self.src.read(self.alpha, window=window)
                 else:
@@ -376,7 +370,7 @@ class RasterTiler(object):
                 int(profile['transform'][5]))
         # if self.cog_output:
         #     dest_path = os.path.join(self.dest_dir, 'tmp.tif')
-        #else:
+        # else:
         dest_path = os.path.join(self.dest_dir, dest_fname)
 
         with rasterio.open(dest_path, 'w',

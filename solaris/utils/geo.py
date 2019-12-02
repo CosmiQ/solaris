@@ -6,12 +6,9 @@ import pandas as pd
 import geopandas as gpd
 from affine import Affine
 import rasterio
-from rasterio.crs import CRS
-from rasterio.vrt import WarpedVRT
 from rasterio.warp import calculate_default_transform, Resampling
 from rasterio.warp import transform_bounds
 from shapely.affinity import affine_transform
-from shapely.errors import WKTReadingError
 from shapely.wkt import loads
 from shapely.geometry import Point, Polygon, LineString
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
@@ -110,7 +107,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
             transform, width, height = calculate_default_transform(
                 input_crs, target_crs,
                 input_data.width, input_data.height, *input_data.bounds
-                )
+            )
             kwargs = input_data.meta.copy()
             kwargs.update({'crs': target_crs,
                            'transform': transform,
@@ -253,9 +250,9 @@ def _parse_geo_data(input):
             input_type = 'vector'
         elif isinstance(
                 input_data, rasterio.DatasetReader
-                ) or isinstance(
+        ) or isinstance(
                 input_data, gdal.Dataset
-                ):
+        ):
             input_type = 'raster'
         else:
             raise ValueError('The input format {} is not compatible with '
@@ -474,8 +471,8 @@ def geometries_internal_intersection(polygons):
     intersect_lists = intersect_lists.reset_index()
     # first, we get rid  of self-intersection indices in 'intersectors':
     intersect_lists['intersectors'] = intersect_lists.apply(
-            lambda x: [i for i in x['intersectors'] if i != x['gs_idx']],
-            axis=1)
+        lambda x: [i for i in x['intersectors'] if i != x['gs_idx']],
+        axis=1)
     # for each row, we next create a union of the polygons in 'intersectors',
     # and find the intersection of that with the polygon at gs[gs_idx]. this
     # (Multi)Polygon output corresponds to all of the intersections for the
