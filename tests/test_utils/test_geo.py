@@ -136,5 +136,5 @@ class TestReprojectGeometry(object):
         reproj_geom = reproject_geometry(input_str, input_crs=32616,
                                          target_crs=4326)
         area_sim = result_geom.intersection(reproj_geom).area/result_geom.area
-
+        
         assert area_sim > 0.99999

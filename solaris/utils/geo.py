@@ -100,7 +100,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                resampling_method='bicubic'):
 
     if input_type == 'vector':
-        output = input_data.to_crs(epsg=target_crs)
+        output = input_data.to_crs(crs=target_crs)
         if dest_path is not None:
             output.to_file(dest_path, driver='GeoJSON')
 
@@ -126,7 +126,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                             src_transform=input_data.transform,
                             src_crs=input_data.crs,
                             dst_transform=transform,
-                            dst_crs=CRS.from_epsg(target_crs),
+                            dst_crs=target_crs,
                             resampling=getattr(Resampling, resampling_method)
                         )
                 output = rasterio.open(dest_path)
@@ -141,7 +141,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                         src_transform=input_data.transform,
                         src_crs=input_data.crs,
                         dst_transform=transform,
-                        dst_crs=CRS.from_epsg(target_crs),
+                        dst_crs=target_crs,
                         resampling=getattr(Resampling, resampling_method)
                     )
 
@@ -217,7 +217,7 @@ def get_bounds(input, crs=None):
         crs = _check_crs(crs)
         src_crs = get_crs(input_data)
     # transform bounds to desired CRS
-    bounds = transform_bounds(CRS.from_epsg(src_crs),
+    bounds = transform_bounds(src_crs,
                               crs,
                               *bounds)
 
@@ -227,9 +227,9 @@ def get_bounds(input, crs=None):
 def get_crs(obj):
     """Get a coordinate reference system from any georegistered object."""
     if isinstance(obj, gpd.GeoDataFrame):
-        return int(obj.crs['init'].lstrip('epsg:'))
+        return _check_crs(obj.crs)
     elif isinstance(obj, rasterio.DatasetReader):
-        return int(obj.crs['init'].lstrip('epsg:'))
+        return _check_crs(obj.crs)
     elif isinstance(obj, gdal.Dataset):
         # rawr
         return int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
@@ -306,8 +306,8 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
             latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
             target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
         target_crs = _check_crs(target_crs)
-        xformed_coords = transform('EPSG:' + str(input_crs),
-                                   'EPSG:' + str(target_crs),
+        xformed_coords = transform(str(input_crs),
+                                   str(target_crs),
                                    *input_coords)
         # create a new instance of the same geometry class as above with the
         # new coordinates
@@ -348,7 +348,7 @@ def gdf_get_projection_unit(vector_file):
     c = _check_gdf_load(vector_file)
     crs = _check_crs(c.crs)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(crs)
+    srs.ImportFromEPSG(crs.to_epsg())
     WKT = srs.ExportToWkt()
     # get count of 'UNIT'
     if WKT.count('UNIT') == 1:
