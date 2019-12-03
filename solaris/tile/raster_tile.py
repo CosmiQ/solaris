@@ -145,7 +145,8 @@ class RasterTiler(object):
             print('tile size units metric: {}'.format(self.src_metric_size))
 
     def tile(self, src, dest_dir=None, channel_idxs=None, nodata=None,
-             alpha=None, aoi_bounds=None, restrict_to_aoi=False):
+             alpha=None, aoi_bounds=None, restrict_to_aoi=False,
+             dest_fname_base=None):
 
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
                                        alpha, aoi_bounds, restrict_to_aoi)
@@ -153,7 +154,7 @@ class RasterTiler(object):
         if self.verbose:
             print('Beginning tiling...')
         for tile_data, mask, profile in tqdm(tile_gen):
-            self.save_tile(tile_data, mask, profile)
+            self.save_tile(tile_data, mask, profile, dest_fname_base)
         if self.verbose:
             print('Tiling complete. Cleaning up...')
         self.src.close()
@@ -341,9 +342,13 @@ class RasterTiler(object):
 
             yield tile_data, mask, profile
 
-    def save_tile(self, tile_data, mask, profile):
+    def save_tile(self, tile_data, mask, profile, dest_fname_base=None):
         """Save a tile created by ``Tiler.tile_generator()``."""
-        dest_fname_root = os.path.splitext(os.path.split(self.src_path)[1])[0]
+        if dest_fname_base is None:
+            dest_fname_root = os.path.splitext(
+                os.path.split(self.src_path)[1])[0]
+        else:
+            dest_fname_root = dest_fname_base
         if self.proj_unit not in ['meter', 'metre']:
             dest_fname = '{}_{}_{}.tif'.format(
                 dest_fname_root,
@@ -356,7 +361,7 @@ class RasterTiler(object):
                 int(profile['transform'][5]))
         # if self.cog_output:
         #     dest_path = os.path.join(self.dest_dir, 'tmp.tif')
-        #else:
+        # else:
         dest_path = os.path.join(self.dest_dir, dest_fname)
 
         with rasterio.open(dest_path, 'w',
