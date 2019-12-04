@@ -34,7 +34,7 @@ class RasterTiler(object):
         project_to_meters.
     project_to_meters : bool, optional
         Specifies whether to project to the correct utm zone for the location. 
-        Cannot be specified along with dest_crs.
+        Cannot be specified along with `dest_crs`.
     nodata : int, optional
         The value in `src` that specifies nodata. If this value is not
         provided, solaris will attempt to infer the nodata value from the `src`
