@@ -6,6 +6,7 @@ from ..utils.tile import save_empty_geojson
 from .polygon import georegister_px_df, geojson_to_px_gdf, affine_transform_gdf
 import numpy as np
 from shapely.geometry import shape
+from shapely.geometry import Polygon
 import geopandas as gpd
 import pandas as pd
 import rasterio
@@ -189,7 +190,7 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
 
-    if len(df) == 0:
+    if len(df) == 0 and not out_file:
         return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
@@ -217,8 +218,11 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     else:
         feature_list = list(zip(df[geom_col], [burn_value]*len(df)))
 
-    output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
-                                    transform=affine_obj)
+    if len(df) > 0:
+        output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
+                                        transform=affine_obj)
+    else:
+        output_arr = np.zeros(shape=shape, dtype='uint8')
     if out_file:
         meta = reference_im.meta.copy()
         meta.update(count=1)
@@ -381,7 +385,7 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
 
-    if len(df) == 0:
+    if len(df) == 0 and not out_file:
         return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
@@ -396,7 +400,10 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
                                      geom_col=geom_col, affine_obj=affine_obj)
     buffered_geoms = buffered_geoms[geom_col]
     # create a single multipolygon that covers all of the intersections
-    intersect_poly = geometries_internal_intersection(buffered_geoms)
+    if len(df) > 0:
+        intersect_poly = geometries_internal_intersection(buffered_geoms)
+    else:
+        intersect_poly = Polygon()
 
     # handle case where there's no intersection
     if intersect_poly.is_empty:
