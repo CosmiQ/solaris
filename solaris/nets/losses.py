@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from tensorflow.keras import backend as K
 from ._keras_losses import keras_losses, k_focal_loss
@@ -55,15 +56,24 @@ def get_single_loss(framework, loss_name, params_dict):
             return k_focal_loss(**params_dict)
         else:
             # keras_losses in the next line is a matching dict
-            # TODO: the next line doesn't handle non-focal loss functions that
+            # TODO: the next block doesn't handle non-focal loss functions that
             # have hyperparameters associated with them. It would be great to
             # refactor this to handle that possibility.
-            return keras_losses.get(loss_name.lower(), None)
+            if loss_name.lower() in keras_losses:
+                return keras_losses.get(loss_name.lower())
+            else:
+                return eval(loss_name)
     elif framework in ['torch', 'pytorch']:
         if params_dict is None:
-            return torch_losses.get(loss_name.lower(), None)()
+            if loss_name.lower() in torch_losses:
+                return torch_losses.get(loss_name.lower())()
+            else:
+                return eval(loss_name)()
         else:
-            return torch_losses.get(loss_name.lower(), None)(**params_dict)
+            if loss_name.lower() in torch_losses:
+                return torch_losses.get(loss_name.lower())(**params_dict)
+            else:
+                return eval(loss_name)(**params_dict)
 
 
 def keras_composite_loss(loss_dict, weight_dict):
