@@ -5,35 +5,47 @@ from ._torch_losses import torch_losses
 from torch import nn
 
 
-def get_loss(framework, config):
+def get_loss(framework, loss, loss_weights=None):
     """Load a loss function based on a config file for the specified framework.
+
+    Arguments
+    ---------
+    framework : string
+        Which neural network framework to use.
+    loss : dict
+        Dictionary of loss functions to use.  Each key is a loss function name,
+        and each entry is a (possibly-empty) dictionary of hyperparameter-value
+        pairs.
+    loss_weights : dict, optional
+        Optional dictionary of weights for loss functions.  Each key is a loss
+        function (same as in the ``loss`` argument), and the corresponding
+        entry is its weight.
     """
     # lots of exception handling here. TODO: Refactor.
-    if not isinstance(config['training']['loss'], dict):
-        raise TypeError('The loss description in the config file is formatted'
-                        ' improperly. See the docs for details.')
-    if len(config['training']['loss']) > 1:
+    if not isinstance(loss, dict):
+        raise TypeError('The loss description is formatted improperly.'
+                        ' See the docs for details.')
+    if len(loss) > 1:
 
         # get the weights for each loss within the composite
-        if config['training'].get('loss_weights') is None:
+        if loss_weights is None:
             # weight all losses equally
-            weights = {k: 1 for k in config['training']['loss'].keys()}
+            weights = {k: 1 for k in loss.keys()}
         else:
-            weights = config['training']['loss_weights']
+            weights = loss_weights
 
         # check if sublosses dict and weights dict have the same keys
-        if list(config['training']['loss'].keys()).sort() !=    \
-                list(weights.keys()).sort():
+        if list(loss.keys()).sort() != list(weights.keys()).sort():
             raise ValueError(
                 'The losses and weights must have the same name keys.')
 
         if framework == 'keras':
-            return keras_composite_loss(config['training']['loss'], weights)
+            return keras_composite_loss(loss, weights)
         elif framework in ['pytorch', 'torch']:
-            return TorchCompositeLoss(config['training']['loss'], weights)
+            return TorchCompositeLoss(loss, weights)
 
     else:  # parse individual loss functions
-        loss_name, loss_dict = list(config['training']['loss'].items())[0]
+        loss_name, loss_dict = list(loss.items())[0]
         return get_single_loss(framework, loss_name, loss_dict)
 
 
