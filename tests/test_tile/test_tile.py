@@ -82,8 +82,8 @@ class TestTilers(object):
                                                 'vectortile_test_custom_proj_result',
                                                 f))
             expected = gpd.read_file(os.path.join(data_dir,
-                                                  'vectortile_test_custom_proj_expected',
-                                                'vectortile_test_custom_proj_result'))
+                                                  'vectortile_test_custom_proj_expected', 
+                                                  f))
         vector_tiler.tile(os.path.join(data_dir, 'geotiff_custom_proj_labels.geojson'),
                           raster_tiler.tile_bounds)
         vector_tiling_result_files = os.listdir(os.path.join(
