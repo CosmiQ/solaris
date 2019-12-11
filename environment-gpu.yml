@@ -30,4 +30,3 @@ dependencies:
   - albumentations>0.2.3
   - rio-cogeo=1.0.0
   - requests
-
