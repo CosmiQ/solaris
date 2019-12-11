@@ -36,7 +36,10 @@ class Trainer(object):
         self.epochs = self.config['training']['epochs']
         self.optimizer = get_optimizer(self.framework, self.config)
         self.lr = self.config['training']['lr']
-        self.loss = get_loss(self.framework, self.config)
+        #self.loss = get_loss(self.framework, self.config)
+        self.loss = get_loss(self.framework,
+                             self.config['training'].get('loss'),
+                             self.config['training'].get('loss_weights'))
         self.callbacks = get_callbacks(self.framework, self.config)
         self.metrics = get_metrics(self.framework, self.config)
         self.verbose = self.config['training']['verbose']
