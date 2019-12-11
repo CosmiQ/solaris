@@ -29,9 +29,9 @@ class RasterTiler(object):
     dest_tile_size : `tuple` of `int`s, optional
         The size of the output tiles in ``(y, x)`` coordinates in pixel units.
     dest_crs : int, optional
-        The EPSG code for the CRS that output tiles are in. If not provided,
-        tiles use the crs of `src` by default. Cannot be specified along with 
-        project_to_meters.
+        The EPSG code or rasterio.crs.CRS object for the CRS that output tiles are in. 
+        If not provided, tiles use the crs of `src` by default. Cannot be specified 
+        along with project_to_meters.
     project_to_meters : bool, optional
         Specifies whether to project to the correct utm zone for the location. 
         Cannot be specified along with `dest_crs`.

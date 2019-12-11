@@ -51,10 +51,12 @@ class VectorTiler(object):
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
         tile_bounds_crs : int, optional
-            The EPSG code for the CRS that the tile bounds are in. If not
-            provided, it's assumed that the CRS is the same as in `src`. This
-            argument must be provided if the bound coordinates and `src` are
-            not in the same CRS, otherwise tiling will not occur correctly.
+            The EPSG code or rasterio.crs.CRS object for the CRS that the tile 
+            bounds are in. RasterTiler.tile returns the CRS of the raster tiles 
+            and can be used here. If not provided, it's assumed that the CRS is the 
+            same as in `src`. This argument must be provided if the bound 
+            coordinates and `src` are not in the same CRS, otherwise tiling will 
+            not occur correctly.
         geom_type : str, optional (default: "Polygon")
             The type of geometries contained within `src`. Defaults to
             ``"Polygon"``, can also be ``"LineString"``.
