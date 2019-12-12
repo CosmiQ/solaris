@@ -4,7 +4,7 @@ import solaris as sol
 from solaris.data import data_dir, sample_load_rasterio, sample_load_gdal
 from solaris.raster.image import get_geo_transform, stitch_images
 from affine import Affine
-import skimage
+import skimage.io
 
 
 class TestGetGeoTransform(object):

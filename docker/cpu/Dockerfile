@@ -6,7 +6,7 @@ ARG solaris_branch='master'
 
 # prep apt-get and cudnn
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	    apt-utils \
+	    apt-utils && \
     rm -rf /var/lib/apt/lists/*
 
 # install requirements

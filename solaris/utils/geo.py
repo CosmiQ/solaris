@@ -6,12 +6,9 @@ import pandas as pd
 import geopandas as gpd
 from affine import Affine
 import rasterio
-from rasterio.crs import CRS
-from rasterio.vrt import WarpedVRT
 from rasterio.warp import calculate_default_transform, Resampling
 from rasterio.warp import transform_bounds
 from shapely.affinity import affine_transform
-from shapely.errors import WKTReadingError
 from shapely.wkt import loads
 from shapely.geometry import Point, Polygon, LineString
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
@@ -100,7 +97,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                resampling_method='bicubic'):
 
     if input_type == 'vector':
-        output = input_data.to_crs(epsg=target_crs)
+        output = input_data.to_crs(crs=target_crs)
         if dest_path is not None:
             output.to_file(dest_path, driver='GeoJSON')
 
@@ -108,9 +105,9 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
 
         if isinstance(input_data, rasterio.DatasetReader):
             transform, width, height = calculate_default_transform(
-                CRS.from_epsg(input_crs), CRS.from_epsg(target_crs),
+                input_crs, target_crs,
                 input_data.width, input_data.height, *input_data.bounds
-                )
+            )
             kwargs = input_data.meta.copy()
             kwargs.update({'crs': target_crs,
                            'transform': transform,
@@ -126,7 +123,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                             src_transform=input_data.transform,
                             src_crs=input_data.crs,
                             dst_transform=transform,
-                            dst_crs=CRS.from_epsg(target_crs),
+                            dst_crs=target_crs,
                             resampling=getattr(Resampling, resampling_method)
                         )
                 output = rasterio.open(dest_path)
@@ -141,7 +138,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                         src_transform=input_data.transform,
                         src_crs=input_data.crs,
                         dst_transform=transform,
-                        dst_crs=CRS.from_epsg(target_crs),
+                        dst_crs=target_crs,
                         resampling=getattr(Resampling, resampling_method)
                     )
 
@@ -217,8 +214,8 @@ def get_bounds(input, crs=None):
         crs = _check_crs(crs)
         src_crs = get_crs(input_data)
     # transform bounds to desired CRS
-    bounds = transform_bounds(CRS.from_epsg(src_crs),
-                              CRS.from_epsg(crs),
+    bounds = transform_bounds(src_crs,
+                              crs,
                               *bounds)
 
     return bounds
@@ -227,9 +224,9 @@ def get_bounds(input, crs=None):
 def get_crs(obj):
     """Get a coordinate reference system from any georegistered object."""
     if isinstance(obj, gpd.GeoDataFrame):
-        return int(obj.crs['init'].lstrip('epsg:'))
+        return _check_crs(obj.crs)
     elif isinstance(obj, rasterio.DatasetReader):
-        return int(obj.crs['init'].lstrip('epsg:'))
+        return _check_crs(obj.crs)
     elif isinstance(obj, gdal.Dataset):
         # rawr
         return int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
@@ -253,9 +250,9 @@ def _parse_geo_data(input):
             input_type = 'vector'
         elif isinstance(
                 input_data, rasterio.DatasetReader
-                ) or isinstance(
+        ) or isinstance(
                 input_data, gdal.Dataset
-                ):
+        ):
             input_type = 'raster'
         else:
             raise ValueError('The input format {} is not compatible with '
@@ -306,9 +303,11 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
             latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
             target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
         target_crs = _check_crs(target_crs)
-        xformed_coords = transform('EPSG:' + str(input_crs),
-                                   'EPSG:' + str(target_crs),
+        xformed_coords = transform(str(input_crs),
+                                   str(target_crs),
                                    *input_coords)
+        # class method for shapely version 1.6.4 expects lon, lat order 
+        xformed_coords = (xformed_coords[1],xformed_coords[0]) 
         # create a new instance of the same geometry class as above with the
         # new coordinates
         output_geom = input_geom.__class__(list(zip(*xformed_coords)))
@@ -348,7 +347,7 @@ def gdf_get_projection_unit(vector_file):
     c = _check_gdf_load(vector_file)
     crs = _check_crs(c.crs)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(crs)
+    srs.ImportFromEPSG(crs.to_epsg())
     WKT = srs.ExportToWkt()
     # get count of 'UNIT'
     if WKT.count('UNIT') == 1:
@@ -365,7 +364,7 @@ def gdf_get_projection_unit(vector_file):
 
 
 def raster_get_projection_unit(image):
-    """Get the projection unit for a vector_file.
+    """Get the projection unit for an image.
 
     Arguments
     ---------
@@ -474,8 +473,8 @@ def geometries_internal_intersection(polygons):
     intersect_lists = intersect_lists.reset_index()
     # first, we get rid  of self-intersection indices in 'intersectors':
     intersect_lists['intersectors'] = intersect_lists.apply(
-            lambda x: [i for i in x['intersectors'] if i != x['gs_idx']],
-            axis=1)
+        lambda x: [i for i in x['intersectors'] if i != x['gs_idx']],
+        axis=1)
     # for each row, we next create a union of the polygons in 'intersectors',
     # and find the intersection of that with the polygon at gs[gs_idx]. this
     # (Multi)Polygon output corresponds to all of the intersections for the
