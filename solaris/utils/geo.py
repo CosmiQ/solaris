@@ -306,6 +306,8 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
         xformed_coords = transform(str(input_crs),
                                    str(target_crs),
                                    *input_coords)
+        # class method for shapely version 1.6.4 expects lon, lat order 
+        xformed_coords = (xformed_coords[1],xformed_coords[0]) 
         # create a new instance of the same geometry class as above with the
         # new coordinates
         output_geom = input_geom.__class__(list(zip(*xformed_coords)))

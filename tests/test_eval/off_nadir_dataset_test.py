@@ -19,8 +19,8 @@ class TestEvalOffNadir(object):
             os.path.join(solaris.data.data_dir, 'sample_preds.csv'),
             os.path.join(solaris.data.data_dir, 'sample_truth.csv')
             )
-        assert pred_results.equals(results_df.reset_index())
-        assert pred_results_full.equals(results_df_full)
+        assert pred_results.equals(results_df.reset_index()[pred_results.columns])
+        assert pred_results_full.equals(results_df_full[pred_results_full.columns])
 
 
 class TestEvalCLI(object):

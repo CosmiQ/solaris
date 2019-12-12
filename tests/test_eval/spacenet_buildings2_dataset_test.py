@@ -28,8 +28,8 @@ class TestEvalSpaceNetBuildings2(object):
         results_df_full_sorted = (results_df_full
                                   .sort_values('imageID')
                                   .reset_index(drop=True))
-        assert almostequal(pred_results, results_df_formatted)
-        assert almostequal(pred_results_full_sorted, results_df_full_sorted)
+        assert almostequal(pred_results, results_df_formatted[pred_results.columns])
+        assert almostequal(pred_results_full_sorted, results_df_full_sorted[pred_results_full_sorted.columns])
 
 
 class TestEvalCLISN2(object):
