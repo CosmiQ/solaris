@@ -35,7 +35,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ### Fixed
 20191123, dphogan: Fixed issue in mask_to_poly_geojson() with empty GeoDataFrames.
 20191204, dphogan: Fixed issue with file output from footprint_mask() and contact_mask() (#301)
-20191212, jshermeyer: Fixed issue with vector tiling: could not load in list of sublists previously. Corrected comments for appropriate order as well.
+20191212, jshermeyer: Fixed issue with vector tiling: could not load in list of sublists previously. Corrected comments for appropriate order as well. (#306)
 
 ### Deprecated
 
