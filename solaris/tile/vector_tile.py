@@ -47,7 +47,7 @@ class VectorTiler(object):
             The source vector data to tile. Must either be a path to a GeoJSON
             or a :class:`geopandas.GeoDataFrame`.
         tile_bounds : list
-            A :class:`list` made up of ``[left, bottom, right, top]`` sublists
+            A :class:`list` made up of ``[left, top, right, bottom] `` sublists
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
         tile_bounds_crs : int, optional
@@ -113,7 +113,7 @@ class VectorTiler(object):
             The source vector data to tile. Must either be a path to a GeoJSON
             or a :class:`geopandas.GeoDataFrame`.
         tile_bounds : list
-            A :class:`list` made up of ``[left, bottom, right, top]`` sublists
+            A :class:`list` made up of ``[left, top, right, bottom] `` sublists
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
         tile_bounds_crs : int, optional
@@ -145,7 +145,7 @@ class VectorTiler(object):
         tile_gdf : :class:`geopandas.GeoDataFrame`
             A tile geodataframe.
         tb : list
-            A list with ``[left, bottom, right, top]`` coordinates for the
+            A list with ``[left, top, right, bottom] `` coordinates for the
             boundaries contained by `tile_gdf`.
         """
         self.src = _check_gdf_load(src)
@@ -243,7 +243,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
         A :py:class:`geopandas.GeoDataFrame` of polygons to clip.
     tile_bounds : `list` or :class:`shapely.geometry.Polygon`
         The geometry to clip objects in `gdf` to. This can either be a
-        ``[left, bottom, right, top]`` bounds list or a
+        ``[left, top, right, bottom] `` bounds list or a
         :class:`shapely.geometry.Polygon` object defining the area to keep.
     min_partial_perc : float, optional
         The minimum fraction of an object in `gdf` that must be
