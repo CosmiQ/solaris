@@ -267,6 +267,8 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
     """
     if isinstance(tile_bounds, tuple):
         tb = box(*tile_bounds)
+    elif isinstance(tile_bounds, list):
+        tb = box(*tile_bounds)
     elif isinstance(tile_bounds, Polygon):
         tb = tile_bounds
     if use_sindex and (geom_type == "Polygon"):
