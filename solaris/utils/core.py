@@ -50,6 +50,12 @@ def _check_df_load(df):
 def _check_gdf_load(gdf):
     """Check if `gdf` is already loaded in, if not, load from geojson."""
     if isinstance(gdf, str):
+        # as of geopandas 0.6.2, using the OGR CSV driver requires some add'nal
+        # kwargs to create a valid geodataframe with a geometry column. see
+        # https://github.com/geopandas/geopandas/issues/1234
+        if gdf.lower().endswith('csv'):
+            return gpd.read_file(gdf, GEOM_POSSIBLE_NAMES="geometry",
+                                 KEEP_GEOM_COLUMNS="NO")
         try:
             return gpd.read_file(gdf)
         except (DriverError, CPLE_OpenFailedError):
