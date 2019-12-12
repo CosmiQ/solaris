@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 from tensorflow.keras import backend as K
 from ._keras_losses import keras_losses, k_focal_loss
@@ -6,7 +5,7 @@ from ._torch_losses import torch_losses
 from torch import nn
 
 
-def get_loss(framework, loss, loss_weights=None):
+def get_loss(framework, loss, loss_weights=None, custom_losses=None):
     """Load a loss function based on a config file for the specified framework.
 
     Arguments
@@ -19,8 +18,12 @@ def get_loss(framework, loss, loss_weights=None):
         pairs.
     loss_weights : dict, optional
         Optional dictionary of weights for loss functions.  Each key is a loss
-        function (same as in the ``loss`` argument), and the corresponding
+        function name (same as in the ``loss`` argument), and the corresponding
         entry is its weight.
+    custom_losses : dict, optional
+        Optional dictionary of Pytorch classes or Keras functions of any
+        user-defined loss functions.  Each key is a loss function name, and the
+        corresponding entry is the Python object implementing that loss.
     """
     # lots of exception handling here. TODO: Refactor.
     if not isinstance(loss, dict):
@@ -41,16 +44,16 @@ def get_loss(framework, loss, loss_weights=None):
                 'The losses and weights must have the same name keys.')
 
         if framework == 'keras':
-            return keras_composite_loss(loss, weights)
+            return keras_composite_loss(loss, weights, custom_losses)
         elif framework in ['pytorch', 'torch']:
-            return TorchCompositeLoss(loss, weights)
+            return TorchCompositeLoss(loss, weights, custom_losses)
 
     else:  # parse individual loss functions
         loss_name, loss_dict = list(loss.items())[0]
-        return get_single_loss(framework, loss_name, loss_dict)
+        return get_single_loss(framework, loss_name, loss_dict, custom_losses)
 
 
-def get_single_loss(framework, loss_name, params_dict):
+def get_single_loss(framework, loss_name, params_dict, custom_losses=None):
     if framework == 'keras':
         if loss_name.lower() == 'focal':
             return k_focal_loss(**params_dict)
@@ -59,29 +62,29 @@ def get_single_loss(framework, loss_name, params_dict):
             # TODO: the next block doesn't handle non-focal loss functions that
             # have hyperparameters associated with them. It would be great to
             # refactor this to handle that possibility.
-            if loss_name.lower() in keras_losses:
-                return keras_losses.get(loss_name.lower())
+            if custom_losses is not None and loss_name in custom_losses:
+                return custom_losses.get(loss_name)
             else:
-                return eval(loss_name)
+                return keras_losses.get(loss_name.lower())
     elif framework in ['torch', 'pytorch']:
         if params_dict is None:
-            if loss_name.lower() in torch_losses:
+            if custom_losses is not None and loss_name in custom_losses:
+                return custom_losses.get(loss_name)()
+            else:
                 return torch_losses.get(loss_name.lower())()
-            else:
-                return eval(loss_name)()
         else:
-            if loss_name.lower() in torch_losses:
-                return torch_losses.get(loss_name.lower())(**params_dict)
+            if custom_losses is not None and loss_name in custom_losses:
+                return custom_losses.get(loss_name)(**params_dict)
             else:
-                return eval(loss_name)(**params_dict)
+                return torch_losses.get(loss_name.lower())(**params_dict)
 
 
-def keras_composite_loss(loss_dict, weight_dict):
+def keras_composite_loss(loss_dict, weight_dict, custom_losses=None):
     """Wrapper to other loss functions to create keras-compatible composite."""
 
     def composite(y_true, y_pred):
         loss = K.sum(K.flatten(K.stack([weight_dict[loss_name]*get_single_loss(
-                'keras', loss_name, loss_params)(y_true, y_pred)
+                'keras', loss_name, loss_params, custom_losses)(y_true, y_pred)
                 for loss_name, loss_params in loss_dict.items()], axis=-1)))
         return loss
 
@@ -91,13 +94,14 @@ def keras_composite_loss(loss_dict, weight_dict):
 class TorchCompositeLoss(nn.Module):
     """Composite loss function."""
 
-    def __init__(self, loss_dict, weight_dict=None):
+    def __init__(self, loss_dict, weight_dict=None, custom_losses=None):
         """Create a composite loss function from a set of pytorch losses."""
         super().__init__()
         self.weights = weight_dict
         self.losses = {loss_name: get_single_loss('pytorch',
                                                   loss_name,
-                                                  loss_params)
+                                                  loss_params,
+                                                  custom_losses)
                        for loss_name, loss_params in loss_dict.items()}
         self.values = {}  # values from the individual loss functions
 
