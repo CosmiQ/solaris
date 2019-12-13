@@ -32,6 +32,7 @@ class VectorTiler(object):
         self.output_format = output_format
         self.verbose = verbose
         self.super_verbose = super_verbose
+        self.tile_paths = [] # retains the paths of the last call to .tile()
         if self.verbose or self.super_verbose:
             print('Initialization done.')
 
@@ -86,23 +87,25 @@ class VectorTiler(object):
                                        geom_type, split_multi_geoms,
                                        min_partial_perc,
                                        obj_id_col=obj_id_col)
+        self.tile_paths = []
         for tile_gdf, tb in tqdm(tile_gen):
             if self.proj_unit not in ['meter', 'metre']:
-                out_path = os.path.join(
+                dest_path = os.path.join(
                     self.dest_dir, '{}_{}_{}{}'.format(dest_fname_base,
                                                        np.round(tb[0], 3),
                                                        np.round(tb[3], 3),
                                                        output_ext))
             else:
-                out_path = os.path.join(
+                dest_path = os.path.join(
                     self.dest_dir, '{}_{}_{}{}'.format(dest_fname_base,
                                                        int(tb[0]),
                                                        int(tb[3]),
                                                        output_ext))
+            self.tile_paths.append(dest_path)
             if len(tile_gdf) > 0:
-                tile_gdf.to_file(out_path, driver='GeoJSON')
+                tile_gdf.to_file(dest_path, driver='GeoJSON')
             else:
-                save_empty_geojson(out_path, self.dest_crs)
+                save_empty_geojson(dest_path, self.dest_crs)
 
     def tile_generator(self, src, tile_bounds, tile_bounds_crs=None,
                        geom_type='Polygon', split_multi_geoms=True,

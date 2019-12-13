@@ -131,6 +131,7 @@ class RasterTiler(object):
         self.aoi_bounds = aoi_bounds
         self.tile_bounds = tile_bounds
         self.project_to_meters = project_to_meters
+        self.tile_paths = [] # retains the paths of the last call to .tile()
 #        self.cog_output = cog_output
         self.verbose = verbose
         if self.verbose:
@@ -156,8 +157,10 @@ class RasterTiler(object):
 
         if self.verbose:
             print('Beginning tiling...')
+        self.tile_paths = []
         for tile_data, mask, profile in tqdm(tile_gen):
-            self.save_tile(tile_data, mask, profile, dest_fname_base)
+            dest_path = self.save_tile(tile_data, mask, profile, dest_fname_base)
+            self.tile_paths.append(dest_path)
         if self.verbose:
             print('Tiling complete. Cleaning up...')
         self.src.close()
@@ -393,11 +396,14 @@ class RasterTiler(object):
                 dest.write(mask, profile['count'] + 1)
 
             dest.close()
+        
+        return dest_path
 
         # if self.cog_output:
         #     self._create_cog(os.path.join(self.dest_dir, 'tmp.tif'),
         #                      os.path.join(self.dest_dir, dest_fname))
         #     os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
+        
 
     def _create_cog(self, src_path, dest_path):
         """Overwrite non-cloud-optimized GeoTIFF with a COG."""
