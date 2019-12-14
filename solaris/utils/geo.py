@@ -751,7 +751,7 @@ def polygon_to_coco(polygon):
     return coords
 
 
-def split_geom(geometry, src_tile_size, transform, use_metric_size=False):
+def split_geom(geometry, tile_size, transform=None, use_metric_size=False):
     """Splits a vector into approximately equal sized tiles.
 
     Splits a vector into 
@@ -766,15 +766,15 @@ def split_geom(geometry, src_tile_size, transform, use_metric_size=False):
     geometry : str, optional
         A shapely.geometry.Polygon, path to a single feature geojson, 
     or list-like bounding box shaped like [left, bottom, right, top]
-    src_tile_size : `tuple` of `int`s, optional
+    tile_size : `tuple` of `int`s, optional
         The size of the input tiles in ``(y, x)`` coordinates. By default,
         this is in pixel units; this can be changed to metric units using the
         `use_metric_size` argument.
     use_metric_size : bool, optional
-        Is `src_tile_size` in pixel units (default) or metric? To set to metric
-        use ``use_metric_size=True``.
+        Is `tile_size` in pixel units (default) or metric? To set to metric
+        use ``use_metric_size=True``. If False, transform must be supplied.
     transform : `tuple` of `int`s, optional
-        A rasterio transform.
+        An affine.Affine transform, possibly from a rasterio dataset object's metadata.
     
     Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
     """
@@ -793,16 +793,17 @@ def split_geom(geometry, src_tile_size, transform, use_metric_size=False):
         geometry = box(*geometry)
         
     if use_metric_size is False:
-        if transform is not isinstance(transform, affine.Affine):
-            print("transform must be of affine.Affine type. Access it from src raster meta.")
+        if isinstance(transform, Affine) is False:
+            print(f"transform must be of affine.Affine type. Access it from src raster meta. Type {type(transform)} was supplied.")
+            return
         # convert pixel units to CRS units to use during image tiling.
         # NOTE: This will be imperfect for large AOIs where there isn't
         # a constant relationship between the src CRS units and src pixel
         # units.
-        tmp_tile_size = [src_tile_size[0]*transform[0],
-                         src_tile_size[1]*-transform[4]]
+        tmp_tile_size = [tile_size[0]*transform[0],
+                         tile_size[1]*-transform[4]]
     else:
-        tmp_tile_size = src_tile_size
+        tmp_tile_size = tile_size
         
     bounds  = geometry.bounds
     xmin = bounds[0]
