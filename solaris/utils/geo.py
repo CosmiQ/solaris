@@ -11,12 +11,13 @@ from rasterio.warp import transform_bounds
 from shapely.affinity import affine_transform
 from shapely.wkt import loads
 from shapely.geometry import Point, Polygon, LineString
-from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
+from shapely.geometry import MultiLineString, MultiPolygon, mapping, box
 from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
 from fiona.transform import transform
 import osr
 import gdal
+import json
 from warnings import warn
 
 
@@ -748,3 +749,79 @@ def polygon_to_coco(polygon):
     coords = [item for coordinate in coords for item in coordinate]
 
     return coords
+
+
+def split_geom(geometry, src_tile_size, transform, use_metric_size=False):
+    """Splits a vector into approximately equal sized tiles.
+
+    Splits a vector into 
+    a list of sublists like [left, bottom, right, top]. The geometry must 
+    be in the projection coordinates corresponding to the transform. The more 
+    complex the geometry, the slower this will run, but geometrys with around 10000
+    coordinates run in a few seconds time. You can simplify geometries with
+    geometry.simplify if necessary.
+    
+    Arguments
+    ---------
+    geometry : str, optional
+        A shapely.geometry.Polygon, path to a single feature geojson, 
+    or list-like bounding box shaped like [left, bottom, right, top]
+    src_tile_size : `tuple` of `int`s, optional
+        The size of the input tiles in ``(y, x)`` coordinates. By default,
+        this is in pixel units; this can be changed to metric units using the
+        `use_metric_size` argument.
+    use_metric_size : bool, optional
+        Is `src_tile_size` in pixel units (default) or metric? To set to metric
+        use ``use_metric_size=True``.
+    transform : `tuple` of `int`s, optional
+        A rasterio transform.
+    
+    Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
+    """
+    if isinstance(geometry, str):
+        gj = json.loads(open(geometry).read())
+
+        features = gj['features']
+        if not len(features) == 1:
+            print('Feature collection must only contain one feature')
+            sys.exit(1)
+
+        geometry = shape(features[0]['geometry'])
+        
+    elif isinstance(geometry, list) or isinstance(geometry, np.ndarray):
+        assert len(geometry) == 4
+        geometry = box(*geometry)
+        
+    if use_metric_size is False:
+        if transform is not isinstance(transform, affine.Affine):
+            print("transform must be of affine.Affine type. Access it from src raster meta.")
+        # convert pixel units to CRS units to use during image tiling.
+        # NOTE: This will be imperfect for large AOIs where there isn't
+        # a constant relationship between the src CRS units and src pixel
+        # units.
+        tmp_tile_size = [src_tile_size[0]*transform[0],
+                         src_tile_size[1]*-transform[4]]
+    else:
+        tmp_tile_size = src_tile_size
+        
+    bounds  = geometry.bounds
+    xmin = bounds[0]
+    xmax =  bounds[2]
+    ymin = bounds[1]
+    ymax = bounds[3]
+    x_extent = xmax - xmin
+    y_extent = ymax - ymin
+    x_steps = np.ceil(x_extent/tmp_tile_size[1])
+    y_steps = np.ceil(y_extent/tmp_tile_size[0])
+    x_mins = np.arange(xmin, xmin + tmp_tile_size[1]*x_steps,
+                            tmp_tile_size[1])
+    y_mins = np.arange(ymin, ymin + tmp_tile_size[0]*y_steps,
+                           tmp_tile_size[0])
+    tile_bounds = [(i,
+                    j,
+                    i+tmp_tile_size[1],
+                    j+tmp_tile_size[0])
+                    for i in x_mins for j in y_mins if not geometry.intersection(
+                        box(*(i, j, i+tmp_tile_size[1], j+tmp_tile_size[0]))).is_empty
+                    ]
+    return tile_bounds
