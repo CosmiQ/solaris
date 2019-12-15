@@ -11,7 +11,7 @@ from rasterio.warp import transform_bounds
 from shapely.affinity import affine_transform
 from shapely.wkt import loads
 from shapely.geometry import Point, Polygon, LineString
-from shapely.geometry import MultiLineString, MultiPolygon, mapping, box
+from shapely.geometry import MultiLineString, MultiPolygon, mapping, box, shape
 from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
 from fiona.transform import transform
@@ -301,17 +301,14 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     if input_crs is not None:
         input_crs = _check_crs(input_crs)
         if target_crs is None:
-            latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
-            target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
+            geom = reproject_geometry(input_geom, input_crs, target_crs=4326)
+            target_crs = latlon_to_utm_epsg(geom.centroid.y, geom.centroid.x)
         target_crs = _check_crs(target_crs)
-        xformed_coords = transform(str(input_crs),
-                                   str(target_crs),
-                                   *input_coords)
-        # class method for shapely version 1.6.4 expects lon, lat order 
-        xformed_coords = (xformed_coords[1],xformed_coords[0]) 
+        gdf = gpd.GeoDataFrame(geometry=[input_geom])
+        gdf.crs = input_crs
         # create a new instance of the same geometry class as above with the
         # new coordinates
-        output_geom = input_geom.__class__(list(zip(*xformed_coords)))
+        output_geom = gdf.to_crs(target_crs).iloc[0]['geometry']
 
     else:
         if affine_obj is None:
@@ -751,12 +748,12 @@ def polygon_to_coco(polygon):
     return coords
 
 
-def split_geom(geometry, tile_size, transform=None, use_metric_size=False):
+def split_geom(geometry, tile_size, resolution=None, use_projection_units=False):
     """Splits a vector into approximately equal sized tiles.
 
     Splits a vector into 
     a list of sublists like [left, bottom, right, top]. The geometry must 
-    be in the projection coordinates corresponding to the transform. The more 
+    be in the projection coordinates corresponding to the resolution units. The more 
     complex the geometry, the slower this will run, but geometrys with around 10000
     coordinates run in a few seconds time. You can simplify geometries with
     geometry.simplify if necessary.
@@ -770,11 +767,12 @@ def split_geom(geometry, tile_size, transform=None, use_metric_size=False):
         The size of the input tiles in ``(y, x)`` coordinates. By default,
         this is in pixel units; this can be changed to metric units using the
         `use_metric_size` argument.
-    use_metric_size : bool, optional
-        Is `tile_size` in pixel units (default) or metric? To set to metric
-        use ``use_metric_size=True``. If False, transform must be supplied.
-    transform : `tuple` of `int`s, optional
-        An affine.Affine transform, possibly from a rasterio dataset object's metadata.
+    use_projection_units : bool, optional
+        Is `tile_size` in pixel units (default) or distance units? To set to distance units
+        use ``use_projection_units=True``. If False, resolution must be supplied.
+    resolution: `tuple` of `float`s, optional
+        (x resolution, y resolution). Used by default if use_metric_size is False.
+        Can be acquired from rasterio dataset object's metadata.
     
     Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
     """
@@ -792,16 +790,18 @@ def split_geom(geometry, tile_size, transform=None, use_metric_size=False):
         assert len(geometry) == 4
         geometry = box(*geometry)
         
-    if use_metric_size is False:
-        if isinstance(transform, Affine) is False:
-            print(f"transform must be of affine.Affine type. Access it from src raster meta. Type {type(transform)} was supplied.")
+    if use_projection_units is False:
+        if resolution is None:
+            print(f"Resolution must be specified if use_projection_units is False. Access it from src raster meta.")
             return
         # convert pixel units to CRS units to use during image tiling.
         # NOTE: This will be imperfect for large AOIs where there isn't
         # a constant relationship between the src CRS units and src pixel
         # units.
-        tmp_tile_size = [tile_size[0]*transform[0],
-                         tile_size[1]*-transform[4]]
+        if isinstance(resolution, (float, int)):
+            resolution = (resolution, resolution)
+        tmp_tile_size = [tile_size[0]*resolution[0],
+                         tile_size[1]*resolution[1]]
     else:
         tmp_tile_size = tile_size
         
