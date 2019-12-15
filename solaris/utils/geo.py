@@ -19,6 +19,7 @@ import osr
 import gdal
 import json
 from warnings import warn
+import sys
 
 
 def reproject(input_object, input_crs=None,
