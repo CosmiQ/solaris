@@ -296,8 +296,6 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     """
     input_geom = _check_geom(input_geom)
 
-    input_coords = _get_coords(input_geom)
-
     if input_crs is not None:
         input_crs = _check_crs(input_crs)
         if target_crs is None:

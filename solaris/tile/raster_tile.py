@@ -422,7 +422,7 @@ class RasterTiler(object):
                 # set to the bounds of the image
                 self.aoi_boundary = list(self.src.bounds) #split_geom can take a list
 
-        self.tile_bounds = split_geom(geometry=self.aoi_boundary, tile_size=self.src_tile_size, transform=self.src.transform, use_metric_size=self.use_src_metric_size)
+        self.tile_bounds = split_geom(geometry=self.aoi_boundary, tile_size=self.src_tile_size, resolution=(self.src.transform[0],-self.src.transform[4]), use_projection_units=self.use_src_metric_size)
 
     def load_src_vrt(self):
         """Load a source dataset's VRT into the destination CRS."""
