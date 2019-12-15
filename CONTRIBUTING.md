@@ -157,9 +157,13 @@ Every time Travis is triggered, it also calls on [Codecov](https://codecov.io) t
 ### Building docs
 
 Sphinx[http://www.sphinx-doc.org/en/stable/] is needed to build the documentation.
+You can install it and other necessary packages with conda.
+```
+conda install -c conda-forge sphinx sphinx_bootstrap_theme nbsphinx
+```
 
 To build docs, run ``make`` from the ``doc`` directory. ``make help`` lists
-all targets. For example, to build the HTML documentation, you can run `make html`. Then, all the HTML files will be generated in `solaris/docs/build/html`. To rebuild a full clean documentation, run:
+all targets. For example, to build the HTML documentation, you can run `make html`. Then, all the HTML files will be generated in `solaris/docs/_build/html`. To rebuild a full clean documentation, run:
 ```
 make clean
 make html

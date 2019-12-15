@@ -747,20 +747,19 @@ def polygon_to_coco(polygon):
 
 
 def split_geom(geometry, tile_size, resolution=None, use_projection_units=False):
-    """Splits a vector into approximately equal sized tiles.
+    """Splits a vector into approximately equal sized tiles. Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
 
-    Splits a vector into 
-    a list of sublists like [left, bottom, right, top]. The geometry must 
-    be in the projection coordinates corresponding to the resolution units. The more 
-    complex the geometry, the slower this will run, but geometrys with around 10000
+    The more complex the geometry, the slower this will run, but geometrys with around 10000
     coordinates run in a few seconds time. You can simplify geometries with
-    geometry.simplify if necessary.
+    shapely.geometry.Polygon.simplify if necessary.
     
     Arguments
     ---------
     geometry : str, optional
         A shapely.geometry.Polygon, path to a single feature geojson, 
-    or list-like bounding box shaped like [left, bottom, right, top]
+        or list-like bounding box shaped like [left, bottom, right, top]. 
+        The geometry must be in the projection coordinates corresponding to 
+        the resolution units.
     tile_size : `tuple` of `int`s, optional
         The size of the input tiles in ``(y, x)`` coordinates. By default,
         this is in pixel units; this can be changed to metric units using the
@@ -771,8 +770,11 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False)
     resolution: `tuple` of `float`s, optional
         (x resolution, y resolution). Used by default if use_metric_size is False.
         Can be acquired from rasterio dataset object's metadata.
-    
-    Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
+
+    Returns
+    -------
+    tile_bounds : list (containing sublists like [left, bottom, right, top])
+
     """
     if isinstance(geometry, str):
         gj = json.loads(open(geometry).read())
