@@ -11,13 +11,15 @@ from rasterio.warp import transform_bounds
 from shapely.affinity import affine_transform
 from shapely.wkt import loads
 from shapely.geometry import Point, Polygon, LineString
-from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
+from shapely.geometry import MultiLineString, MultiPolygon, mapping, box, shape
 from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
 from fiona.transform import transform
 import osr
 import gdal
+import json
 from warnings import warn
+import sys
 
 
 def reproject(input_object, input_crs=None,
@@ -295,22 +297,17 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     """
     input_geom = _check_geom(input_geom)
 
-    input_coords = _get_coords(input_geom)
-
     if input_crs is not None:
         input_crs = _check_crs(input_crs)
         if target_crs is None:
-            latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
-            target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
+            geom = reproject_geometry(input_geom, input_crs, target_crs=4326)
+            target_crs = latlon_to_utm_epsg(geom.centroid.y, geom.centroid.x)
         target_crs = _check_crs(target_crs)
-        xformed_coords = transform(str(input_crs),
-                                   str(target_crs),
-                                   *input_coords)
-        # class method for shapely version 1.6.4 expects lon, lat order 
-        xformed_coords = (xformed_coords[1],xformed_coords[0]) 
+        gdf = gpd.GeoDataFrame(geometry=[input_geom])
+        gdf.crs = input_crs
         # create a new instance of the same geometry class as above with the
         # new coordinates
-        output_geom = input_geom.__class__(list(zip(*xformed_coords)))
+        output_geom = gdf.to_crs(target_crs).iloc[0]['geometry']
 
     else:
         if affine_obj is None:
@@ -748,3 +745,85 @@ def polygon_to_coco(polygon):
     coords = [item for coordinate in coords for item in coordinate]
 
     return coords
+
+
+def split_geom(geometry, tile_size, resolution=None, use_projection_units=False):
+    """Splits a vector into approximately equal sized tiles. Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
+
+    The more complex the geometry, the slower this will run, but geometrys with around 10000
+    coordinates run in a few seconds time. You can simplify geometries with
+    shapely.geometry.Polygon.simplify if necessary.
+    
+    Arguments
+    ---------
+    geometry : str, optional
+        A shapely.geometry.Polygon, path to a single feature geojson, 
+        or list-like bounding box shaped like [left, bottom, right, top]. 
+        The geometry must be in the projection coordinates corresponding to 
+        the resolution units.
+    tile_size : `tuple` of `int`s, optional
+        The size of the input tiles in ``(y, x)`` coordinates. By default,
+        this is in pixel units; this can be changed to metric units using the
+        `use_metric_size` argument.
+    use_projection_units : bool, optional
+        Is `tile_size` in pixel units (default) or distance units? To set to distance units
+        use ``use_projection_units=True``. If False, resolution must be supplied.
+    resolution: `tuple` of `float`s, optional
+        (x resolution, y resolution). Used by default if use_metric_size is False.
+        Can be acquired from rasterio dataset object's metadata.
+
+    Returns
+    -------
+    tile_bounds : list (containing sublists like [left, bottom, right, top])
+
+    """
+    if isinstance(geometry, str):
+        gj = json.loads(open(geometry).read())
+
+        features = gj['features']
+        if not len(features) == 1:
+            print('Feature collection must only contain one feature')
+            sys.exit(1)
+
+        geometry = shape(features[0]['geometry'])
+        
+    elif isinstance(geometry, list) or isinstance(geometry, np.ndarray):
+        assert len(geometry) == 4
+        geometry = box(*geometry)
+        
+    if use_projection_units is False:
+        if resolution is None:
+            print(f"Resolution must be specified if use_projection_units is False. Access it from src raster meta.")
+            return
+        # convert pixel units to CRS units to use during image tiling.
+        # NOTE: This will be imperfect for large AOIs where there isn't
+        # a constant relationship between the src CRS units and src pixel
+        # units.
+        if isinstance(resolution, (float, int)):
+            resolution = (resolution, resolution)
+        tmp_tile_size = [tile_size[0]*resolution[0],
+                         tile_size[1]*resolution[1]]
+    else:
+        tmp_tile_size = tile_size
+        
+    bounds  = geometry.bounds
+    xmin = bounds[0]
+    xmax =  bounds[2]
+    ymin = bounds[1]
+    ymax = bounds[3]
+    x_extent = xmax - xmin
+    y_extent = ymax - ymin
+    x_steps = np.ceil(x_extent/tmp_tile_size[1])
+    y_steps = np.ceil(y_extent/tmp_tile_size[0])
+    x_mins = np.arange(xmin, xmin + tmp_tile_size[1]*x_steps,
+                            tmp_tile_size[1])
+    y_mins = np.arange(ymin, ymin + tmp_tile_size[0]*y_steps,
+                           tmp_tile_size[0])
+    tile_bounds = [(i,
+                    j,
+                    i+tmp_tile_size[1],
+                    j+tmp_tile_size[0])
+                    for i in x_mins for j in y_mins if not geometry.intersection(
+                        box(*(i, j, i+tmp_tile_size[1], j+tmp_tile_size[0]))).is_empty
+                    ]
+    return tile_bounds

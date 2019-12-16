@@ -7,7 +7,7 @@ from shapely.wkt import loads
 from shapely.ops import cascaded_union
 from solaris.data import data_dir
 from solaris.utils.geo import list_to_affine, split_multi_geometries
-from solaris.utils.geo import geometries_internal_intersection
+from solaris.utils.geo import geometries_internal_intersection, split_geom
 from solaris.utils.geo import reproject, reproject_geometry
 import rasterio
 
@@ -138,3 +138,26 @@ class TestReprojectGeometry(object):
         area_sim = result_geom.intersection(reproj_geom).area/result_geom.area
         
         assert area_sim > 0.99999
+
+    def test_reproject_from_wkt_to_utm(self):
+        result_str = "POLYGON ((736687.5456353347 3722455.06780279, 736686.9301210654 3722464.96326352, 736691.6397869177 3722470.9059681, 736705.5443059544 3722472.614050498, 736706.8992101226 3722462.858909504, 736704.866059878 3722459.457111885, 736713.1443474176 3722452.103498172, 736710.0312805283 3722447.309985571, 736700.3886167214 3722454.263705271, 736698.4577440721 3722451.98534527, 736690.1272768064 3722451.291527834, 736689.4108667439 3722455.113813923, 736687.5456353347 3722455.06780279))"
+        input_str = "POLYGON ((-84.4487639 33.6156071, -84.44876790000001 33.6156964, -84.4487156 33.61574889999999, -84.44856540000001 33.6157612, -84.44855339999999 33.61567300000001, -84.44857620000001 33.6156428, -84.448489 33.6155747, -84.4485238 33.6155322, -84.4486258 33.615597, -84.4486472 33.61557689999999, -84.4487371 33.6155725, -84.4487438 33.6156071, -84.4487639 33.6156071))"
+        result_geom = loads(result_str)
+        reproj_geom = reproject_geometry(input_str, input_crs=4326,
+                                         target_crs=32616)
+        area_sim = result_geom.intersection(reproj_geom).area/result_geom.area
+        
+        assert area_sim > 0.99999
+
+
+class TestSplitGeometry(object):
+    """Test splitting of single geometries. Used in RasterTiler"""
+
+    def test_split_polygon(self):
+
+        poly = gpd.read_file(os.path.join(
+            data_dir, 'test_polygon_split.geojson')).iloc[0]['geometry']    
+        reproj_poly = reproject_geometry(poly, input_crs=4326,
+                                         target_crs=32611)
+        split_geom_list = split_geom(reproj_poly, (1024,1024), resolution=30)
+        assert len(split_geom_list) == 47
