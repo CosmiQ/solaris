@@ -843,7 +843,7 @@ def _check_do_transform(df, reference_im, affine_obj):
 
 def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
                   do_transform=None, affine_obj=None, shape=(900, 900),
-                  out_type='int', burn_value=255, burn_field=None):
+                  out_type='int', burn_value=255, burn_field=None, nodata_value=0):
     """Convert a dataframe of geometries to a pixel mask.
 
     Arguments
@@ -886,6 +886,10 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     burn_field : str, optional
         Name of a column in `df` that provides values for `burn_value` for each
         independent object. If provided, `burn_value` is ignored.
+    nodata_value : `int` or `float`, optional
+        The value to use for nodata pixels in the mask. Defaults to 0 (the
+        min value for ``uint8`` arrays). Used if reference_im nodata value is a float.
+        Ignored if reference_im nodata value is an int or if reference_im is not used.
 
     Returns
     -------
@@ -946,6 +950,8 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         meta.update(count=output_arr.shape[-1])
         if out_type == 'int':
             meta.update(dtype='uint8')
+            if isinstance(meta['nodata'], float):
+                meta.update(nodata=nodata_value)
         with rasterio.open(out_file, 'w', **meta) as dst:
             for c in range(1, 1 + output_arr.shape[-1]):
                 dst.write(output_arr[:, :, c-1], indexes=c)
