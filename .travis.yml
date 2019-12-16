@@ -33,8 +33,7 @@ install:
   - source activate solaris
   - python --version
   - pip install -q -e .[test]
-  - conda install pytest=4.6.2 -c conda-forge
-  - pip install codecov pytest-cov
+  - pip install codecov pytest-cov pytest=5.3.1
 # command to run tests
 script:
   - python -m pytest --cov=./
