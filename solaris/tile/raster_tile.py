@@ -45,11 +45,11 @@ class RasterTiler(object):
     force_load_cog : bool, optional
         If `src` is a cloud-optimized geotiff, use this argument to force
         loading in the entire image at once.
-    aoi_boundary : list, optional
-        A :class:`list` -like of shape
-        ``[left_bound, bottom_bound, right_bound, top_bound]`` defining the
-        extent of the area of interest to be tiled, in the same units as
-        defined by `use_src_metric_size`. If not provided either upon
+    aoi_boundary : :class:`shapely.geometry.Polygon` or `list`-like [left, bottom, right, top]
+        Defines the bounds of the AOI in which tiles will be created. If a 
+        tile will extend beyond the boundary, the "extra" pixels will have 
+        the value `nodata`. Can be provided at initialization of the :class:`Tiler` 
+        instance or when the input is loaded. If not provided either upon
         initialization or when an image is loaded, the image bounds will be
         used; if provided, this value will override image metadata.
     tile_bounds : `list`-like
@@ -131,7 +131,7 @@ class RasterTiler(object):
         self.aoi_boundary = aoi_boundary
         self.tile_bounds = tile_bounds
         self.project_to_meters = project_to_meters
-        self.tile_paths = [] # retains the paths of the last call to .tile()
+        self.tile_paths = []  # retains the paths of the last call to .tile()
 #        self.cog_output = cog_output
         self.verbose = verbose
         if self.verbose:
@@ -159,7 +159,8 @@ class RasterTiler(object):
             print('Beginning tiling...')
         self.tile_paths = []
         for tile_data, mask, profile in tqdm(tile_gen):
-            dest_path = self.save_tile(tile_data, mask, profile, dest_fname_base)
+            dest_path = self.save_tile(
+                tile_data, mask, profile, dest_fname_base)
             self.tile_paths.append(dest_path)
         if self.verbose:
             print('Tiling complete. Cleaning up...')
@@ -396,14 +397,13 @@ class RasterTiler(object):
                 dest.write(mask, profile['count'] + 1)
 
             dest.close()
-        
+
         return dest_path
 
         # if self.cog_output:
         #     self._create_cog(os.path.join(self.dest_dir, 'tmp.tif'),
         #                      os.path.join(self.dest_dir, dest_fname))
         #     os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
-        
 
     def _create_cog(self, src_path, dest_path):
         """Overwrite non-cloud-optimized GeoTIFF with a COG."""
@@ -420,9 +420,11 @@ class RasterTiler(object):
                                  'provided.')
             else:
                 # set to the bounds of the image
-                self.aoi_boundary = list(self.src.bounds) #split_geom can take a list
+                # split_geom can take a list
+                self.aoi_boundary = list(self.src.bounds)
 
-        self.tile_bounds = split_geom(geometry=self.aoi_boundary, tile_size=self.src_tile_size, resolution=(self.src.transform[0],-self.src.transform[4]), use_projection_units=self.use_src_metric_size)
+        self.tile_bounds = split_geom(geometry=self.aoi_boundary, tile_size=self.src_tile_size, resolution=(
+            self.src.transform[0], -self.src.transform[4]), use_projection_units=self.use_src_metric_size)
 
     def load_src_vrt(self):
         """Load a source dataset's VRT into the destination CRS."""
