@@ -216,10 +216,10 @@ def get_bounds(geo_obj, crs=None):
     if crs is not None:
         crs = _check_crs(crs)
         src_crs = get_crs(input_data)
-    # transform bounds to desired CRS
-    bounds = transform_bounds(src_crs,
-                              crs,
-                              *bounds)
+        # transform bounds to desired CRS
+        bounds = transform_bounds(src_crs,
+                                crs,
+                                *bounds)
 
     return bounds
 
