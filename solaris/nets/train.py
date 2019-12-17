@@ -18,7 +18,7 @@ import tensorflow as tf
 class Trainer(object):
     """Object for training `solaris` models using PyTorch or Keras."""
 
-    def __init__(self, config, custom_model_dict=None):
+    def __init__(self, config, custom_model_dict=None, custom_losses=None):
         self.config = config
         self.pretrained = self.config['pretrained']
         self.batch_size = self.config['batch_size']
@@ -36,7 +36,11 @@ class Trainer(object):
         self.epochs = self.config['training']['epochs']
         self.optimizer = get_optimizer(self.framework, self.config)
         self.lr = self.config['training']['lr']
-        self.loss = get_loss(self.framework, self.config)
+        self.custom_losses = custom_losses
+        self.loss = get_loss(self.framework,
+                             self.config['training'].get('loss'),
+                             self.config['training'].get('loss_weights'),
+                             self.custom_losses)
         self.callbacks = get_callbacks(self.framework, self.config)
         self.metrics = get_metrics(self.framework, self.config)
         self.verbose = self.config['training']['verbose']
