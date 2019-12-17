@@ -35,7 +35,7 @@ class TestGetLoss(object):
     def test_torch_composite_loss(self):
         epsilon = 1e-4
         loss_dict = {'bce' : {}, 'hinge' : {}}
-        lf = get_loss('torch', config)
+        lf = get_loss('torch', loss_dict)
         y_true = torch.tensor([1, 1, 1], dtype=torch.float)
         y_pred = torch.tensor([0, 1, 0], dtype=torch.float)
         assert np.abs(
