@@ -12,23 +12,14 @@ class TestGetLoss(object):
     """Test solaris.nets.losses.get_loss()."""
 
     def test_keras_vanilla_loss(self):
-        config = {'training':
-                  {'loss':
-                   {'bce': {}}
-                   }
-                  }
-        lf = get_loss('keras', config)
+        loss_dict = {'bce' : {}}
+        lf = get_loss('keras', loss_dict)
         assert lf == keras.losses.binary_crossentropy
 
     def test_keras_composite_loss_noweight(self):
         epsilon = 1e-6
-        config = {'training':
-                  {'loss':
-                   {'bce': {},
-                    'hinge': {}}
-                   }
-                  }
-        lf = get_loss('keras', config)
+        loss_dict = {'bce' : {}, 'hinge' : {}}
+        lf = get_loss('keras', loss_dict)
         y_true = tf.constant([1, 1, 1], dtype='float')
         y_pred = tf.constant([0, 1, 0], dtype='float')
         sess = tf.Session()
@@ -37,22 +28,13 @@ class TestGetLoss(object):
                 lf(y_true, y_pred).eval() - 11.41206380063888) < epsilon
 
     def test_torch_vanilla_loss(self):
-        config = {'training':
-                  {'loss':
-                   {'bce': {}}
-                   }
-                  }
-        lf = get_loss('torch', config)
+        loss_dict = {'bce' : {}}
+        lf = get_loss('torch', loss_dict)
         assert isinstance(lf, torch.nn.BCELoss)
 
     def test_torch_composite_loss(self):
         epsilon = 1e-4
-        config = {'training':
-                  {'loss':
-                   {'bce': {},
-                    'hinge': {}}
-                   }
-                  }
+        loss_dict = {'bce' : {}, 'hinge' : {}}
         lf = get_loss('torch', config)
         y_true = torch.tensor([1, 1, 1], dtype=torch.float)
         y_pred = torch.tensor([0, 1, 0], dtype=torch.float)
