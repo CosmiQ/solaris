@@ -1,1 +1,1 @@
-from . import cli, config, core, geo, io, tile
+from . import cli, config, core, geo, io, tile, data

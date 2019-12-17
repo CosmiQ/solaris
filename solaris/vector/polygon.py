@@ -231,8 +231,12 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
         im_path = im_path.name
     # make sure the geo vector data is loaded in as geodataframe(s)
     gdf = _check_gdf_load(geojson)
-    overlap_gdf = get_overlapping_subset(gdf, im)
 
+    if len(gdf):  # if there's at least one geometry
+        overlap_gdf = get_overlapping_subset(gdf, im)
+    else:
+        overlap_gdf = gdf
+    
     affine_obj = im.transform
     transformed_gdf = affine_transform_gdf(overlap_gdf, affine_obj=affine_obj,
                                            inverse=True, precision=precision,
@@ -301,7 +305,6 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
                              'must provide a coordinate reference system.')
     else:
         bbox_crs = _check_crs(bbox_crs)
-        bbox_crs = CRS.from_epsg(bbox_crs)
     bbox = transform_bounds(bbox_crs, gdf.crs, *bbox)
     try:
         intersectors = list(sindex.intersection(bbox))

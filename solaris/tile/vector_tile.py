@@ -32,6 +32,7 @@ class VectorTiler(object):
         self.output_format = output_format
         self.verbose = verbose
         self.super_verbose = super_verbose
+        self.tile_paths = [] # retains the paths of the last call to .tile()
         if self.verbose or self.super_verbose:
             print('Initialization done.')
 
@@ -47,14 +48,16 @@ class VectorTiler(object):
             The source vector data to tile. Must either be a path to a GeoJSON
             or a :class:`geopandas.GeoDataFrame`.
         tile_bounds : list
-            A :class:`list` made up of ``[left, bottom, right, top]`` sublists
+            A :class:`list` made up of ``[left, top, right, bottom] `` sublists
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
         tile_bounds_crs : int, optional
-            The EPSG code for the CRS that the tile bounds are in. If not
-            provided, it's assumed that the CRS is the same as in `src`. This
-            argument must be provided if the bound coordinates and `src` are
-            not in the same CRS, otherwise tiling will not occur correctly.
+            The EPSG code or rasterio.crs.CRS object for the CRS that the tile 
+            bounds are in. RasterTiler.tile returns the CRS of the raster tiles 
+            and can be used here. If not provided, it's assumed that the CRS is the 
+            same as in `src`. This argument must be provided if the bound 
+            coordinates and `src` are not in the same CRS, otherwise tiling will 
+            not occur correctly.
         geom_type : str, optional (default: "Polygon")
             The type of geometries contained within `src`. Defaults to
             ``"Polygon"``, can also be ``"LineString"``.
@@ -84,23 +87,25 @@ class VectorTiler(object):
                                        geom_type, split_multi_geoms,
                                        min_partial_perc,
                                        obj_id_col=obj_id_col)
+        self.tile_paths = []
         for tile_gdf, tb in tqdm(tile_gen):
             if self.proj_unit not in ['meter', 'metre']:
-                out_path = os.path.join(
+                dest_path = os.path.join(
                     self.dest_dir, '{}_{}_{}{}'.format(dest_fname_base,
                                                        np.round(tb[0], 3),
                                                        np.round(tb[3], 3),
                                                        output_ext))
             else:
-                out_path = os.path.join(
+                dest_path = os.path.join(
                     self.dest_dir, '{}_{}_{}{}'.format(dest_fname_base,
                                                        int(tb[0]),
                                                        int(tb[3]),
                                                        output_ext))
+            self.tile_paths.append(dest_path)
             if len(tile_gdf) > 0:
-                tile_gdf.to_file(out_path, driver='GeoJSON')
+                tile_gdf.to_file(dest_path, driver='GeoJSON')
             else:
-                save_empty_geojson(out_path, self.dest_crs)
+                save_empty_geojson(dest_path, self.dest_crs)
 
     def tile_generator(self, src, tile_bounds, tile_bounds_crs=None,
                        geom_type='Polygon', split_multi_geoms=True,
@@ -113,7 +118,7 @@ class VectorTiler(object):
             The source vector data to tile. Must either be a path to a GeoJSON
             or a :class:`geopandas.GeoDataFrame`.
         tile_bounds : list
-            A :class:`list` made up of ``[left, bottom, right, top]`` sublists
+            A :class:`list` made up of ``[left, top, right, bottom] `` sublists
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
         tile_bounds_crs : int, optional
@@ -145,7 +150,7 @@ class VectorTiler(object):
         tile_gdf : :class:`geopandas.GeoDataFrame`
             A tile geodataframe.
         tb : list
-            A list with ``[left, bottom, right, top]`` coordinates for the
+            A list with ``[left, top, right, bottom] `` coordinates for the
             boundaries contained by `tile_gdf`.
         """
         self.src = _check_gdf_load(src)
@@ -162,9 +167,8 @@ class VectorTiler(object):
             reproject_bounds = True  # used to transform tb for clip_gdf()
         else:
             reproject_bounds = False
-
-        self.proj_unit = gdf_get_projection_unit(
-            self.src).strip('"').strip("'")
+        
+        self.proj_unit = self.src_crs.linear_units
         if getattr(self, 'dest_crs', None) is None:
             self.dest_crs = self.src_crs
         for i, tb in enumerate(tile_bounds):
@@ -181,7 +185,7 @@ class VectorTiler(object):
                 tile_gdf = clip_gdf(self.src, tb, min_partial_perc, geom_type,
                                     verbose=self.super_verbose)
             if self.src_crs != self.dest_crs:
-                tile_gdf = tile_gdf.to_crs(epsg=self.dest_crs)
+                tile_gdf = tile_gdf.to_crs(crs=self.dest_crs)
             if split_multi_geoms:
                 split_multi_geometries(tile_gdf, obj_id_col=obj_id_col)
             yield tile_gdf, tb
@@ -243,7 +247,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
         A :py:class:`geopandas.GeoDataFrame` of polygons to clip.
     tile_bounds : `list` or :class:`shapely.geometry.Polygon`
         The geometry to clip objects in `gdf` to. This can either be a
-        ``[left, bottom, right, top]`` bounds list or a
+        ``[left, top, right, bottom] `` bounds list or a
         :class:`shapely.geometry.Polygon` object defining the area to keep.
     min_partial_perc : float, optional
         The minimum fraction of an object in `gdf` that must be
@@ -266,6 +270,8 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
 
     """
     if isinstance(tile_bounds, tuple):
+        tb = box(*tile_bounds)
+    elif isinstance(tile_bounds, list):
         tb = box(*tile_bounds)
     elif isinstance(tile_bounds, Polygon):
         tb = tile_bounds

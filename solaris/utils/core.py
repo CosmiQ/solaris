@@ -50,6 +50,12 @@ def _check_df_load(df):
 def _check_gdf_load(gdf):
     """Check if `gdf` is already loaded in, if not, load from geojson."""
     if isinstance(gdf, str):
+        # as of geopandas 0.6.2, using the OGR CSV driver requires some add'nal
+        # kwargs to create a valid geodataframe with a geometry column. see
+        # https://github.com/geopandas/geopandas/issues/1234
+        if gdf.lower().endswith('csv'):
+            return gpd.read_file(gdf, GEOM_POSSIBLE_NAMES="geometry",
+                                 KEEP_GEOM_COLUMNS="NO")
         try:
             return gpd.read_file(gdf)
         except (DriverError, CPLE_OpenFailedError):
@@ -76,19 +82,19 @@ def _check_geom(geom):
     elif isinstance(geom, list) and len(geom) == 2:  # coordinates
         return Point(geom)
 
-
 def _check_crs(input_crs):
     """Convert CRS to the integer format passed by ``solaris``."""
     if isinstance(input_crs, dict):
         # assume it's an {'init': 'epsgxxxx'} dict
         out_crs = int(input_crs['init'].lower().strip('epsg:'))
+        out_crs = rasterio.crs.CRS.from_epsg(out_crs)
     elif isinstance(input_crs, str):
         # handle PROJ4 strings, epsg strings, wkt strings
-        out_crs = rasterio.crs.CRS.from_string(input_crs).to_epsg()
+        out_crs = rasterio.crs.CRS.from_string(input_crs)
     elif isinstance(input_crs, rasterio.crs.CRS):
-        out_crs = input_crs.to_epsg()
-    elif isinstance(input_crs, int):
         out_crs = input_crs
+    elif isinstance(input_crs, int):
+        out_crs = rasterio.crs.CRS.from_epsg(input_crs)
     elif input_crs is None:
         out_crs = input_crs
     return out_crs
@@ -127,18 +133,18 @@ def get_data_paths(path, infer=False):
         return df[['image', 'label']]  # remove anything extraneous
 
 
-def get_files_recursively(image_path, traverse_subdirs=False):
+def get_files_recursively(path, traverse_subdirs=False, extension='.tif'):
     """Get files from subdirs of `path`, joining them to the dir."""
     if traverse_subdirs:
-        walker = os.walk(image_path)
-        im_path_list = []
+        walker = os.walk(path)
+        path_list = []
         for step in walker:
             if not step[2]:  # if there are no files in the current dir
                 continue
-            im_path_list += [os.path.join(step[0], fname)
-                             for fname in step[2] if
-                             fname.endswith('.tif')]
-        return im_path_list
+            path_list += [os.path.join(step[0], fname)
+                          for fname in step[2] if
+                          fname.lower().endswith(extension)]
+        return path_list
     else:
-        return [f for f in os.listdir(image_path)
-                if f.endswith('.tif')]
+        return [os.path.join(path, f) for f in os.listdir(path)
+                if f.endswith(extension)]

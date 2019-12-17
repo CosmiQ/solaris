@@ -6,21 +6,20 @@ import pandas as pd
 import geopandas as gpd
 from affine import Affine
 import rasterio
-from rasterio.crs import CRS
-from rasterio.vrt import WarpedVRT
 from rasterio.warp import calculate_default_transform, Resampling
 from rasterio.warp import transform_bounds
 from shapely.affinity import affine_transform
-from shapely.errors import WKTReadingError
 from shapely.wkt import loads
 from shapely.geometry import Point, Polygon, LineString
-from shapely.geometry import MultiLineString, MultiPolygon, mapping, shape
+from shapely.geometry import MultiLineString, MultiPolygon, mapping, box, shape
 from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
 from fiona.transform import transform
 import osr
 import gdal
+import json
 from warnings import warn
+import sys
 
 
 def reproject(input_object, input_crs=None,
@@ -100,7 +99,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                resampling_method='bicubic'):
 
     if input_type == 'vector':
-        output = input_data.to_crs(epsg=target_crs)
+        output = input_data.to_crs(crs=target_crs)
         if dest_path is not None:
             output.to_file(dest_path, driver='GeoJSON')
 
@@ -108,9 +107,9 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
 
         if isinstance(input_data, rasterio.DatasetReader):
             transform, width, height = calculate_default_transform(
-                CRS.from_epsg(input_crs), CRS.from_epsg(target_crs),
+                input_crs, target_crs,
                 input_data.width, input_data.height, *input_data.bounds
-                )
+            )
             kwargs = input_data.meta.copy()
             kwargs.update({'crs': target_crs,
                            'transform': transform,
@@ -126,7 +125,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                             src_transform=input_data.transform,
                             src_crs=input_data.crs,
                             dst_transform=transform,
-                            dst_crs=CRS.from_epsg(target_crs),
+                            dst_crs=target_crs,
                             resampling=getattr(Resampling, resampling_method)
                         )
                 output = rasterio.open(dest_path)
@@ -141,7 +140,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                         src_transform=input_data.transform,
                         src_crs=input_data.crs,
                         dst_transform=transform,
-                        dst_crs=CRS.from_epsg(target_crs),
+                        dst_crs=target_crs,
                         resampling=getattr(Resampling, resampling_method)
                     )
 
@@ -217,8 +216,8 @@ def get_bounds(input, crs=None):
         crs = _check_crs(crs)
         src_crs = get_crs(input_data)
     # transform bounds to desired CRS
-    bounds = transform_bounds(CRS.from_epsg(src_crs),
-                              CRS.from_epsg(crs),
+    bounds = transform_bounds(src_crs,
+                              crs,
                               *bounds)
 
     return bounds
@@ -227,9 +226,9 @@ def get_bounds(input, crs=None):
 def get_crs(obj):
     """Get a coordinate reference system from any georegistered object."""
     if isinstance(obj, gpd.GeoDataFrame):
-        return int(obj.crs['init'].lstrip('epsg:'))
+        return _check_crs(obj.crs)
     elif isinstance(obj, rasterio.DatasetReader):
-        return int(obj.crs['init'].lstrip('epsg:'))
+        return _check_crs(obj.crs)
     elif isinstance(obj, gdal.Dataset):
         # rawr
         return int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
@@ -253,9 +252,9 @@ def _parse_geo_data(input):
             input_type = 'vector'
         elif isinstance(
                 input_data, rasterio.DatasetReader
-                ) or isinstance(
+        ) or isinstance(
                 input_data, gdal.Dataset
-                ):
+        ):
             input_type = 'raster'
         else:
             raise ValueError('The input format {} is not compatible with '
@@ -298,20 +297,17 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     """
     input_geom = _check_geom(input_geom)
 
-    input_coords = _get_coords(input_geom)
-
     if input_crs is not None:
         input_crs = _check_crs(input_crs)
         if target_crs is None:
-            latlon = reproject_geometry(input_geom, input_crs, target_crs=4326)
-            target_crs = latlon_to_utm_epsg(latlon.y, latlon.x)
+            geom = reproject_geometry(input_geom, input_crs, target_crs=4326)
+            target_crs = latlon_to_utm_epsg(geom.centroid.y, geom.centroid.x)
         target_crs = _check_crs(target_crs)
-        xformed_coords = transform('EPSG:' + str(input_crs),
-                                   'EPSG:' + str(target_crs),
-                                   *input_coords)
+        gdf = gpd.GeoDataFrame(geometry=[input_geom])
+        gdf.crs = input_crs
         # create a new instance of the same geometry class as above with the
         # new coordinates
-        output_geom = input_geom.__class__(list(zip(*xformed_coords)))
+        output_geom = gdf.to_crs(target_crs).iloc[0]['geometry']
 
     else:
         if affine_obj is None:
@@ -348,7 +344,7 @@ def gdf_get_projection_unit(vector_file):
     c = _check_gdf_load(vector_file)
     crs = _check_crs(c.crs)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(crs)
+    srs.ImportFromEPSG(crs.to_epsg())
     WKT = srs.ExportToWkt()
     # get count of 'UNIT'
     if WKT.count('UNIT') == 1:
@@ -365,7 +361,7 @@ def gdf_get_projection_unit(vector_file):
 
 
 def raster_get_projection_unit(image):
-    """Get the projection unit for a vector_file.
+    """Get the projection unit for an image.
 
     Arguments
     ---------
@@ -474,8 +470,8 @@ def geometries_internal_intersection(polygons):
     intersect_lists = intersect_lists.reset_index()
     # first, we get rid  of self-intersection indices in 'intersectors':
     intersect_lists['intersectors'] = intersect_lists.apply(
-            lambda x: [i for i in x['intersectors'] if i != x['gs_idx']],
-            axis=1)
+        lambda x: [i for i in x['intersectors'] if i != x['gs_idx']],
+        axis=1)
     # for each row, we next create a union of the polygons in 'intersectors',
     # and find the intersection of that with the polygon at gs[gs_idx]. this
     # (Multi)Polygon output corresponds to all of the intersections for the
@@ -715,3 +711,119 @@ def _get_coords(geom):
         return geom.coords.xy
     elif isinstance(geom, Polygon):
         return geom.exterior.coords.xy
+
+
+def bbox_corners_to_coco(bbox):
+    """Convert bbox from ``[minx, miny, maxx, maxy]`` to coco format.
+
+    COCO formats bounding boxes as ``[minx, miny, width, height]``.
+
+    Arguments
+    ---------
+    bbox : :class:`list`-like of numerics
+        A 4-element list of the form ``[minx, miny, maxx, maxy]``.
+
+    Returns
+    -------
+    coco_bbox : list
+        ``[minx, miny, width, height]`` shape.
+    """
+
+    return [bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]]
+
+
+def polygon_to_coco(polygon):
+    """Convert a geometry to COCO polygon format."""
+    if isinstance(polygon, Polygon):
+        coords = polygon.exterior.coords.xy
+    elif isinstance(polygon, str):  # assume it's WKT
+        coords = loads(polygon).exterior.coords.xy
+    else:
+        raise ValueError('polygon must be a shapely geometry or WKT.')
+    # zip together x,y pairs
+    coords = list(zip(coords[0], coords[1]))
+    coords = [item for coordinate in coords for item in coordinate]
+
+    return coords
+
+
+def split_geom(geometry, tile_size, resolution=None, use_projection_units=False):
+    """Splits a vector into approximately equal sized tiles. Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
+
+    The more complex the geometry, the slower this will run, but geometrys with around 10000
+    coordinates run in a few seconds time. You can simplify geometries with
+    shapely.geometry.Polygon.simplify if necessary.
+    
+    Arguments
+    ---------
+    geometry : str, optional
+        A shapely.geometry.Polygon, path to a single feature geojson, 
+        or list-like bounding box shaped like [left, bottom, right, top]. 
+        The geometry must be in the projection coordinates corresponding to 
+        the resolution units.
+    tile_size : `tuple` of `int`s, optional
+        The size of the input tiles in ``(y, x)`` coordinates. By default,
+        this is in pixel units; this can be changed to metric units using the
+        `use_metric_size` argument.
+    use_projection_units : bool, optional
+        Is `tile_size` in pixel units (default) or distance units? To set to distance units
+        use ``use_projection_units=True``. If False, resolution must be supplied.
+    resolution: `tuple` of `float`s, optional
+        (x resolution, y resolution). Used by default if use_metric_size is False.
+        Can be acquired from rasterio dataset object's metadata.
+
+    Returns
+    -------
+    tile_bounds : list (containing sublists like [left, bottom, right, top])
+
+    """
+    if isinstance(geometry, str):
+        gj = json.loads(open(geometry).read())
+
+        features = gj['features']
+        if not len(features) == 1:
+            print('Feature collection must only contain one feature')
+            sys.exit(1)
+
+        geometry = shape(features[0]['geometry'])
+        
+    elif isinstance(geometry, list) or isinstance(geometry, np.ndarray):
+        assert len(geometry) == 4
+        geometry = box(*geometry)
+        
+    if use_projection_units is False:
+        if resolution is None:
+            print(f"Resolution must be specified if use_projection_units is False. Access it from src raster meta.")
+            return
+        # convert pixel units to CRS units to use during image tiling.
+        # NOTE: This will be imperfect for large AOIs where there isn't
+        # a constant relationship between the src CRS units and src pixel
+        # units.
+        if isinstance(resolution, (float, int)):
+            resolution = (resolution, resolution)
+        tmp_tile_size = [tile_size[0]*resolution[0],
+                         tile_size[1]*resolution[1]]
+    else:
+        tmp_tile_size = tile_size
+        
+    bounds  = geometry.bounds
+    xmin = bounds[0]
+    xmax =  bounds[2]
+    ymin = bounds[1]
+    ymax = bounds[3]
+    x_extent = xmax - xmin
+    y_extent = ymax - ymin
+    x_steps = np.ceil(x_extent/tmp_tile_size[1])
+    y_steps = np.ceil(y_extent/tmp_tile_size[0])
+    x_mins = np.arange(xmin, xmin + tmp_tile_size[1]*x_steps,
+                            tmp_tile_size[1])
+    y_mins = np.arange(ymin, ymin + tmp_tile_size[0]*y_steps,
+                           tmp_tile_size[0])
+    tile_bounds = [(i,
+                    j,
+                    i+tmp_tile_size[1],
+                    j+tmp_tile_size[0])
+                    for i in x_mins for j in y_mins if not geometry.intersection(
+                        box(*(i, j, i+tmp_tile_size[1], j+tmp_tile_size[0]))).is_empty
+                    ]
+    return tile_bounds

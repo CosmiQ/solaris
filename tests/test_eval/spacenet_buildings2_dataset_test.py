@@ -28,8 +28,8 @@ class TestEvalSpaceNetBuildings2(object):
         results_df_full_sorted = (results_df_full
                                   .sort_values('imageID')
                                   .reset_index(drop=True))
-        assert almostequal(pred_results, results_df_formatted)
-        assert almostequal(pred_results_full_sorted, results_df_full_sorted)
+        assert almostequal(pred_results, results_df_formatted[pred_results.columns])
+        assert almostequal(pred_results_full_sorted, results_df_full_sorted[pred_results_full_sorted.columns])
 
 
 class TestEvalCLISN2(object):
@@ -52,12 +52,12 @@ class TestEvalCLISN2(object):
         test_results = pd.read_csv('test_out.csv')
         full_test_results = pd.read_csv('test_out_full.csv')
 
-        assert pred_results.equals(test_results)
-        assert pred_results_full.sort_values(by='imageID') \
-                                .reset_index(drop=True) \
-                                .equals(full_test_results
-                                        .sort_values(by='imageID')
-                                        .reset_index(drop=True))
+        assert pred_results.equals(test_results[pred_results.columns])
+        pred_results_full_sorted = pred_results_full.sort_values(by='imageID') \
+                                .reset_index(drop=True)
+        full_test_results_sorted = full_test_results.sort_values(by='imageID') \
+                                .reset_index(drop=True)
+        assert pred_results_full_sorted.equals(full_test_results_sorted[pred_results_full_sorted.columns])
 
         os.remove('test_out.csv')
         os.remove('test_out_full.csv')

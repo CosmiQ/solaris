@@ -2,9 +2,11 @@ from ..utils.core import _check_df_load, _check_geom
 from ..utils.core import _check_skimage_im_load, _check_rasterio_im_load
 from ..utils.geo import gdf_get_projection_unit, reproject
 from ..utils.geo import geometries_internal_intersection
+from ..utils.tile import save_empty_geojson
 from .polygon import georegister_px_df, geojson_to_px_gdf, affine_transform_gdf
 import numpy as np
 from shapely.geometry import shape
+from shapely.geometry import Polygon
 import geopandas as gpd
 import pandas as pd
 import rasterio
@@ -188,7 +190,7 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
 
-    if len(df) == 0:
+    if len(df) == 0 and not out_file:
         return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
@@ -212,17 +214,21 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
                                     df[burn_field].astype('uint8')))
         else:
             feature_list = list(zip(df[geom_col],
-                                    df[burn_field].astype('uint8')))
+                                    df[burn_field].astype('float32')))
     else:
         feature_list = list(zip(df[geom_col], [burn_value]*len(df)))
 
-    output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
-                                    transform=affine_obj)
+    if len(df) > 0:
+        output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
+                                        transform=affine_obj)
+    else:
+        output_arr = np.zeros(shape=shape, dtype='uint8')
     if out_file:
         meta = reference_im.meta.copy()
         meta.update(count=1)
         if out_type == 'int':
             meta.update(dtype='uint8')
+            meta.update(nodata=0)
         with rasterio.open(out_file, 'w', **meta) as dst:
             dst.write(output_arr, indexes=1)
 
@@ -379,7 +385,7 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
 
-    if len(df) == 0:
+    if len(df) == 0 and not out_file:
         return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
@@ -394,7 +400,10 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
                                      geom_col=geom_col, affine_obj=affine_obj)
     buffered_geoms = buffered_geoms[geom_col]
     # create a single multipolygon that covers all of the intersections
-    intersect_poly = geometries_internal_intersection(buffered_geoms)
+    if len(df) > 0:
+        intersect_poly = geometries_internal_intersection(buffered_geoms)
+    else:
+        intersect_poly = Polygon()
 
     # handle case where there's no intersection
     if intersect_poly.is_empty:
@@ -706,7 +715,7 @@ def preds_to_binary(pred_arr, channel_scaling=None, bg_threshold=0):
 
 
 def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
-                         output_path=None, output_type='csv', min_area=40,
+                         output_path=None, output_type='geojson', min_area=40,
                          bg_threshold=0, do_transform=None, simplify=False,
                          tolerance=0.5, **kwargs):
     """Get polygons from an image mask.
@@ -795,6 +804,15 @@ def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
         polygon_gdf['geometry'] = polygon_gdf['geometry'].apply(
             lambda x: x.simplify(tolerance=tolerance)
         )
+    # save output files
+    if output_path is not None:
+        if output_type.lower() == 'geojson':
+            if len(polygon_gdf) > 0:
+                polygon_gdf.to_file(output_path, driver='GeoJSON')
+            else:
+                save_empty_geojson(output_path, polygon_gdf.crs.to_epsg())
+        elif output_type.lower() == 'csv':
+            polygon_gdf.to_csv(output_path, index=False)
 
     return polygon_gdf
 
@@ -821,3 +839,122 @@ def _check_do_transform(df, reference_im, affine_obj):
     elif crs and (reference_im is not None or affine_obj is not None):
         # if the input has a CRS and another obj was provided for xforming
         return True
+
+
+def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
+                  do_transform=None, affine_obj=None, shape=(900, 900),
+                  out_type='int', burn_value=255, burn_field=None, nodata_value=0):
+    """Convert a dataframe of geometries to a pixel mask.
+
+    Arguments
+    ---------
+    df : :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame`
+        A :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame` instance
+        with a column containing geometries (identified by `geom_col`). If the
+        geometries in `df` are not in pixel coordinates, then `affine` or
+        `reference_im` must be passed to provide the transformation to convert.
+    out_file : str, optional
+        Path to an image file to save the output to. Must be compatible with
+        :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
+        provided (for metadata purposes).
+    reference_im : :class:`rasterio.DatasetReader` or `str`, optional
+        An image to extract necessary coordinate information from: the
+        affine transformation matrix, the image extent, etc. If provided,
+        `affine_obj` and `shape` are ignored.
+    geom_col : str, optional
+        The column containing geometries in `df`. Defaults to ``"geometry"``.
+    do_transform : bool, optional
+        Should the values in `df` be transformed from geospatial coordinates
+        to pixel coordinates? Defaults to ``None``, in which case the function
+        attempts to infer whether or not a transformation is required based on
+        the presence or absence of a CRS in `df`. If ``True``, either
+        `reference_im` or `affine_obj` must be provided as a source for the
+        the required affine transformation matrix.
+    affine_obj : `list` or :class:`affine.Affine`, optional
+        Affine transformation to use to convert from geo coordinates to pixel
+        space. Only provide this argument if `df` is a
+        :class:`geopandas.GeoDataFrame` with coordinates in a georeferenced
+        coordinate space. Ignored if `reference_im` is provided.
+    shape : tuple, optional
+        An ``(x_size, y_size)`` tuple defining the pixel extent of the output
+        mask. Ignored if `reference_im` is provided.
+    out_type : 'float' or 'int'
+    burn_value : `int` or `float`, optional
+        The value to use for labeling objects in the mask. Defaults to 255 (the
+        max value for ``uint8`` arrays). The mask array will be set to the same
+        dtype as `burn_value`. Ignored if `burn_field` is provided.
+    burn_field : str, optional
+        Name of a column in `df` that provides values for `burn_value` for each
+        independent object. If provided, `burn_value` is ignored.
+    nodata_value : `int` or `float`, optional
+        The value to use for nodata pixels in the mask. Defaults to 0 (the
+        min value for ``uint8`` arrays). Used if reference_im nodata value is a float.
+        Ignored if reference_im nodata value is an int or if reference_im is not used.
+
+    Returns
+    -------
+    mask : :class:`numpy.array`
+        A pixel mask with 0s for non-object pixels and `burn_value` at object
+        pixels. `mask` dtype will coincide with `burn_value`.
+
+    """
+    # TODO: Refactor to remove some duplicated code here and in other mask fxns
+
+    if out_file and not reference_im:
+        raise ValueError(
+            'If saving output to file, `reference_im` must be provided.')
+    df = _check_df_load(df)
+
+    if len(df) == 0:
+        return np.zeros(shape=shape, dtype='uint8')
+
+    if do_transform is None:
+        # determine whether or not transform should be done
+        do_transform = _check_do_transform(df, reference_im, affine_obj)
+
+    df[geom_col] = df[geom_col].apply(_check_geom)  # load in geoms if wkt
+    if not do_transform:
+        affine_obj = Affine(1, 0, 0, 0, 1, 0)  # identity transform
+
+    if reference_im:
+        reference_im = _check_rasterio_im_load(reference_im)
+        shape = reference_im.shape
+        if do_transform:
+            affine_obj = reference_im.transform
+
+    # extract geometries and pair them with burn values
+
+    if burn_field:
+        if out_type == 'int':
+            feature_list = list(zip(df[geom_col],
+                                    df[burn_field].astype('uint8')))
+        else:
+            feature_list = list(zip(df[geom_col],
+                                    df[burn_field].astype('float32')))
+    else:
+        feature_list = list(zip(df[geom_col], [burn_value]*len(df)))
+
+    if out_type == 'int':
+        output_arr = np.empty(shape=(shape[0], shape[1],
+                                     len(feature_list)), dtype='uint8')
+    else:
+        output_arr = np.empty(shape=(shape[0], shape[1],
+                                     len(feature_list)), dtype='float32')
+    # initialize the output array
+
+    for idx, feat in enumerate(feature_list):
+        output_arr[:, :, idx] = features.rasterize([feat], out_shape=shape,
+                                                   transform=affine_obj)
+    if out_file:
+        meta = reference_im.meta.copy()
+        meta.update(count=output_arr.shape[-1])
+        if out_type == 'int':
+            meta.update(dtype='uint8')
+            if isinstance(meta['nodata'], float):
+                meta.update(nodata=nodata_value)
+        with rasterio.open(out_file, 'w', **meta) as dst:
+            for c in range(1, 1 + output_arr.shape[-1]):
+                dst.write(output_arr[:, :, c-1], indexes=c)
+            dst.close()
+
+    return output_arr

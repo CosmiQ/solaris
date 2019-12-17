@@ -19,8 +19,8 @@ class TestEvalOffNadir(object):
             os.path.join(solaris.data.data_dir, 'sample_preds.csv'),
             os.path.join(solaris.data.data_dir, 'sample_truth.csv')
             )
-        assert pred_results.equals(results_df.reset_index())
-        assert pred_results_full.equals(results_df_full)
+        assert pred_results.equals(results_df.reset_index()[pred_results.columns])
+        assert pred_results_full.equals(results_df_full[pred_results_full.columns])
 
 
 class TestEvalCLI(object):
@@ -42,9 +42,10 @@ class TestEvalCLI(object):
         test_results = pd.read_csv('test_out.csv')
         full_test_results = pd.read_csv('test_out_full.csv')
 
-        assert pred_results.equals(test_results)
-        assert pred_results_full.sort_values(by='imageID').reset_index(drop=True).equals(
-            full_test_results.sort_values(by='imageID').reset_index(drop=True))
+        assert pred_results.equals(test_results[pred_results.columns])
+        pred_results_full_sorted = pred_results_full.sort_values(by='imageID').reset_index(drop=True)
+        full_test_results_sorted = full_test_results.sort_values(by='imageID').reset_index(drop=True)
+        assert pred_results_full_sorted.equals(full_test_results_sorted[pred_results_full_sorted.columns])
 
         os.remove('test_out.csv')
         os.remove('test_out_full.csv')
