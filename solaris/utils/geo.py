@@ -813,7 +813,7 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False,
         tmp_tile_size = tile_size
 
     if src_img is not None:
-        geometry = geometry.intersection(box(get_bounds(src_img)))
+        geometry = geometry.intersection(box(*get_bounds(src_img)))
 
     bounds = geometry.bounds
     xmin = bounds[0]
