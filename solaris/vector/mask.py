@@ -13,7 +13,7 @@ import rasterio
 from rasterio import features
 from affine import Affine
 from skimage.morphology import square, erosion, dilation
-
+import sys
 
 def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
                   geom_col='geometry', do_transform=None, affine_obj=None,
@@ -950,7 +950,9 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         reference_im = _check_rasterio_im_load(reference_im)
         try:
             bad_data_mask = (reference_im.read() != reference_im.nodata).all(axis=0) # take logical and along all dims so that all pixxels not -9999 across bands
-        except("A nodata value is not defined for the source image. Make sure the reference_im has a nodata value defined.")
+        except AttributeError:
+            print("A nodata value is not defined for the source image. Make sure the reference_im has a nodata value defined.")
+            sys.exit(1)
         output_arr = output_arr.where(bad_data_mask) # mask is broadcasted to filter labels where there are non-nan image values
 
     if out_file:
