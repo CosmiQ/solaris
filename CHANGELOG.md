@@ -44,6 +44,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 - 20191123, dphogan: Fixed issue in mask_to_poly_geojson() with empty GeoDataFrames.
 - 20191204, dphogan: Fixed issue with file output from footprint_mask() and contact_mask() (#301)
 - 20191212, jshermeyer: Fixed issue with vector tiling: could not load in list of sublists previously. Corrected comments for appropriate order as well. (#306)
+- 20191219: rbavery: In `solaris.utils.geo.split_geom`, tile bounds that fall within `aoi_boundary` but not `src_img` are not returned. `solaris.vector.mask.instance_mask` only rasterizes geojsons where `reference_im` has values (nodata pixels won't have corresponding labels) (#315)
 
 
 ---
