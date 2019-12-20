@@ -29,6 +29,8 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 20191203: dphogan: Added filename argument to vector tiler's tile() (#297)
 20191211: rbavery: Tilers also accept rasterio CRS objects, `RasterTiler.tile` returns CRS object for vector tiler (#294)
 20191214: rbavery: tiler argument `aoi_bounds` is now `aoi_boundary` and can accept polygons besides boxes. functionaility for this moved to `soalris.utils.geo.split_geom` (#298)
+20191214: rbavery: tiler argument `aoi_bounds` is now `aoi_boundary` and can accept polygons besides boxes. functionaility for this moved to `soalris.utils.geo.split_geom` (#298)
+20191219: rbavery: In `solaris.utils.geo.split_geom` tile bounds that fall within `aoi_boundary` but not `src_img`. `solaris.vector.mask.instance_mask` only rasterizes geojsons where `reference_im` has values (nodata pixels won't have corresponding labels) (#315)
 
 ### Removed
 
