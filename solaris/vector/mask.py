@@ -947,14 +947,10 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
 
     if reference_im:
         reference_im = _check_rasterio_im_load(reference_im)
-        try:
     try:
             bad_data_mask = (reference_im.read() == reference_im.nodata).any(axis=0) # take logical and along all dims so that all pixxels not -9999 across bands
     except AttributeError as ae:  # raise another, more verbose AttributeError
         raise AttributeError("A nodata value is not defined for the source image. Make sure the reference_im has a nodata value defined.") from ae
-        except AttributeError:
-            print("A nodata value is not defined for the source image. Make sure the reference_im has a nodata value defined.")
-            sys.exit(1)
         bad_data_mask = np.dstack([bad_data_mask]*output_arr.shape[2])
         output_arr = np.where(bad_data_mask, 0, output_arr) # mask is broadcasted to filter labels where there are non-nan image values
 
