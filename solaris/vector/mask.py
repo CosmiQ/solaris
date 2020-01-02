@@ -1,4 +1,4 @@
-from ..utils.core import _check_df_load, _check_geom
+from ..utils.core import _check_df_load, _check_geom, _check_crs
 from ..utils.core import _check_skimage_im_load, _check_rasterio_im_load
 from ..utils.geo import gdf_get_projection_unit, reproject
 from ..utils.geo import geometries_internal_intersection
@@ -611,7 +611,7 @@ def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
         reference_im = _check_rasterio_im_load(reference_im)
 
     if hasattr(df, 'crs'):
-        orig_crs = df.crs
+        orig_crs = _check_crs(df.crs)
     else:
         orig_crs = None  # will represent pixel crs
 
@@ -648,10 +648,10 @@ def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
         lambda x: x.buffer(buffer))
 
     # return to original crs
-    if getattr(df_for_buffer, 'crs', None) != orig_crs:
+    if _check_crs(getattr(df_for_buffer, 'crs', None)) != orig_crs:
         if orig_crs is not None and \
                 getattr(df_for_buffer, 'crs', None) is not None:
-            buffered_df = df_for_buffer.to_crs(orig_crs)
+            buffered_df = df_for_buffer.to_crs(orig_crs.to_wkt())
         elif orig_crs is None:  # but df_for_buffer has one: meters=True case
             buffered_df = geojson_to_px_gdf(df_for_buffer, reference_im)
         else:  # orig_crs exists, but df_for_buffer doesn't have one
@@ -799,7 +799,7 @@ def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
             values.append(value)
 
     polygon_gdf = gpd.GeoDataFrame({'geometry': polygons, 'value': values},
-                                   crs=crs)
+                                   crs=crs.to_wkt())
     if simplify:
         polygon_gdf['geometry'] = polygon_gdf['geometry'].apply(
             lambda x: x.simplify(tolerance=tolerance)

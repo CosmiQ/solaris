@@ -99,7 +99,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                resampling_method='bicubic'):
 
     if input_type == 'vector':
-        output = input_data.to_crs(crs=target_crs)
+        output = input_data.to_crs(crs=target_crs.to_wkt())
         if dest_path is not None:
             output.to_file(dest_path, driver='GeoJSON')
 
@@ -147,7 +147,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
         elif isinstance(input_data, gdal.Dataset):
             if dest_path is not None:
                 gdal.Warp(dest_path, input_data,
-                          dstSRS='EPSG:' + str(target_crs))
+                          dstSRS='EPSG:' + str(target_crs.to_epsg()))
                 output = gdal.Open(dest_path)
             else:
                 raise ValueError('An output path must be provided for '
@@ -167,7 +167,7 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
                          ' input_crs.')
     input_crs = _check_crs(input_crs)
 
-    bounds = get_bounds(input_data, crs=4326)  # need in wkt84 for UTM zone
+    bounds = get_bounds(input_data, crs=_check_crs(4326))  # need in wkt84 for UTM zone
     midpoint = [(bounds[1] + bounds[3])/2., (bounds[0] + bounds[2])/2.]
     utm_epsg = latlon_to_utm_epsg(*midpoint)
 
@@ -300,14 +300,15 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     if input_crs is not None:
         input_crs = _check_crs(input_crs)
         if target_crs is None:
-            geom = reproject_geometry(input_geom, input_crs, target_crs=4326)
+            geom = reproject_geometry(input_geom, input_crs,
+                                      target_crs=_check_crs(4326))
             target_crs = latlon_to_utm_epsg(geom.centroid.y, geom.centroid.x)
         target_crs = _check_crs(target_crs)
         gdf = gpd.GeoDataFrame(geometry=[input_geom])
         gdf.crs = input_crs
         # create a new instance of the same geometry class as above with the
         # new coordinates
-        output_geom = gdf.to_crs(target_crs).iloc[0]['geometry']
+        output_geom = gdf.to_crs(target_crs.to_wkt()).iloc[0]['geometry']
 
     else:
         if affine_obj is None:
@@ -753,13 +754,13 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False)
     The more complex the geometry, the slower this will run, but geometrys with around 10000
     coordinates run in a few seconds time. You can simplify geometries with
     shapely.geometry.Polygon.simplify if necessary.
-    
+
     Arguments
     ---------
     geometry : str, optional
-        A shapely.geometry.Polygon, path to a single feature geojson, 
-        or list-like bounding box shaped like [left, bottom, right, top]. 
-        The geometry must be in the projection coordinates corresponding to 
+        A shapely.geometry.Polygon, path to a single feature geojson,
+        or list-like bounding box shaped like [left, bottom, right, top].
+        The geometry must be in the projection coordinates corresponding to
         the resolution units.
     tile_size : `tuple` of `int`s, optional
         The size of the input tiles in ``(y, x)`` coordinates. By default,
@@ -786,11 +787,11 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False)
             sys.exit(1)
 
         geometry = shape(features[0]['geometry'])
-        
+
     elif isinstance(geometry, list) or isinstance(geometry, np.ndarray):
         assert len(geometry) == 4
         geometry = box(*geometry)
-        
+
     if use_projection_units is False:
         if resolution is None:
             print(f"Resolution must be specified if use_projection_units is False. Access it from src raster meta.")
@@ -805,10 +806,10 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False)
                          tile_size[1]*resolution[1]]
     else:
         tmp_tile_size = tile_size
-        
-    bounds  = geometry.bounds
+
+    bounds = geometry.bounds
     xmin = bounds[0]
-    xmax =  bounds[2]
+    xmax = bounds[2]
     ymin = bounds[1]
     ymax = bounds[3]
     x_extent = xmax - xmin
