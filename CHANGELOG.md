@@ -19,8 +19,9 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ### Added
 ### Removed
 ### Changed
-- 202001003, nrweir: Updated version pins for proj6 compatibility, also relaxed version pins for many dependencies (#321)
+- 20200103, nrweir: Updated version pins for proj6 compatibility, also relaxed version pins for many dependencies (#321)
 ### Fixed
+- 20200103, nrweir: Fixed various places where CRS wasn't passed correctly from rasterio CRS object (#317)
 ### Deprecated
 ### Security
 
