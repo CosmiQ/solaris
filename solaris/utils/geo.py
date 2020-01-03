@@ -97,6 +97,8 @@ def reproject(input_object, input_crs=None,
 def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                resampling_method='bicubic'):
 
+    input_crs = _check_crs(input_crs)
+    target_crs = _check_crs(target_crs)
     if input_type == 'vector':
         output = input_data.to_crs(crs=target_crs.to_wkt())
         if dest_path is not None:

@@ -781,7 +781,7 @@ def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
             ref.close()
     else:
         transform = Affine(1, 0, 0, 0, 1, 0)  # identity transform
-        crs = None
+        crs = rasterio.crs.CRS()
 
     mask = mask_arr > bg_threshold
     mask = mask.astype('uint8')
