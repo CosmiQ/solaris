@@ -19,12 +19,21 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ### Added
 ### Removed
 ### Changed
-- 20200103, nrweir: Updated version pins for proj6 compatibility, also relaxed version pins for many dependencies (#321)
 ### Fixed
-- 20200103, nrweir: Fixed various places where CRS wasn't passed correctly from rasterio CRS object (#317)
-- 20200103, nrweir: Fixed axis length check for axis ordering in sol.utils.raster.reorder_axes() (#318)
 ### Deprecated
 ### Security
+
+---
+
+## Version 0.2.1
+
+### Changed
+- 20200103, nrweir: Updated version pins for proj6 compatibility, also relaxed version pins for many dependencies (#321)
+### Fixed
+- 20200103, nrweir: Fixed various places where CRS wasn't passed correctly from rasterio CRS object (#319, #322)
+- 20200103, nrweir: Fixed axis length check for axis ordering in sol.utils.raster.reorder_axes() (#318)
+
+---
 
 ## Version 0.2.0
 
