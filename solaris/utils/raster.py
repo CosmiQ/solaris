@@ -31,7 +31,7 @@ def reorder_axes(arr, target='tensorflow'):
                 arr = arr.permute(1, 2, 0)
             elif target == 'torch' and axes[2] < axes[1]:
                 arr = arr.permute(2, 0, 1)
-        elif len(axes == 4):
+        elif len(axes) == 4:
             if target == 'tensorflow' and axes[1] < axes[2]:
                 arr = arr.permute(0, 2, 3, 1)
             elif target == 'torch' and axes[3] < axes[2]:

@@ -52,11 +52,11 @@ class VectorTiler(object):
             (this can be extracted from
             :class:`solaris.tile.raster_tile.RasterTiler` after tiling imagery)
         tile_bounds_crs : int, optional
-            The EPSG code or rasterio.crs.CRS object for the CRS that the tile 
-            bounds are in. RasterTiler.tile returns the CRS of the raster tiles 
-            and can be used here. If not provided, it's assumed that the CRS is the 
-            same as in `src`. This argument must be provided if the bound 
-            coordinates and `src` are not in the same CRS, otherwise tiling will 
+            The EPSG code or rasterio.crs.CRS object for the CRS that the tile
+            bounds are in. RasterTiler.tile returns the CRS of the raster tiles
+            and can be used here. If not provided, it's assumed that the CRS is the
+            same as in `src`. This argument must be provided if the bound
+            coordinates and `src` are not in the same CRS, otherwise tiling will
             not occur correctly.
         geom_type : str, optional (default: "Polygon")
             The type of geometries contained within `src`. Defaults to
@@ -167,7 +167,7 @@ class VectorTiler(object):
             reproject_bounds = True  # used to transform tb for clip_gdf()
         else:
             reproject_bounds = False
-        
+
         self.proj_unit = self.src_crs.linear_units
         if getattr(self, 'dest_crs', None) is None:
             self.dest_crs = self.src_crs
@@ -185,7 +185,7 @@ class VectorTiler(object):
                 tile_gdf = clip_gdf(self.src, tb, min_partial_perc, geom_type,
                                     verbose=self.super_verbose)
             if self.src_crs != self.dest_crs:
-                tile_gdf = tile_gdf.to_crs(crs=self.dest_crs)
+                tile_gdf = tile_gdf.to_crs(crs=self.dest_crs.to_wkt())
             if split_multi_geoms:
                 split_multi_geometries(tile_gdf, obj_id_col=obj_id_col)
             yield tile_gdf, tb

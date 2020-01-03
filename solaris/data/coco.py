@@ -125,7 +125,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
     logger = logging.getLogger(__name__)
     logger.setLevel(_get_logging_level(int(verbose)))
     logger.debug('Preparing image filename: image ID dict.')
-
+    # pdb.set_trace()
     if isinstance(image_src, str):
         if image_src.endswith('json'):
             logger.debug('COCO json provided. Extracting fname:id dict.')
@@ -192,6 +192,8 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         logger.debug('Reading in {}'.format(gj))
         curr_gdf = gpd.read_file(gj)
         curr_gdf['label_fname'] = gj
+        curr_gdf['image_fname'] = ''
+        curr_gdf['image_id'] = np.nan
         if category_attribute is None:
             logger.debug('No category attribute provided. Creating a default '
                          '"other" category.')
@@ -202,12 +204,13 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         if do_matches:  # multiple images: multiple labels
             logger.debug('do_matches is True, finding matching image')
             logger.debug('Converting to pixel coordinates.')
-            curr_gdf = geojson_to_px_gdf(
-                curr_gdf,
-                im_path=match_df.loc[match_df['label_fname'] == gj,
-                                     'image_fname'].values[0])
-            curr_gdf['image_id'] = image_ref[match_df.loc[
-                match_df['label_fname'] == gj, 'image_fname'].values[0]]
+            if len(curr_gdf) > 0:  # if there are geoms, reproj to px coords
+                curr_gdf = geojson_to_px_gdf(
+                    curr_gdf,
+                    im_path=match_df.loc[match_df['label_fname'] == gj,
+                                         'image_fname'].values[0])
+                curr_gdf['image_id'] = image_ref[match_df.loc[
+                    match_df['label_fname'] == gj, 'image_fname'].values[0]]
         # handle case with multiple images, one big geojson
         elif len(image_ref) > 1 and len(label_list) == 1:
             logger.debug('do_matches is False. Many images:1 label detected.')

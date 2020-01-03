@@ -14,7 +14,6 @@ from shapely.geometry import Point, Polygon, LineString
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, box, shape
 from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
-from fiona.transform import transform
 import osr
 import gdal
 import json
@@ -74,7 +73,7 @@ def reproject(input_object, input_crs=None,
     """
     input_data, input_type = _parse_geo_data(input_object)
     if input_crs is None:
-        input_crs = get_crs(input_data)
+        input_crs = _check_crs(get_crs(input_data))
     else:
         input_crs = _check_crs(input_crs)
     if target_object is not None:
@@ -98,8 +97,10 @@ def reproject(input_object, input_crs=None,
 def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                resampling_method='bicubic'):
 
+    input_crs = _check_crs(input_crs)
+    target_crs = _check_crs(target_crs)
     if input_type == 'vector':
-        output = input_data.to_crs(crs=target_crs)
+        output = input_data.to_crs(crs=target_crs.to_wkt())
         if dest_path is not None:
             output.to_file(dest_path, driver='GeoJSON')
 
@@ -147,7 +148,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
         elif isinstance(input_data, gdal.Dataset):
             if dest_path is not None:
                 gdal.Warp(dest_path, input_data,
-                          dstSRS='EPSG:' + str(target_crs))
+                          dstSRS='EPSG:' + str(target_crs.to_epsg()))
                 output = gdal.Open(dest_path)
             else:
                 raise ValueError('An output path must be provided for '
@@ -167,7 +168,7 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
                          ' input_crs.')
     input_crs = _check_crs(input_crs)
 
-    bounds = get_bounds(input_data, crs=4326)  # need in wkt84 for UTM zone
+    bounds = get_bounds(input_data, crs=_check_crs(4326))  # need in wkt84 for UTM zone
     midpoint = [(bounds[1] + bounds[3])/2., (bounds[0] + bounds[2])/2.]
     utm_epsg = latlon_to_utm_epsg(*midpoint)
 
@@ -188,8 +189,8 @@ def get_bounds(geo_obj, crs=None):
     ---------
     geo_obj : a georeferenced raster or vector dataset.
     crs : int, optional
-        The EPSG code (or other CRS format supported by rasterio.warp) 
-        for the CRS the bounds should be returned in. If not provided, 
+        The EPSG code (or other CRS format supported by rasterio.warp)
+        for the CRS the bounds should be returned in. If not provided,
         the bounds will be returned in the same crs as `geo_obj`.
 
     Returns
@@ -232,8 +233,8 @@ def get_crs(obj):
         return _check_crs(obj.crs)
     elif isinstance(obj, gdal.Dataset):
         # rawr
-        return int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
-            'AUTHORITY', 1))
+        return _check_crs(int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
+            'AUTHORITY', 1)))
     else:
         raise TypeError("solaris doesn't know how to extract a crs from an "
                         "object of type {}".format(type(obj)))
@@ -301,14 +302,14 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     if input_crs is not None:
         input_crs = _check_crs(input_crs)
         if target_crs is None:
-            geom = reproject_geometry(input_geom, input_crs, target_crs=4326)
+            geom = reproject_geometry(input_geom, input_crs,
+                                      target_crs=_check_crs(4326))
             target_crs = latlon_to_utm_epsg(geom.centroid.y, geom.centroid.x)
         target_crs = _check_crs(target_crs)
-        gdf = gpd.GeoDataFrame(geometry=[input_geom])
-        gdf.crs = input_crs
+        gdf = gpd.GeoDataFrame(geometry=[input_geom], crs=input_crs.to_wkt())
         # create a new instance of the same geometry class as above with the
         # new coordinates
-        output_geom = gdf.to_crs(target_crs).iloc[0]['geometry']
+        output_geom = gdf.to_crs(target_crs.to_wkt()).iloc[0]['geometry']
 
     else:
         if affine_obj is None:
@@ -758,9 +759,9 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False,
     Arguments
     ---------
     geometry : str, optional
-        A shapely.geometry.Polygon, path to a single feature geojson, 
-        or list-like bounding box shaped like [left, bottom, right, top]. 
-        The geometry must be in the projection coordinates corresponding to 
+        A shapely.geometry.Polygon, path to a single feature geojson,
+        or list-like bounding box shaped like [left, bottom, right, top].
+        The geometry must be in the projection coordinates corresponding to
         the resolution units.
     tile_size : `tuple` of `int`s
         The size of the input tiles in ``(y, x)`` coordinates. By default,
@@ -774,7 +775,7 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False,
         Can be acquired from rasterio dataset object's metadata.
     src_img:  `str` or `raster`, optional
         A rasterio raster object or path to a geotiff. The bounds of this raster and the geometry will be
-        intersected and the result of the intersection will be tiled. Useful in cases where the extent of 
+        intersected and the result of the intersection will be tiled. Useful in cases where the extent of
         collected labels and source imagery partially overlap. The src_img must have the same projection units
         as the geometry.
 
@@ -799,7 +800,8 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False,
 
     if use_projection_units is False:
         if resolution is None:
-            print(f"Resolution must be specified if use_projection_units is False. Access it from src raster meta.")
+            print("Resolution must be specified if use_projection_units is"
+                  " False. Access it from src raster meta.")
             return
         # convert pixel units to CRS units to use during image tiling.
         # NOTE: This will be imperfect for large AOIs where there isn't
@@ -811,9 +813,6 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False,
                          tile_size[1]*resolution[1]]
     else:
         tmp_tile_size = tile_size
-
-    if src_img is not None:
-        geometry = geometry.intersection(box(*get_bounds(src_img)))
 
     bounds = geometry.bounds
     xmin = bounds[0]
@@ -828,11 +827,9 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False,
                        tmp_tile_size[1])
     y_mins = np.arange(ymin, ymin + tmp_tile_size[0]*y_steps,
                        tmp_tile_size[0])
-    tile_bounds = [(i,
-                    j,
-                    i+tmp_tile_size[1],
-                    j+tmp_tile_size[0])
-                   for i in x_mins for j in y_mins if not geometry.intersection(
-        box(*(i, j, i+tmp_tile_size[1], j+tmp_tile_size[0]))).is_empty
-    ]
+    tile_bounds = [
+        (i, j, i+tmp_tile_size[1], j+tmp_tile_size[0])
+        for i in x_mins for j in y_mins if not geometry.intersection(
+            box(*(i, j, i+tmp_tile_size[1], j+tmp_tile_size[0]))).is_empty
+        ]
     return tile_bounds
