@@ -1,3 +1,4 @@
+from .core import _check_crs
 import geopandas as gpd
 import json
 from affine import Affine
@@ -10,6 +11,7 @@ from rasterio.enums import Resampling
 
 
 def save_empty_geojson(path, crs):
+    crs = _check_crs(crs)
     empty_geojson_dict = {
         "type": "FeatureCollection",
         "crs":
@@ -17,7 +19,7 @@ def save_empty_geojson(path, crs):
             "type": "name",
             "properties":
             {
-                "name": "urn:ogc:def:crs:EPSG:{}".format(crs)
+                "name": "urn:ogc:def:crs:EPSG:{}".format(crs.to_epsg())
             }
         },
         "features":

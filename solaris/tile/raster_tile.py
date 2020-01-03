@@ -29,11 +29,11 @@ class RasterTiler(object):
     dest_tile_size : `tuple` of `int`s, optional
         The size of the output tiles in ``(y, x)`` coordinates in pixel units.
     dest_crs : int, optional
-        The EPSG code or rasterio.crs.CRS object for the CRS that output tiles are in. 
-        If not provided, tiles use the crs of `src` by default. Cannot be specified 
+        The EPSG code or rasterio.crs.CRS object for the CRS that output tiles are in.
+        If not provided, tiles use the crs of `src` by default. Cannot be specified
         along with project_to_meters.
     project_to_meters : bool, optional
-        Specifies whether to project to the correct utm zone for the location. 
+        Specifies whether to project to the correct utm zone for the location.
         Cannot be specified along with `dest_crs`.
     nodata : int, optional
         The value in `src` that specifies nodata. If this value is not
@@ -46,9 +46,9 @@ class RasterTiler(object):
         If `src` is a cloud-optimized geotiff, use this argument to force
         loading in the entire image at once.
     aoi_boundary : :class:`shapely.geometry.Polygon` or `list`-like [left, bottom, right, top]
-        Defines the bounds of the AOI in which tiles will be created. If a 
-        tile will extend beyond the boundary, the "extra" pixels will have 
-        the value `nodata`. Can be provided at initialization of the :class:`Tiler` 
+        Defines the bounds of the AOI in which tiles will be created. If a
+        tile will extend beyond the boundary, the "extra" pixels will have
+        the value `nodata`. Can be provided at initialization of the :class:`Tiler`
         instance or when the input is loaded. If not provided either upon
         initialization or when an image is loaded, the image bounds will be
         used; if provided, this value will override image metadata.
@@ -169,7 +169,7 @@ class RasterTiler(object):
             os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
         if self.verbose:
             print("Done. CRS returned for vector tiling.")
-        return profile['crs']  # returns the crs to be used for vector tiling
+        return _check_crs(profile['crs'])  # returns the crs to be used for vector tiling
 
     def tile_generator(self, src, dest_dir=None, channel_idxs=None,
                        nodata=None, alpha=None, aoi_boundary=None,
@@ -239,11 +239,11 @@ class RasterTiler(object):
             print(channel_idxs)
         self.src_crs = _check_crs(self.src.crs)
         if self.verbose:
-            print('Source CRS: EPSG:{}'.format(self.src_crs))
+            print('Source CRS: EPSG:{}'.format(self.src_crs.to_epsg()))
         if self.dest_crs is None:
             self.dest_crs = self.src_crs
         if self.verbose:
-            print('Destination CRS: EPSG:{}'.format(self.dest_crs))
+            print('Destination CRS: EPSG:{}'.format(self.dest_crs.to_epsg()))
         self.src_path = self.src.name
         self.proj_unit = self.src_crs.linear_units  # used for rounding in filename
         if self.verbose:
@@ -424,7 +424,7 @@ class RasterTiler(object):
                 self.aoi_boundary = list(self.src.bounds)
 
         self.tile_bounds = split_geom(geometry=self.aoi_boundary, tile_size=self.src_tile_size, resolution=(
-            self.src.transform[0], -self.src.transform[4]), use_projection_units=self.use_src_metric_size)
+            self.src.transform[0], -self.src.transform[4]), use_projection_units=self.use_src_metric_size, src_img=self.src)
 
     def load_src_vrt(self):
         """Load a source dataset's VRT into the destination CRS."""
