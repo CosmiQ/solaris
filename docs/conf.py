@@ -24,8 +24,8 @@ import time
 copyright = u'2018-{}, CosmiQ Works: an IQT Lab'.format(time.strftime("%Y"))
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.0'
-version = '0.2.0'
+release = '0.2.1'
+version = '0.2.1'
 
 # -- General configuration ---------------------------------------------------
 
