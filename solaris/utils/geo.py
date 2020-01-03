@@ -14,7 +14,6 @@ from shapely.geometry import Point, Polygon, LineString
 from shapely.geometry import MultiLineString, MultiPolygon, mapping, box, shape
 from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
-from fiona.transform import transform
 import osr
 import gdal
 import json
@@ -74,7 +73,7 @@ def reproject(input_object, input_crs=None,
     """
     input_data, input_type = _parse_geo_data(input_object)
     if input_crs is None:
-        input_crs = get_crs(input_data)
+        input_crs = _check_crs(get_crs(input_data))
     else:
         input_crs = _check_crs(input_crs)
     if target_object is not None:
@@ -231,8 +230,8 @@ def get_crs(obj):
         return _check_crs(obj.crs)
     elif isinstance(obj, gdal.Dataset):
         # rawr
-        return int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
-            'AUTHORITY', 1))
+        return _check_crs(int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
+            'AUTHORITY', 1)))
     else:
         raise TypeError("solaris doesn't know how to extract a crs from an "
                         "object of type {}".format(type(obj)))
@@ -304,8 +303,7 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
                                       target_crs=_check_crs(4326))
             target_crs = latlon_to_utm_epsg(geom.centroid.y, geom.centroid.x)
         target_crs = _check_crs(target_crs)
-        gdf = gpd.GeoDataFrame(geometry=[input_geom])
-        gdf.crs = input_crs
+        gdf = gpd.GeoDataFrame(geometry=[input_geom], crs=input_crs.to_wkt())
         # create a new instance of the same geometry class as above with the
         # new coordinates
         output_geom = gdf.to_crs(target_crs.to_wkt()).iloc[0]['geometry']
@@ -794,7 +792,8 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False)
 
     if use_projection_units is False:
         if resolution is None:
-            print(f"Resolution must be specified if use_projection_units is False. Access it from src raster meta.")
+            print("Resolution must be specified if use_projection_units is"
+                  " False. Access it from src raster meta.")
             return
         # convert pixel units to CRS units to use during image tiling.
         # NOTE: This will be imperfect for large AOIs where there isn't
@@ -817,14 +816,12 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False)
     x_steps = np.ceil(x_extent/tmp_tile_size[1])
     y_steps = np.ceil(y_extent/tmp_tile_size[0])
     x_mins = np.arange(xmin, xmin + tmp_tile_size[1]*x_steps,
-                            tmp_tile_size[1])
+                       tmp_tile_size[1])
     y_mins = np.arange(ymin, ymin + tmp_tile_size[0]*y_steps,
-                           tmp_tile_size[0])
-    tile_bounds = [(i,
-                    j,
-                    i+tmp_tile_size[1],
-                    j+tmp_tile_size[0])
-                    for i in x_mins for j in y_mins if not geometry.intersection(
-                        box(*(i, j, i+tmp_tile_size[1], j+tmp_tile_size[0]))).is_empty
-                    ]
+                       tmp_tile_size[0])
+    tile_bounds = [
+        (i, j, i+tmp_tile_size[1], j+tmp_tile_size[0])
+        for i in x_mins for j in y_mins if not geometry.intersection(
+            box(*(i, j, i+tmp_tile_size[1], j+tmp_tile_size[0]))).is_empty
+        ]
     return tile_bounds
