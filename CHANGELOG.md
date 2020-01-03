@@ -19,6 +19,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ### Added
 ### Removed
 ### Changed
+- 202001003, nrweir: Updated version pins for proj6 compatibility, also relaxed version pins for many dependencies (#321)
 ### Fixed
 ### Deprecated
 ### Security
