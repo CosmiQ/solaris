@@ -180,15 +180,16 @@ def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
     return output
 
 
-def get_bounds(input, crs=None):
+def get_bounds(geo_obj, crs=None):
     """Get the ``[left, bottom, right, top]`` bounds in any CRS.
 
     Arguments
     ---------
     geo_obj : a georeferenced raster or vector dataset.
     crs : int, optional
-        The EPSG code for the CRS the bounds should be returned in. If not
-        provided, the bounds will be returned in the same crs as `geo_obj`.
+        The EPSG code (or other CRS format supported by rasterio.warp)
+        for the CRS the bounds should be returned in. If not provided,
+        the bounds will be returned in the same crs as `geo_obj`.
 
     Returns
     -------
@@ -196,7 +197,7 @@ def get_bounds(input, crs=None):
         ``[left, bottom, right, top]`` bounds in the input crs (if `crs` is
         ``None``) or in `crs` if it was provided.
     """
-    input_data, input_type = _parse_geo_data(input)
+    input_data, input_type = _parse_geo_data(geo_obj)
     if input_type == 'vector':
         bounds = list(input_data.geometry.total_bounds)
     elif input_type == 'raster':
@@ -214,10 +215,10 @@ def get_bounds(input, crs=None):
     if crs is not None:
         crs = _check_crs(crs)
         src_crs = get_crs(input_data)
-    # transform bounds to desired CRS
-    bounds = transform_bounds(src_crs,
-                              crs,
-                              *bounds)
+        # transform bounds to desired CRS
+        bounds = transform_bounds(src_crs,
+                                crs,
+                                *bounds)
 
     return bounds
 
@@ -613,7 +614,7 @@ def latlon_to_utm_epsg(latitude, longitude, return_proj4=False):
         The longitude value for the coordinate.
     return_proj4 : bool, optional
         Should the proj4 string be returned as well as the EPSG code? Defaults
-        to no (``False``)
+        to no (``False``)`
 
     Returns
     -------
@@ -746,7 +747,7 @@ def polygon_to_coco(polygon):
     return coords
 
 
-def split_geom(geometry, tile_size, resolution=None, use_projection_units=False):
+def split_geom(geometry, tile_size, resolution=None, use_projection_units=False, src_img=None):
     """Splits a vector into approximately equal sized tiles. Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
 
     The more complex the geometry, the slower this will run, but geometrys with around 10000
@@ -760,7 +761,7 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False)
         or list-like bounding box shaped like [left, bottom, right, top].
         The geometry must be in the projection coordinates corresponding to
         the resolution units.
-    tile_size : `tuple` of `int`s, optional
+    tile_size : `tuple` of `int`s
         The size of the input tiles in ``(y, x)`` coordinates. By default,
         this is in pixel units; this can be changed to metric units using the
         `use_metric_size` argument.
@@ -770,6 +771,11 @@ def split_geom(geometry, tile_size, resolution=None, use_projection_units=False)
     resolution: `tuple` of `float`s, optional
         (x resolution, y resolution). Used by default if use_metric_size is False.
         Can be acquired from rasterio dataset object's metadata.
+    src_img:  `str` or `raster`, optional
+        A rasterio raster object or path to a geotiff. The bounds of this raster and the geometry will be
+        intersected and the result of the intersection will be tiled. Useful in cases where the extent of
+        collected labels and source imagery partially overlap. The src_img must have the same projection units
+        as the geometry.
 
     Returns
     -------
