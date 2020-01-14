@@ -149,19 +149,33 @@ class RasterTiler(object):
                 print('Resampling is set to None')
 
     def tile(self, src, dest_dir=None, channel_idxs=None, nodata=None,
-             alpha=None, aoi_boundary=None, restrict_to_aoi=False,
-             dest_fname_base=None):
+             alpha=None, restrict_to_aoi=False,
+             dest_fname_base=None, nodata_threshold = None):
 
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
-                                       alpha, aoi_boundary, restrict_to_aoi)
+                                       alpha, self.aoi_boundary, restrict_to_aoi)
 
         if self.verbose:
             print('Beginning tiling...')
         self.tile_paths = []
-        for tile_data, mask, profile in tqdm(tile_gen):
-            dest_path = self.save_tile(
-                tile_data, mask, profile, dest_fname_base)
-            self.tile_paths.append(dest_path)
+        if nodata_threshold is not None:
+            if nodata_threshold > 1:
+                raise ValueError("nodatathreshold should be expressed as a float less than 1.")
+            print("nodata value threshold supplied, filtering based on this percentage.")
+            new_tile_bounds = []
+            for tile_data, mask, profile, tb in tqdm(tile_gen):
+                nodata_perc = (tile_data == profile['nodata']).sum() / (tile_data.shape[0] * tile_data.shape[1])
+                if nodata_perc > nodata_threshold:
+                    dest_path = self.save_tile(
+                        tile_data, mask, profile, dest_fname_base)
+                    self.tile_paths.append(dest_path)
+                    new_tile_bounds.append(tb)
+            self.tile_bounds = new_tile_bounds # only keep the tile bounds that make it past the nodata threshold
+        else:
+            for tile_data, mask, profile in tqdm(tile_gen):
+                dest_path = self.save_tile(
+                    tile_data, mask, profile, dest_fname_base)
+                self.tile_paths.append(dest_path)
         if self.verbose:
             print('Tiling complete. Cleaning up...')
         self.src.close()
@@ -360,7 +374,7 @@ class RasterTiler(object):
             else:
                 profile.update(count=tile_data.shape[0])
 
-            yield tile_data, mask, profile
+            yield tile_data, mask, profile, tb
 
     def save_tile(self, tile_data, mask, profile, dest_fname_base=None):
         """Save a tile created by ``Tiler.tile_generator()``."""
