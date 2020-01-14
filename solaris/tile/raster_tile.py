@@ -151,7 +151,16 @@ class RasterTiler(object):
     def tile(self, src, dest_dir=None, channel_idxs=None, nodata=None,
              alpha=None, restrict_to_aoi=False,
              dest_fname_base=None, nodata_threshold = None):
+        """An object to tile geospatial image strips into smaller pieces.
 
+        Arguments
+        ---------
+        src : :class:`rasterio.io.DatasetReader` or str
+            The source dataset to tile.
+        nodata_threshold : float, optional
+            Nodata percentages greater than this threshold will not be saved as tiles.
+        """
+        
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
                                        alpha, self.aoi_boundary, restrict_to_aoi)
 
@@ -165,7 +174,7 @@ class RasterTiler(object):
             new_tile_bounds = []
             for tile_data, mask, profile, tb in tqdm(tile_gen):
                 nodata_perc = (tile_data == profile['nodata']).sum() / (tile_data.shape[0] * tile_data.shape[1])
-                if nodata_perc > nodata_threshold:
+                if nodata_perc < nodata_threshold:
                     dest_path = self.save_tile(
                         tile_data, mask, profile, dest_fname_base)
                     self.tile_paths.append(dest_path)
