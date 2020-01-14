@@ -2,6 +2,7 @@ import os
 import rasterio
 from rasterio.warp import Resampling, calculate_default_transform
 from rasterio.vrt import WarpedVRT
+from rasterio.mask import mask as rasterio_mask
 from rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
 # removing the following until COG functionality is implemented
@@ -9,6 +10,7 @@ from ..utils.core import _check_crs, _check_rasterio_im_load
 from ..utils.geo import reproject, split_geom
 from tqdm import tqdm
 import numpy as np
+from shapely.geometry import box
 
 
 class RasterTiler(object):
@@ -159,8 +161,25 @@ class RasterTiler(object):
             The source dataset to tile.
         nodata_threshold : float, optional
             Nodata percentages greater than this threshold will not be saved as tiles.
+        restrict_to_aoi : bool, optional
+            Requires aoi_boundary. Sets all pixel values outside the aoi_boundary to the nodata value of the src image.
         """
-        
+                        
+        if restrict_to_aoi is True:
+            if aoi_boundary is None:
+                raise ValueError("aoi_boundary must be specified when RasterTiler is called.")
+            src = _check_rasterio_im_load(src)
+            name = src.name
+            mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
+            arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'], 
+                                     filled=True, crop=False, pad=False, pad_width=0.5, indexes=[1,2,3]) # assumes exactly bands
+            with rasterio.open(os.path.join(self.dest_dir, 'tmp-masked.tif'), 'w', **src.profile) as dest:
+                dest.write(arr)
+                dest.close()
+                src.close()
+            src = _check_rasterio_im_load(os.path.join(self.dest_dir, 'tmp-masked.tif'))
+            src.name = name
+            
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
                                        alpha, self.aoi_boundary, restrict_to_aoi)
 
@@ -190,6 +209,8 @@ class RasterTiler(object):
         self.src.close()
         if os.path.exists(os.path.join(self.dest_dir, 'tmp.tif')):
             os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
+        if os.path.exists(os.path.join(self.dest_dir, 'tmp-masked.tif')):
+            os.remove(os.path.join(self.dest_dir, 'tmp-masked.tif'))
         if self.verbose:
             print("Done. CRS returned for vector tiling.")
         return _check_crs(profile['crs'])  # returns the crs to be used for vector tiling
