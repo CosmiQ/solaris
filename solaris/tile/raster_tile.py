@@ -164,16 +164,15 @@ class RasterTiler(object):
         restrict_to_aoi : bool, optional
             Requires aoi_boundary. Sets all pixel values outside the aoi_boundary to the nodata value of the src image.
         """
-                        
+        src = _check_rasterio_im_load(src)
+        restricted_im_path = os.path.join(self.dest_dir, "aoi_restricted_"+ os.path.basename(src.name))
+        self.src_name = src.name # preserves original src name in case restrict is used
         if restrict_to_aoi is True:
             if self.aoi_boundary is None:
                 raise ValueError("aoi_boundary must be specified when RasterTiler is called.")
-            src = _check_rasterio_im_load(src)
-            self.src_name = src.name
             mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
             arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'], 
                                      filled=True, crop=False, pad=False, pad_width=0.5, indexes=[1,2,3]) # assumes exactly bands
-            restricted_im_path = os.path.join(self.dest_dir, "aoi_restricted_"+ os.path.basename(src.name))
             with rasterio.open(restricted_im_path, 'w', **src.profile) as dest:
                 dest.write(arr)
                 dest.close()
@@ -200,7 +199,7 @@ class RasterTiler(object):
                     new_tile_bounds.append(tb)
             self.tile_bounds = new_tile_bounds # only keep the tile bounds that make it past the nodata threshold
         else:
-            for tile_data, mask, profile in tqdm(tile_gen):
+            for tile_data, mask, profile, tb in tqdm(tile_gen):
                 dest_path = self.save_tile(
                     tile_data, mask, profile, dest_fname_base)
                 self.tile_paths.append(dest_path)
