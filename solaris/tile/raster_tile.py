@@ -166,19 +166,19 @@ class RasterTiler(object):
         """
                         
         if restrict_to_aoi is True:
-            if aoi_boundary is None:
+            if self.aoi_boundary is None:
                 raise ValueError("aoi_boundary must be specified when RasterTiler is called.")
             src = _check_rasterio_im_load(src)
-            name = src.name
+            self.src_name = src.name
             mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
             arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'], 
                                      filled=True, crop=False, pad=False, pad_width=0.5, indexes=[1,2,3]) # assumes exactly bands
-            with rasterio.open(os.path.join(self.dest_dir, 'tmp-masked.tif'), 'w', **src.profile) as dest:
+            restricted_im_path = os.path.join(self.dest_dir, "aoi_restricted_"+ os.path.basename(src.name))
+            with rasterio.open(restricted_im_path, 'w', **src.profile) as dest:
                 dest.write(arr)
                 dest.close()
                 src.close()
-            src = _check_rasterio_im_load(os.path.join(self.dest_dir, 'tmp-masked.tif'))
-            src.name = name
+            src = _check_rasterio_im_load(restricted_im_path)
             
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
                                        alpha, self.aoi_boundary, restrict_to_aoi)
@@ -209,8 +209,8 @@ class RasterTiler(object):
         self.src.close()
         if os.path.exists(os.path.join(self.dest_dir, 'tmp.tif')):
             os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
-        if os.path.exists(os.path.join(self.dest_dir, 'tmp-masked.tif')):
-            os.remove(os.path.join(self.dest_dir, 'tmp-masked.tif'))
+        if os.path.exists(restricted_im_path):
+            os.remove(restricted_im_path)
         if self.verbose:
             print("Done. CRS returned for vector tiling.")
         return _check_crs(profile['crs'])  # returns the crs to be used for vector tiling
@@ -288,7 +288,7 @@ class RasterTiler(object):
             self.dest_crs = self.src_crs
         if self.verbose:
             print('Destination CRS: EPSG:{}'.format(self.dest_crs.to_epsg()))
-        self.src_path = self.src.name
+        self.src_path = self.src_name
         self.proj_unit = self.src_crs.linear_units  # used for rounding in filename
         if self.verbose:
             print("Inputs OK.")
