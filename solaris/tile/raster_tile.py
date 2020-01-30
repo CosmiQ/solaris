@@ -171,19 +171,20 @@ class RasterTiler(object):
             if self.aoi_boundary is None:
                 raise ValueError("aoi_boundary must be specified when RasterTiler is called.")
             mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
+            index_lst = list(np.arange(1,src.meta['count']+1))
             arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'], 
-                                     filled=True, crop=False, pad=False, pad_width=0.5, indexes=[1,2,3]) # assumes exactly bands
+                         filled=True, crop=True, pad=False, pad_width=0.5, indexes=list(index_lst))
             with rasterio.open(restricted_im_path, 'w', **src.profile) as dest:
                 dest.write(arr)
                 dest.close()
                 src.close()
-            src = _check_rasterio_im_load(restricted_im_path)
+            src = _check_rasterio_im_load(restricted_im_path) #if restrict_to_aoi, we overwrite the src to be the masked raster
             
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
                                        alpha, self.aoi_boundary, restrict_to_aoi)
 
         if self.verbose:
-            print('Beginning tiling...')
+            print('Beginning tiling...')   
         self.tile_paths = []
         if nodata_threshold is not None:
             if nodata_threshold > 1:
@@ -447,6 +448,45 @@ class RasterTiler(object):
         #     self._create_cog(os.path.join(self.dest_dir, 'tmp.tif'),
         #                      os.path.join(self.dest_dir, dest_fname))
         #     os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
+        
+    def fill_all_nodata(self, nodata_fill):
+        """
+        Fills all tile nodata values with a fill value.
+        
+        The standard workflow is to run this function only after generating label masks and using the original output 
+        from the raster tiler to filter out label pixels that overlap nodata pixels in a tile. For example, 
+        solaris.vector.mask.instance_mask will filter out nodata pixels from a label mask if a reference_im is provided,
+        and after this step nodata pixels may be filled by calling this method.
+        
+        nodata_fill : int, float, or str, optional
+            Default is to not fill any nodata values. Otherwise, pixels outside of the aoi_boundary and pixels inside 
+            the aoi_boundary with the nodata value will be filled. "mean" will fill pixels with the channel-wise mean. 
+            Providing an int or float will fill pixels in all channels with the provided value.
+        """
+        src = _check_rasterio_im_load(self.src_name)
+        if nodata_fill == "mean":
+            arr = src.read()
+            arr_nan = np.where(arr!=src.nodata, arr, np.nan)
+            fill_values = np.nanmean(arr_nan, axis=tuple(range(1, arr_nan.ndim)))
+            print('Fill values set to {}'.format(fill_values))
+        elif isinstance(nodata_fill, (float, int)):
+            fill_values = src.meta['count'] * [nodata_fill]
+            print('Fill values set to {}'.format(fill_values))
+        else:
+            raise TypeError('nodata_fill must be "mean", int, or float. {} was supplied.'.format(nodata_fill))
+        src.close()
+        for tile_path in self.tile_paths:
+            tile_src = rasterio.open(tile_path, "r+")
+            tile_data = tile_src.read()
+            for i in np.arange(arr.shape[0]):
+                tile_data[i,...][tile_data[i,...] == tile_src.nodata] = fill_values[i]
+            if tile_src.meta['count'] == 1:
+                tile_src.write(tile_data[0, :, :], 1)
+            else:
+                for band in range(1, tile_src.meta['count'] + 1):
+                    # base-1 vs. base-0 indexing...bleh
+                    tile_src.write(tile_data[band-1, :, :], band)
+            tile_src.close()
 
     def _create_cog(self, src_path, dest_path):
         """Overwrite non-cloud-optimized GeoTIFF with a COG."""
