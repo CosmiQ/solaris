@@ -193,7 +193,7 @@ def georegister_px_df(df, im_path=None, affine_obj=None, crs=None,
 
 
 def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
-                      output_path=None):
+                      output_path=None, override_crs=False):
     """Convert a geojson or set of geojsons from geo coords to px coords.
 
     Arguments
@@ -216,7 +216,11 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
     output_path : str, optional
         Path to save the resulting output to. If not provided, the object
         won't be saved to disk.
-
+    override_geojson_crs: bool, optional
+        If the geojsons gtenerated by the vector tiler or otherwise were saved
+        out with a non EPSG code projection, an EPSG code is chosen and for 
+        the metadata and this can be wrong. True sets the gdf crs to that of the 
+        image, they should have the same underlying projection for this to work.
     Returns
     -------
     output_df : :class:`pandas.DataFrame`
@@ -234,6 +238,9 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
     gdf = _check_gdf_load(geojson)
 
     if len(gdf):  # if there's at least one geometry
+        # The vector tiler saves out geojsons with wkt crs as epsg which can be wrong
+        if override_crs:
+            gdf.crs = im.crs 
         overlap_gdf = get_overlapping_subset(gdf, im)
     else:
         overlap_gdf = gdf

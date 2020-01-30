@@ -209,7 +209,7 @@ def search_gdf_polygon(gdf, tile_polygon):
         :py:class:`geopandas.GeoDataFrame`.
 
     """
-
+    crs = gdf.crs
     sindex = gdf.sindex
     possible_matches_index = list(sindex.intersection(tile_polygon.bounds))
     possible_matches = gdf.iloc[possible_matches_index]
@@ -218,6 +218,7 @@ def search_gdf_polygon(gdf, tile_polygon):
         ]
     if precise_matches.empty:
         precise_matches = gpd.GeoDataFrame(geometry=[])
+    precise_matches.crs = crs # precise_matches crs is lost so we need to reassign it
     return precise_matches
 
 
@@ -296,7 +297,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
             gdf['origlen'] = 0
     # TODO must implement different case for lines and for spatialIndex
     # (Assume RTree is already performed)
-
+    
     cut_gdf = gdf.copy()
     cut_gdf.geometry = gdf.intersection(tb)
 
