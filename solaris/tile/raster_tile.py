@@ -466,6 +466,9 @@ class RasterTiler(object):
             Default is to not fill any nodata values. Otherwise, pixels outside of the aoi_boundary and pixels inside 
             the aoi_boundary with the nodata value will be filled. "mean" will fill pixels with the channel-wise mean. 
             Providing an int or float will fill pixels in all channels with the provided value.
+            
+        Returns: list
+            The fill values, in case the mean of the src image should be used for normalization later.
         """
         src = _check_rasterio_im_load(self.src_name)
         if nodata_fill == "mean":
@@ -491,6 +494,7 @@ class RasterTiler(object):
                     # base-1 vs. base-0 indexing...bleh
                     tile_src.write(tile_data[band-1, :, :], band)
             tile_src.close()
+            return fill_values
 
     def _create_cog(self, src_path, dest_path):
         """Overwrite non-cloud-optimized GeoTIFF with a COG."""
