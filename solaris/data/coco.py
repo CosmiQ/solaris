@@ -1,7 +1,7 @@
 from ..utils.core import _check_df_load, _check_geom, get_files_recursively
 from ..utils.geo import bbox_corners_to_coco, polygon_to_coco
 from ..utils.log import _get_logging_level
-from ..vector.polygon import geojson_to_px_gdf
+from ..vector.polygon import geojson_to_px_gdf, remove_multipolygons
 import numpy as np
 import rasterio
 from tqdm import tqdm
@@ -15,7 +15,7 @@ import logging
 def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                  matching_re=None, category_attribute=None, score_attribute=None,
                  preset_categories=None, include_other=True, info_dict=None,
-                 license_dict=None, recursive=False, verbose=0):
+                 license_dict=None, recursive=False, remove_all_multipolygons=False, verbose=0):
     """Generate COCO-formatted labels from one or multiple geojsons and images.
 
     This function ingests optionally georegistered polygon labels in geojson
@@ -108,6 +108,9 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         If `image_src` and/or `label_src` are directories, setting this flag
         to ``True`` will induce solaris to descend into subdirectories to find
         files. By default, solaris does not traverse the directory tree.
+    remove_all_multipolygons : bool, optional
+        Filters multipolygons out of each tile geodataframe. Alternatively you 
+        can edit each polygon manually to be a polygon.
     verbose : int, optional
         Verbose text output. By default, none is provided; if ``True`` or
         ``1``, information-level outputs are provided; if ``2``, extremely
@@ -191,6 +194,10 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
     for gj in tqdm(label_list):
         logger.debug('Reading in {}'.format(gj))
         curr_gdf = gpd.read_file(gj)
+        
+        if remove_all_multipolygons is True:
+            curr_gdf = remove_multipolygons(curr_gdf)
+        
         curr_gdf['label_fname'] = gj
         curr_gdf['image_fname'] = ''
         curr_gdf['image_id'] = np.nan
