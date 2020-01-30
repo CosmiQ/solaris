@@ -172,7 +172,7 @@ class RasterTiler(object):
                 raise ValueError("aoi_boundary must be specified when RasterTiler is called.")
             mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
             index_lst = list(np.arange(1,src.meta['count']+1))
-            # no need to use transform t since we don't crop
+            # no need to use transform t since we don't crop. cropping messes up transform of tiled outputs
             arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'], 
                          filled=True, crop=False, pad=False, pad_width=0.5, indexes=list(index_lst))
             with rasterio.open(restricted_im_path, 'w', **src.profile) as dest:
