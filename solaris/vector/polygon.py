@@ -404,3 +404,16 @@ def gdf_to_yolo(geodataframe, image, output_dir, column='single_id',
             shutil.move(image, remove_no_labels_dir)
 
     return gdf
+
+def remove_multipolygons(gdf):
+    """
+    Filters out rows of a geodataframe containing multipolygons.
+ 
+    This function is optionally used in geojson2coco.
+    """
+    mask = (gdf.geom_type == "MultiPolygon")
+    if mask.any():
+        return gdf.drop(gdf[mask].index).reset_index(drop=True)
+    else:
+        return gdf
+
