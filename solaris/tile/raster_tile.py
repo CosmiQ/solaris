@@ -172,8 +172,9 @@ class RasterTiler(object):
                 raise ValueError("aoi_boundary must be specified when RasterTiler is called.")
             mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
             index_lst = list(np.arange(1,src.meta['count']+1))
+            # no need to use transform t since we don't crop
             arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'], 
-                         filled=True, crop=True, pad=False, pad_width=0.5, indexes=list(index_lst))
+                         filled=True, crop=False, pad=False, pad_width=0.5, indexes=list(index_lst))
             with rasterio.open(restricted_im_path, 'w', **src.profile) as dest:
                 dest.write(arr)
                 dest.close()
@@ -192,12 +193,15 @@ class RasterTiler(object):
             print("nodata value threshold supplied, filtering based on this percentage.")
             new_tile_bounds = []
             for tile_data, mask, profile, tb in tqdm(tile_gen):
-                nodata_perc = (tile_data == profile['nodata']).sum() / (tile_data.shape[0] * tile_data.shape[1])
+                nodata_count = np.logical_or.reduce((tile_data == profile['nodata']), axis=0).sum()
+                nodata_perc = nodata_count / (tile_data.shape[1] * tile_data.shape[2])
                 if nodata_perc < nodata_threshold:
                     dest_path = self.save_tile(
                         tile_data, mask, profile, dest_fname_base)
                     self.tile_paths.append(dest_path)
                     new_tile_bounds.append(tb)
+                else:
+                    print("{} of nodata is over the nodata_threshold, tile not saved.".format(nodata_perc))
             self.tile_bounds = new_tile_bounds # only keep the tile bounds that make it past the nodata threshold
         else:
             for tile_data, mask, profile, tb in tqdm(tile_gen):

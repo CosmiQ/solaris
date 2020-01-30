@@ -218,7 +218,6 @@ def search_gdf_polygon(gdf, tile_polygon):
         ]
     if precise_matches.empty:
         precise_matches = gpd.GeoDataFrame(geometry=[])
-    precise_matches.crs = crs # precise_matches crs is lost so we need to reassign it
     return precise_matches
 
 

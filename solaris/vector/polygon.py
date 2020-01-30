@@ -216,7 +216,7 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
     output_path : str, optional
         Path to save the resulting output to. If not provided, the object
         won't be saved to disk.
-    override_geojson_crs: bool, optional
+    override_crs: bool, optional
         If the geojsons gtenerated by the vector tiler or otherwise were saved
         out with a non EPSG code projection, an EPSG code is chosen and for 
         the metadata and this can be wrong. True sets the gdf crs to that of the 
