@@ -905,6 +905,8 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     df = _check_df_load(df)
 
     if len(df) == 0:
+        reference_im = _check_rasterio_im_load(reference_im)
+        shape = reference_im.shape
         return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:

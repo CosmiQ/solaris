@@ -494,7 +494,7 @@ class RasterTiler(object):
                     # base-1 vs. base-0 indexing...bleh
                     tile_src.write(tile_data[band-1, :, :], band)
             tile_src.close()
-            return fill_values
+        return fill_values
 
     def _create_cog(self, src_path, dest_path):
         """Overwrite non-cloud-optimized GeoTIFF with a COG."""
