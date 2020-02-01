@@ -414,11 +414,13 @@ def gdf_to_yolo(geodataframe, image, output_dir, column='single_id',
 
 def remove_multipolygons(gdf):
     """
-    Filters out rows of a geodataframe containing multipolygons.
+    Filters out rows of a geodataframe containing MultiPolygons and GeometryCollections.
  
-    This function is optionally used in geojson2coco.
+    This function is optionally used in geojson2coco. For instance segmentation, where 
+    objects are composed of single polygons, multi part geometries need to be either removed or
+    inspected manually to be resolved as a single geometry.
     """
-    mask = (gdf.geom_type == "MultiPolygon")
+    mask = (gdf.geom_type == "MultiPolygon") | (gdf.geom_type == "GeometryCollection")
     if mask.any():
         return gdf.drop(gdf[mask].index).reset_index(drop=True)
     else:

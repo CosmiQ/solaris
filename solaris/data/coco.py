@@ -110,8 +110,8 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         to ``True`` will induce solaris to descend into subdirectories to find
         files. By default, solaris does not traverse the directory tree.
     remove_all_multipolygons : bool, optional
-        Filters multipolygons out of each tile geodataframe. Alternatively you 
-        can edit each polygon manually to be a polygon.
+        Filters MultiPolygons and GeometryCollections out of each tile geodataframe. Alternatively you 
+        can edit each polygon manually to be a polygon before converting to COCO format.
     verbose : int, optional
         Verbose text output. By default, none is provided; if ``True`` or
         ``1``, information-level outputs are provided; if ``2``, extremely
@@ -413,6 +413,7 @@ def df_to_coco_annos(df, output_path=None, geom_col='geometry',
     def _row_to_coco(row, geom_col, category_id_col, image_id_col, score_col):
         "get a single annotation record from a row of temp_df."
         if score_col is None:
+            
             return {'id': row['annotation_id'],
                     'image_id': int(row[image_id_col]),
                     'category_id': int(row[category_id_col]),
