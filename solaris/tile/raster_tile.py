@@ -485,8 +485,8 @@ class RasterTiler(object):
         for tile_path in self.tile_paths:
             tile_src = rasterio.open(tile_path, "r+")
             tile_data = tile_src.read()
-            for i in np.arange(arr.shape[0]):
-                tile_data[i,...][tile_data[i,...] == tile_src.nodata] = fill_values[i]
+            for i in np.arange(tile_data.shape[0]):
+                tile_data[i,...][tile_data[i,...] == tile_src.nodata] = fill_values[i] # set fill value for each band
             if tile_src.meta['count'] == 1:
                 tile_src.write(tile_data[0, :, :], 1)
             else:
