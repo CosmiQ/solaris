@@ -72,7 +72,7 @@ else:
                  'opencv-python>=4.1.0.25',
                  'pandas>=0.25.3',
                  'pyproj>=2.1',
-                 'torch==1.3.1',
+                 'torch>=1.3.1',
                  'pyyaml==5.2',
                  'rasterio>=1.0.23',
                  'requests>=2.22.0',
@@ -82,7 +82,7 @@ else:
                  'scipy>=1.3.2',
                  'shapely>=1.6.4',
                  'tensorflow==1.13.1',
-                 'torchvision>=0.4.2',
+                 'torchvision>=0.5.0',
                  'tqdm>=4.40.0',
                  'urllib3>=1.25.7']
 
