@@ -5,7 +5,8 @@ import geopandas as gpd
 import rasterio
 from solaris.data import data_dir
 from solaris.utils.core import _check_df_load, _check_gdf_load
-from solaris.utils.core import _check_rasterio_im_load
+from solaris.utils.core import _check_rasterio_im_load, _check_crs
+import pyproj
 
 
 class TestLoadCheckers(object):
@@ -60,3 +61,12 @@ class TestLoadCheckers(object):
 
         truth_im.close()  # need to close the rasterio datasetreader objects
         test_im.close()
+
+
+class TestCRS(object):
+    """Test CRS parsing."""
+
+    def test_proj_CRS_object(self):
+        input_crs = pyproj.crs.CRS.from_epsg(4326)
+        crs = _check_crs(input_crs)
+        assert crs == rasterio.crs.CRS.from_epsg(4326)

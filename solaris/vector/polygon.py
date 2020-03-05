@@ -293,7 +293,9 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
     sindex = gdf.sindex
     if im is not None:
         im = _check_rasterio_im_load(im)
-        bbox = transform_bounds(im.crs, _check_crs(gdf.crs), *im.bounds)
+        # currently, convert CRSs to WKT strings here to accommodate rasterio.
+        bbox = transform_bounds(im.crs, _check_crs(gdf.crs).to_epsg(),
+                                *im.bounds)
         bbox_crs = im.crs
     # use transform_bounds in case the crs is different - no effect if not
     if isinstance(bbox, Polygon):
@@ -306,7 +308,10 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
                              'must provide a coordinate reference system.')
     else:
         bbox_crs = _check_crs(bbox_crs)
-    bbox = transform_bounds(bbox_crs, _check_crs(gdf.crs), *bbox)
+    # currently, convert CRSs to WKT strings here to accommodate rasterio.
+    bbox = transform_bounds(bbox_crs.to_wkt("WKT1_GDAL"),
+                            _check_crs(gdf.crs).to_wkt("WKT1_GDAL"),
+                            *bbox)
     try:
         intersectors = list(sindex.intersection(bbox))
     except RTreeError:

@@ -2,12 +2,11 @@ import os
 import rasterio
 from rasterio.warp import Resampling, calculate_default_transform
 from rasterio.vrt import WarpedVRT
-from rio_cogeo.cogeo import cog_validate, cog_translate
+# efrom rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
 # removing the following until COG functionality is implemented
 # from ..utils.tile import read_cog_tile
-from ..utils.geo import reproject, split_geom
-from tqdm import tqdm
+from ..utils.geo import reproject, split_geom, raster_get_projection_unit
 import numpy as np
 
 
@@ -158,7 +157,7 @@ class RasterTiler(object):
         if self.verbose:
             print('Beginning tiling...')
         self.tile_paths = []
-        for tile_data, mask, profile in tqdm(tile_gen):
+        for tile_data, mask, profile in tile_gen:
             dest_path = self.save_tile(
                 tile_data, mask, profile, dest_fname_base)
             self.tile_paths.append(dest_path)
@@ -227,12 +226,12 @@ class RasterTiler(object):
         # parse arguments
         if self.verbose:
             print("Checking input data...")
-        if isinstance(src, str):
-            self.is_cog = cog_validate(src)
-        else:
-            self.is_cog = cog_validate(src.name)
-        if self.verbose:
-            print('COG: {}'.format(self.is_cog))
+        # if isinstance(src, str):
+        #     self.is_cog = cog_validate(src)
+        # else:
+        # self.is_cog = cog_validate(src.name)
+        # if self.verbose:
+        #     print('COG: {}'.format(self.is_cog))
         self.src = _check_rasterio_im_load(src)
         if channel_idxs is None:  # if not provided, include them all
             channel_idxs = list(range(1, self.src.count + 1))
@@ -245,7 +244,7 @@ class RasterTiler(object):
         if self.verbose:
             print('Destination CRS: EPSG:{}'.format(self.dest_crs.to_epsg()))
         self.src_path = self.src.name
-        self.proj_unit = self.src_crs.linear_units  # used for rounding in filename
+        self.proj_unit = raster_get_projection_unit(self.src)  # for rounding
         if self.verbose:
             print("Inputs OK.")
         if self.use_src_metric_size:
