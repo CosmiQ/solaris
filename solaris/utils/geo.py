@@ -100,7 +100,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
     input_crs = _check_crs(input_crs)
     target_crs = _check_crs(target_crs)
     if input_type == 'vector':
-        output = input_data.to_crs(crs=target_crs.to_wkt())
+        output = input_data.to_crs(target_crs)
         if dest_path is not None:
             output.to_file(dest_path, driver='GeoJSON')
 
@@ -108,11 +108,11 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
 
         if isinstance(input_data, rasterio.DatasetReader):
             transform, width, height = calculate_default_transform(
-                input_crs, target_crs,
+                input_crs.to_wkt("WKT1_GDAL"), target_crs.to_wkt("WKT1_GDAL"),
                 input_data.width, input_data.height, *input_data.bounds
             )
             kwargs = input_data.meta.copy()
-            kwargs.update({'crs': target_crs,
+            kwargs.update({'crs': target_crs.to_wkt("WKT1_GDAL"),
                            'transform': transform,
                            'width': width,
                            'height': height})
@@ -126,7 +126,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                             src_transform=input_data.transform,
                             src_crs=input_data.crs,
                             dst_transform=transform,
-                            dst_crs=target_crs,
+                            dst_crs=target_crs.to_wkt("WKT1_GDAL"),
                             resampling=getattr(Resampling, resampling_method)
                         )
                 output = rasterio.open(dest_path)
@@ -218,9 +218,8 @@ def get_bounds(geo_obj, crs=None):
         crs = _check_crs(crs)
         src_crs = get_crs(input_data)
         # transform bounds to desired CRS
-        bounds = transform_bounds(src_crs,
-                                crs,
-                                *bounds)
+        bounds = transform_bounds(src_crs.to_wkt("WKT1_GDAL"),
+                                  crs.to_wkt("WKT1_GDAL"), *bounds)
 
     return bounds
 
@@ -343,23 +342,8 @@ def gdf_get_projection_unit(vector_file):
     unit : String
         The unit i.e. meter, metre, or degree, of the projection
     """
-    c = _check_gdf_load(vector_file)
-    crs = _check_crs(c.crs)
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(crs.to_epsg())
-    WKT = srs.ExportToWkt()
-    # get count of 'UNIT'
-    if WKT.count('UNIT') == 1:
-        # simple geo format
-        unit = WKT.split("UNIT[")[1].split(",")[0]
-    elif WKT.count('UNIT') == 2:
-        # complex geo format, return the second instance of 'UNIT'
-        unit = WKT.split("UNIT[")[2].split(",")[0]
-    else:
-        print("Unknown units in {}".format(vector_file))
-        return
-
-    return unit
+    c = _check_gdf_load(vector_file).crs
+    return get_projection_unit(c)
 
 
 def raster_get_projection_unit(image):
@@ -381,22 +365,28 @@ def raster_get_projection_unit(image):
     unit : String
         The unit i.e. meters or degrees, of the projection
     """
-    c = _check_rasterio_im_load(image)
-    crs = _check_crs(c.crs)
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(crs)
-    WKT = srs.ExportToWkt()
-    # get count of 'UNIT'
-    if WKT.count('UNIT') == 1:
-        # simple geo format
-        unit = WKT.split("UNIT[")[1].split(",")[0]
-    elif WKT.count('UNIT') == 2:
-        # complex geo format, return the second instance of 'UNIT'
-        unit = WKT.split("UNIT[")[2].split(",")[0]
-    else:
-        print("Unknown units in {}".format(image))
-        return
+    c = _check_rasterio_im_load(image).crs
+    return get_projection_unit(c)
+
+
+def get_projection_unit(crs):
+    """Get the units of a specific SRS.
+
+    Arguments
+    ---------
+    crs : :class:`pyproj.crs.CRS`, :class:`rasterio.crs.CRS`, `str`, or `int`
+        The coordinate reference system to retrieve a unit for.
+
+    Returns
+    -------
+    unit : str
+        The string-formatted unit.
+    """
+    crs = _check_crs(crs)
+    unit = crs.axis_info[0].unit_name
+
     return unit
+
 
 
 def list_to_affine(xform_mat):
@@ -601,7 +591,6 @@ def _reduce_geom_precision(geom, precision=2):
     geojson = mapping(geom)
     geojson['coordinates'] = np.round(np.array(geojson['coordinates']),
                                       precision)
-
     return shape(geojson)
 
 
@@ -749,12 +738,17 @@ def polygon_to_coco(polygon):
     return coords
 
 
-def split_geom(geometry, tile_size, resolution=None, use_projection_units=False, src_img=None):
-    """Splits a vector into approximately equal sized tiles. Adapted from @lossyrob's Gist https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
+def split_geom(geometry, tile_size, resolution=None,
+               use_projection_units=False, src_img=None):
+    """Splits a vector into approximately equal sized tiles.
 
-    The more complex the geometry, the slower this will run, but geometrys with around 10000
-    coordinates run in a few seconds time. You can simplify geometries with
-    shapely.geometry.Polygon.simplify if necessary.
+    Adapted from @lossyrob's Gist__
+
+    .. Gist: https://gist.github.com/lossyrob/7b620e6d2193cb55fbd0bffacf27f7f2
+
+    The more complex the geometry, the slower this will run, but geometrys with
+    around 10000 coordinates run in a few seconds time. You can simplify
+    geometries with shapely.geometry.Polygon.simplify if necessary.
 
     Arguments
     ---------

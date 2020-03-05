@@ -1,8 +1,10 @@
 from tensorflow import keras
 import numpy as np
+import rasterio
 from torch.utils.data import Dataset, DataLoader
 from .transform import _check_augs, process_aug_dict
 from ..utils.core import _check_df_load
+from ..utils.geo import split_geom
 from ..utils.io import imread, _check_channel_order
 
 
@@ -327,6 +329,9 @@ class TorchDataset(Dataset):
             mask[mask != 0] = 1
         if len(mask.shape) == 2:
             mask = mask[:, :, np.newaxis]
+        if len(image.shape) == 2:
+            image = image[:, :, np.newaxis]
+
         sample = {'image': image, 'mask': mask}
 
         if self.aug:
@@ -343,6 +348,179 @@ class TorchDataset(Dataset):
         sample['mask'] = _check_channel_order(sample['mask'],
                                               'torch').astype(np.float32)
         return sample
+
+
+class GeoTIFFDataset(Dataset):
+    """A PyTorch dataset object for solaris.
+
+    Note that this object is wrapped in a :class:`torch.utils.data.DataLoader`
+    before being passed to the :class:solaris.nets.train.Trainer` instance.
+
+    Attributes
+    ----------
+    df : :class:`pandas.DataFrame`
+        The :class:`pandas.DataFrame` specifying where inputs are stored.
+    aug : :class:`albumentations.core.composition.Compose`
+        An albumentations Compose object to pass imagery through before
+        passing it into the neural net. If an augmentation config subdict
+        was provided during initialization, this is created by parsing the
+        dict with :func:`solaris.nets.transform.process_aug_dict`.
+    batch_size : int
+        The batch size generated.
+    n_batches : int
+        The number of batches per epoch. Inferred based on the number of
+        input files in `df` and `batch_size`.
+    dtype : :class:`numpy.dtype`
+        The numpy dtype that image inputs should be when passed to the model.
+    is_categorical : bool
+        Indicates whether masks output are boolean or categorical labels.
+    dtype : class:`numpy.dtype`
+        The data type images should be converted to before being passed to
+        neural nets.
+    """
+
+    def __init__(self, df, augs, batch_size, n_batches=None,
+                 tile_size=(512, 512), label_type='mask', is_categorical=False,
+                 dtype=None, randomize_tiles=False, randomize_start=False):
+        """
+        Create an instance of TorchDataset for use in model training.
+
+        Arguments
+        ---------
+        df : :class:`pandas.DataFrame`
+            A pandas DataFrame specifying images and label files to read into
+            the model. ``GeoTIFFDataset`` is intended to accommodate very large
+            GeoTIFF files for each row of this DataFrame.
+            See `the reference file creation tutorial`_ for more.
+        augs : :class:`dict` or :class:`albumentations.core.composition.Compose`
+            Either the config subdict specifying augmentations to apply, or
+            a pre-created :class:`albumentations.core.composition.Compose`
+            object containing all of the augmentations to apply.
+        batch_size : int
+            The number of samples in a training batch.
+        label_type : str, optional
+            The type of labels to be used. At present, only ``"mask"`` is
+            supported.
+        is_categorical : bool, optional
+            Is the data categorical or boolean (default)?
+        dtype : str, optional
+            The dtype that image arrays should be converted to before being
+            passed to the neural net. If not provided, defaults to
+            ``"float32"``. Must be one of the `numpy dtype options`_.
+
+        .. _numpy dtype options: https://docs.scipy.org/doc/numpy/user/basics.types.html
+        """
+        super().__init__()
+
+        self.df = df
+        self.open_geotiffs()
+        self.batch_size = batch_size
+        self.n_batches = n_batches
+        self.aug = _check_augs(augs)
+        self.label_type = label_type
+        self.is_categorical = is_categorical
+        self.randomize_tiles = randomize_tiles
+        self.randomize_start = randomize_start
+        self.tile_size = tile_size
+        if not self.randomize_start:
+            # calculate tiles based on input_size
+            self.tile_bounds = split_geoms([0, 0, self.input_size[1],
+                                            self.input_size[0]],
+                                            tile_size=self.tile_size)
+
+        if dtype is None:
+            self.dtype = np.float32  # default
+        # if it's a string, get the appropriate object
+        elif isinstance(dtype, str):
+            try:
+                self.dtype = getattr(np, dtype)
+            except AttributeError:
+                raise ValueError(
+                    'The data type {} is not supported'.format(dtype))
+        # lastly, check if it's already defined in the right format for use
+        elif issubclass(dtype, np.number) or isinstance(dtype, np.dtype):
+            self.dtype = dtype
+
+        self.on_epoch_end()
+
+    def __len__(self):
+        return self.n_batches
+
+    def __getitem__(self, idx):
+        """Get one image, mask pair"""
+        # Generate indexes of the batch
+
+        image = imread(self.df['image'].iloc[idx])
+        mask = imread(self.df['label'].iloc[idx])
+        if not self.is_categorical:
+            mask[mask != 0] = 1
+        if len(mask.shape) == 2:
+            mask = mask[:, :, np.newaxis]
+        if len(image.shape) == 2:
+            image = image[:, :, np.newaxis]
+
+        sample = {'image': image, 'mask': mask}
+
+        if self.aug:
+            sample = self.aug(**sample)
+        # add in additional inputs (if applicable)
+        # additional_inputs = self.config['data_specs'].get('additional_inputs',
+        #                                                   None)
+        # if additional_inputs is not None:
+        #     for input in additional_inputs:
+        #         sample[input] = self.df[input].iloc[idx]
+
+        sample['image'] = _check_channel_order(sample['image'],
+                                               'torch').astype(self.dtype)
+        sample['mask'] = _check_channel_order(sample['mask'],
+                                              'torch').astype(np.float32)
+        return sample
+
+    def open_geotiffs(self):
+        """Open all the GeoTIFFs in the DataFrame with rasterio.open()."""
+        self.df['opened_image'] = self.df['image'].apply(rasterio.open)
+        self.df['image_extent'] = self.df['opened_image'].apply(
+            lambda x: x.shape)
+        self.df['image_size'] = self.df['image_extent'].apply(
+            lambda x: x[0]*x[1])
+        # get ratios to use for random sampling
+        self.df['image_ratio'] = self.df['image_size'].apply(
+            lambda x: float(x)/self.df['image_size'].iloc[0])
+        if self.label_type == 'mask':
+            self.df['opened_label'] = self.df['label'].apply(rasterio.open)
+            self.df['label_extent'] = self.df['opened_label'].apply(
+                lambda x: x.shape)
+            self.df['label_size'] = self.df['label_extent'].apply(
+                lambda x: x[0]*x[1])
+
+    def get_all_tiles_sequential(self):
+        """Get the indices of all of the tiles in the GeoTIFFDataset's images.
+        """
+        if 'opened_image' not in self.df.columns:  # make sure they're opened
+            self.open_geotiffs()
+        tile_series = self.df['image_extent'].apply(
+            self.get_single_im_tiles,
+            tile_size=self.tile_size,
+            randomize_start=self.randomize_start)
+
+    def get_single_im_tiles(im_shape, tile_size, randomize_start=False):
+        """Get the bounds of the tiles for a single image."""
+        if randomize_start:
+            starting_coord = (np.random.randint(0, tile_size[0]),
+                              np.random.randint(0, tile_size[1]))
+        else:
+            starting_coord = (0, 0)
+        return split_geom(geometry=[starting_coord[1], starting_coord[0],
+                                    im_shape[1], im_shape[0]],
+                          tile_size=tile_size)
+
+
+    def on_epoch_end(self):
+        if self.randomize_start:
+            x_arr = np.random.randint(0, self.input_shape[0]-self.tile_size[0], self.n_batches)
+            y_arr = np.random.randint(0, self.input_shape[1]-self.tile_size[1], self.n_batches)
+            self.tile_bounds = list(zip(x_arr, y_arr,
+                                        x_arr+self.tile_size[0], y_arr+self.tile_size[1]))
 
 
 class InferenceTiler(object):
