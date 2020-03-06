@@ -62,7 +62,7 @@ if on_rtd:
 else:
     inst_reqs = ['pip>=19.0.3',
                  'affine>=2.3.0',
-                 'albumentations==0.4.3',
+                 'albumentations>=0.4.3',
                  'fiona>=1.8.13',
                  'gdal>=3.0.2',
                  'geopandas>=0.7.0',
@@ -73,7 +73,7 @@ else:
                  'pandas>=0.25.3',
                  'pyproj>=2.1',
                  'torch>=1.3.1',
-                 'pyyaml==5.2',
+                 'pyyaml>=5.2',
                  'rasterio>=1.0.23',
                  'requests>=2.22.0',
                  # 'rio-cogeo>=1.1.6',
