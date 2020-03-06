@@ -56,9 +56,6 @@ except Exception:
 
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
-dependency_links = [
-        'git+git://github.com/toblerity/shapely.git@master#egg=shapely-1.7.1dev'
-        ]
 if on_rtd:
     inst_reqs = ['sphinx_bootstrap_theme']
 else:
@@ -81,7 +78,7 @@ else:
                  'rtree>=0.9.3',
                  'scikit-image>=0.16.2',
                  'scipy>=1.3.2',
-                 'shapely=1.7.1dev',
+                 'shapely>=1.7.1dev',
                  'torchvision>=0.5.0',
                  'tqdm>=4.40.0',
                  'urllib3>=1.25.7',
@@ -91,6 +88,10 @@ else:
 
 extra_reqs = {
     'test': ['mock', 'pytest', 'pytest-cov', 'codecov']}
+
+# workaround until new shapely release is out
+os.system('pip install  git+git://github.com/toblerity/shapely@master')
+
 
 project_name = 'solaris'
 setup(name='solaris',
@@ -109,7 +110,6 @@ setup(name='solaris',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       zip_safe=False,
       include_package_data=True,
-      dependency_links=dependency_links,
       install_requires=inst_reqs,
       extras_require=extra_reqs,
       entry_points={'console_scripts': [
