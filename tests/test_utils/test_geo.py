@@ -71,7 +71,7 @@ class TestSplitMultiGeometries(object):
         output = split_multi_geometries(os.path.join(data_dir,
                                                      'w_multipolygon.csv'))
         expected = gpd.read_file(os.path.join(
-            data_dir, 'split_multi_result.json')).drop(columns='id')
+            data_dir, 'split_multi_result.json'))
 
         assert expected.equals(output)
 
@@ -80,7 +80,7 @@ class TestSplitMultiGeometries(object):
             os.path.join(data_dir, 'w_multipolygon.csv'), obj_id_col='field_1',
             group_col='truncated')
         expected = gpd.read_file(os.path.join(
-            data_dir, 'split_multi_grouped_result.json')).drop(columns='id')
+            data_dir, 'split_multi_grouped_result.json'))
 
         assert expected.equals(output)
 
@@ -171,4 +171,4 @@ class TestSplitGeometry(object):
             os.path.join(data_dir, 'multigeom_split_result.geojson'))
         single_gdf = split_multi_geometries(multi_gdf)
 
-        assert single_gdf == expected_result
+        assert single_gdf.equals(expected_result)
