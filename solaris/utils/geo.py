@@ -520,7 +520,7 @@ def split_multi_geometries(gdf, obj_id_col=None, group_col=None,
         gdf2[geom_col] = gdf2[geom_col].apply(loads)
     split_geoms_gdf = pd.concat(
         gdf2.apply(_split_multigeom_row, axis=1, geom_col=geom_col).tolist())
-    gdf2.drop(index=split_geoms_gdf.index.unique())  # remove multipolygons
+    gdf2 = gdf2.drop(index=split_geoms_gdf.index.unique())  # remove multipolygons
     gdf2 = gpd.GeoDataFrame(pd.concat([gdf2, split_geoms_gdf],
                                       ignore_index=True), crs=gdf2.crs)
 

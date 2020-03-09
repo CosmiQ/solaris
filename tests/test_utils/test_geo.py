@@ -6,6 +6,7 @@ from affine import Affine
 from shapely.wkt import loads
 from shapely.ops import cascaded_union
 from solaris.data import data_dir
+from solaris.utils.core import _check_gdf_load
 from solaris.utils.geo import list_to_affine, split_multi_geometries
 from solaris.utils.geo import geometries_internal_intersection, split_geom
 from solaris.utils.geo import reproject, reproject_geometry
@@ -136,7 +137,7 @@ class TestReprojectGeometry(object):
         reproj_geom = reproject_geometry(input_str, input_crs=32616,
                                          target_crs=4326)
         area_sim = result_geom.intersection(reproj_geom).area/result_geom.area
-        
+
         assert area_sim > 0.99999
 
     def test_reproject_from_wkt_to_utm(self):
@@ -146,7 +147,7 @@ class TestReprojectGeometry(object):
         reproj_geom = reproject_geometry(input_str, input_crs=4326,
                                          target_crs=32616)
         area_sim = result_geom.intersection(reproj_geom).area/result_geom.area
-        
+
         assert area_sim > 0.99999
 
 
@@ -156,8 +157,18 @@ class TestSplitGeometry(object):
     def test_split_polygon(self):
 
         poly = gpd.read_file(os.path.join(
-            data_dir, 'test_polygon_split.geojson')).iloc[0]['geometry']    
+            data_dir, 'test_polygon_split.geojson')).iloc[0]['geometry']
         reproj_poly = reproject_geometry(poly, input_crs=4326,
                                          target_crs=32611)
         split_geom_list = split_geom(reproj_poly, (1024,1024), resolution=30)
         assert len(split_geom_list) == 47
+
+    def test_split_multigeom_gdf(self):
+
+        multi_gdf = _check_gdf_load(
+            os.path.join(data_dir, 'multigeom.geojson'))
+        expected_result = _check_gdf_load(
+            os.path.join(data_dir, 'multigeom_split_result.geojson'))
+        single_gdf = split_multi_geometries(multi_gdf)
+
+        assert single_gdf == expected_result
