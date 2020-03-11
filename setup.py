@@ -112,6 +112,7 @@ setup(name='solaris',
       include_package_data=True,
       install_requires=inst_reqs,
       extras_require=extra_reqs,
+      dependency_links=['https://github.com/toblerity/shapely/tarball/master#egg=shapely-1.7.1dev'],
       entry_points={'console_scripts': [
           'geotransform_footprints = solaris.bin.geotransform_footprints:main',
           'make_graphs = solaris.bin.make_graphs:main',
