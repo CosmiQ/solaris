@@ -32,7 +32,8 @@ install:
   - conda list -n solaris
   - source activate solaris
   - python --version
-  - pip install -q -e .[test]
+  - pip install --user -r requirements.txt -vv
+  - pip install .[test] -vv
   - pip install codecov pytest-cov pytest==5.3.1
 # command to run tests
 script:

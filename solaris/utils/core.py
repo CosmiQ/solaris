@@ -5,12 +5,12 @@ from shapely.geometry import Point
 from shapely.geometry.base import BaseGeometry
 import pandas as pd
 import geopandas as gpd
+import pyproj
 import rasterio
 import skimage
 from fiona._err import CPLE_OpenFailedError
 from fiona.errors import DriverError
 from warnings import warn
-import pdb
 
 
 def _check_rasterio_im_load(im):
@@ -85,34 +85,11 @@ def _check_geom(geom):
 
 
 def _check_crs(input_crs):
-    """Convert CRS to the integer format passed by ``solaris``."""
-    if isinstance(input_crs, dict):
-        # assume it's an {'init': 'epsgxxxx'} dict
-        out_crs = int(input_crs['init'].lower().strip('epsg:'))
-        out_crs = rasterio.crs.CRS.from_epsg(out_crs)
-    elif isinstance(input_crs, str):
-        #pdb.set_trace()
-        # handle PROJ4 strings, epsg strings, wkt strings
-        # but FIRST, see if it's just a number represented as a string
-        try:
-            input_crs = int(input_crs)
-            out_crs = rasterio.crs.CRS.from_epsg(input_crs)
-        except ValueError:
-            try:
-                out_crs = rasterio.crs.CRS.from_string(input_crs)
-            except rasterio.errors.CRSError as e:
-                raise ValueError(
-                    f"Solaris doesn't know how to parse {input_crs} as a "
-                    "crs. Try re-formatting. If this is properly formatted, "
-                    "open an issue in solaris's GitHub repository."
-                    ) from e
-    elif isinstance(input_crs, rasterio.crs.CRS):
-        out_crs = input_crs
-    elif isinstance(input_crs, int):
-        out_crs = rasterio.crs.CRS.from_epsg(input_crs)
-    elif input_crs is None:
-        out_crs = input_crs
-    return out_crs
+    """Convert CRS to the ``pyproj.CRS`` object passed by ``solaris``."""
+    if not isinstance(input_crs, pyproj.CRS) and input_crs is not None:
+        return pyproj.CRS(input_crs)
+    else:
+        return input_crs
 
 
 def get_data_paths(path, infer=False):

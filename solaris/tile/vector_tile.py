@@ -4,7 +4,7 @@ from shapely.geometry import box, Polygon
 import geopandas as gpd
 from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
-from ..utils.geo import gdf_get_projection_unit, split_multi_geometries
+from ..utils.geo import get_projection_unit, split_multi_geometries
 from ..utils.geo import reproject_geometry
 from tqdm import tqdm
 
@@ -168,7 +168,7 @@ class VectorTiler(object):
         else:
             reproject_bounds = False
 
-        self.proj_unit = self.src_crs.linear_units
+        self.proj_unit = get_projection_unit(self.src_crs)
         if getattr(self, 'dest_crs', None) is None:
             self.dest_crs = self.src_crs
         for i, tb in enumerate(tile_bounds):
