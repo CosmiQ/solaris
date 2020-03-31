@@ -3,12 +3,11 @@ import rasterio
 from rasterio.warp import Resampling, calculate_default_transform
 from rasterio.vrt import WarpedVRT
 from rasterio.mask import mask as rasterio_mask
-from rio_cogeo.cogeo import cog_validate, cog_translate
+# from rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
 # removing the following until COG functionality is implemented
 # from ..utils.tile import read_cog_tile
-from ..utils.geo import reproject, split_geom
-from tqdm import tqdm
+from ..utils.geo import reproject, split_geom, raster_get_projection_unit
 import numpy as np
 from shapely.geometry import box
 
@@ -189,10 +188,10 @@ class RasterTiler(object):
         self.tile_paths = []
         if nodata_threshold is not None:
             if nodata_threshold > 1:
-                raise ValueError("nodatathreshold should be expressed as a float less than 1.")
+                raise ValueError("nodata_threshold should be expressed as a float less than 1.")
             print("nodata value threshold supplied, filtering based on this percentage.")
             new_tile_bounds = []
-            for tile_data, mask, profile, tb in tqdm(tile_gen):
+            for tile_data, mask, profile, tb in tile_gen:
                 nodata_count = np.logical_or.reduce((tile_data == profile['nodata']), axis=0).sum()
                 nodata_perc = nodata_count / (tile_data.shape[1] * tile_data.shape[2])
                 if nodata_perc < nodata_threshold:
@@ -204,7 +203,7 @@ class RasterTiler(object):
                     print("{} of nodata is over the nodata_threshold, tile not saved.".format(nodata_perc))
             self.tile_bounds = new_tile_bounds # only keep the tile bounds that make it past the nodata threshold
         else:
-            for tile_data, mask, profile, tb in tqdm(tile_gen):
+            for tile_data, mask, profile, tb in tile_gen:
                 dest_path = self.save_tile(
                     tile_data, mask, profile, dest_fname_base)
                 self.tile_paths.append(dest_path)
@@ -275,12 +274,12 @@ class RasterTiler(object):
         # parse arguments
         if self.verbose:
             print("Checking input data...")
-        if isinstance(src, str):
-            self.is_cog = cog_validate(src)
-        else:
-            self.is_cog = cog_validate(src.name)
-        if self.verbose:
-            print('COG: {}'.format(self.is_cog))
+        # if isinstance(src, str):
+        #     self.is_cog = cog_validate(src)
+        # else:
+        # self.is_cog = cog_validate(src.name)
+        # if self.verbose:
+        #     print('COG: {}'.format(self.is_cog))
         self.src = _check_rasterio_im_load(src)
         if channel_idxs is None:  # if not provided, include them all
             channel_idxs = list(range(1, self.src.count + 1))
@@ -292,8 +291,8 @@ class RasterTiler(object):
             self.dest_crs = self.src_crs
         if self.verbose:
             print('Destination CRS: EPSG:{}'.format(self.dest_crs.to_epsg()))
-        self.src_path = self.src_name
-        self.proj_unit = self.src_crs.linear_units  # used for rounding in filename
+        self.src_path = self.src.name
+        self.proj_unit = raster_get_projection_unit(self.src)  # for rounding
         if self.verbose:
             print("Inputs OK.")
         if self.use_src_metric_size:

@@ -5,7 +5,6 @@ import numpy as np
 import logging
 from ..utils.raster import reorder_axes
 from ..utils.log import _get_logging_level
-import pdb
 
 
 def get_geo_transform(raster_src):
@@ -208,7 +207,6 @@ def get_tdigest(data_buffer, tdigest=None, scale_function=K1ScaleFunction,
     tdigest : :class:`TDigest`, optional
         An existing :class:`TDigest` object to merge with the new data.
     """
-    pdb.set_trace()
     buffer_centroids = data_buffer.flatten().astype(np.float32)
     buffer_weights = np.ones(shape=buffer_centroids.shape, dtype=np.float32)
     if tdigest:

@@ -3,10 +3,10 @@ from .base import Evaluator
 import re
 
 
-def spacenet_buildings_2(prop_csv, truth_csv, miniou=0.5, min_area=20):
-    """Evaluate a SpaceNet2 building footprint competition proposal csv.
+def spacenet_buildings_2(prop_csv, truth_csv, miniou=0.5, min_area=20, challenge='spacenet_2'):
+    """Evaluate a SpaceNet building footprint competition proposal csv.
 
-    Uses :class:`Evaluator` to evaluate SpaceNet2 challenge proposals.
+    Uses :class:`Evaluator` to evaluate SpaceNet challenge proposals.
 
     Arguments
     ---------
@@ -20,6 +20,12 @@ def spacenet_buildings_2(prop_csv, truth_csv, miniou=0.5, min_area=20):
     min_area : float or int, optional
         Minimum area of ground truth regions to include in scoring calculation.
         Defaults to ``20``.
+    challenge: str, optional
+        The challenge id for evaluation.
+        One of
+        ``['spacenet_2', 'spacenet_3', 'spacenet_off_nadir', 'spacenet_6']``.
+        The name of the challenge that `chip_name` came from. Defaults to
+        ``'spacenet_2'``.
 
     Returns
     -------
@@ -48,7 +54,7 @@ def spacenet_buildings_2(prop_csv, truth_csv, miniou=0.5, min_area=20):
                                               )
     results_DF_Full = pd.DataFrame(results)
 
-    results_DF_Full['AOI'] = [get_chip_id(imageID, challenge='spacenet_2')
+    results_DF_Full['AOI'] = [get_chip_id(imageID, challenge=challenge)
                               for imageID in results_DF_Full['imageID'].values]
 
     results_DF = results_DF_Full.groupby(['AOI']).sum()
@@ -209,7 +215,7 @@ def get_chip_id(chip_name, challenge="spacenet_2"):
         The name of the chip to extract the identifier from.
     challenge: str, optional
         One of
-        ``['spacenet_buildings_2', 'spacenet_roads', 'spacenet_off_nadir']``.
+        ``['spacenet_2', 'spacenet_3', 'spacenet_off_nadir', 'spacenet_6']``.
         The name of the challenge that `chip_name` came from. Defaults to
         ``'spacenet_2'``.
 
@@ -225,5 +231,7 @@ def get_chip_id(chip_name, challenge="spacenet_2"):
     elif challenge == 'spacenet_off_nadir':
         chip_id = re.findall('Atlanta_nadir[0-9]{1,2}_catid_[0-9A-Z]{16}',
                              chip_name)[0]
+    elif challenge == 'spacenet_6':
+        chip_id = '_'.join(chip_name.split('_')[-4:]).split(".")[0]
 
     return chip_id

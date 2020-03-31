@@ -13,6 +13,7 @@ import rasterio
 from rasterio import features
 from affine import Affine
 from skimage.morphology import square, erosion, dilation
+import os
 
 def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
                   geom_col='geometry', do_transform=None, affine_obj=None,
@@ -969,3 +970,50 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             dst.close()
 
     return output_arr
+
+def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value=0):
+    """
+    Converts tiled vectors to raster labels and fills nodata values in raster and vector tiles.
+    
+    This function must be run after a raster tiler and vector tiler have already been initialized 
+    and the `.tile()` method for each has been called to generate raster and vector tiles. 
+    Geojson labels are first converted to rasterized masks, then the labels are set to 0 
+    where the reference image, the corresponding image tile, has nodata values. Then, nodata 
+    areas in the image tile are filled  in place with the fill_value. Only works for rasterizing 
+    all geometries as a single category with a burn value of 1.
+
+    rtiler : RasterTiler
+        The RasterTiler that has had it's `.tile()` method called.
+    vtiler : VectorTiler
+        The VectorTiler that has had it's `.tile()` method called.
+    label_tile_dir : str
+        The folder path to save rasterized labels.
+    fill_value : str, optional
+        The value to use to fill nodata values in images. Defaults to 0.
+    """
+    rasterized_label_paths = []
+    print("starting label mask generation")
+    for img_tile, geojson_tile in zip(sorted(rtiler.tile_paths)), sorted(vtiler.tile_paths):
+        fid = os.path.basename(geojson_tile).split(".geojson")[0]
+        rasterized_label_path = os.path.join(label_tile_dir, fid + ".tif")
+        rasterized_label_paths.append(rasterized_label_path)
+        gdf = gpd.read_file(geojson_tile)
+        # gdf.crs = rtiler.raster_bounds_crs # add this because gdfs can't be saved with wkt crs
+        arr = instance_mask(gdf, out_file=rasterized_label_path, reference_im=img_tile, 
+                                        geom_col='geometry', do_transform=None,
+                                        out_type='int', burn_value=1, burn_field=None) # this saves the file, unless it is empty in which case we deal with it below.
+        if not arr.any(): # in case no instances in a tile we save it with "empty" at the front of the basename
+            with rasterio.open(img_tile) as reference_im:
+                meta = reference_im.meta.copy()
+                reference_im.close()
+            meta.update(count=1)
+            meta.update(dtype='uint8')
+            if isinstance(meta['nodata'], float):
+                meta.update(nodata=0)
+            rasterized_label_path = os.path.join(label_tile_dir, "empty_" + fid + ".tif")
+            with rasterio.open(rasterized_label_path, 'w', **meta) as dst:
+                dst.write(np.expand_dims(arr, axis=0))
+                dst.close()
+    return rtiler.raster_tiler.fill_all_nodata(fill_value)       
+#         return self for debugging
+
