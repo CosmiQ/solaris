@@ -32,7 +32,7 @@ class Trainer(object):
         self.train_datagen = make_data_generator(self.framework, self.config,
                                                  self.train_df, stage='train')
         self.val_datagen = make_data_generator(self.framework, self.config,
-                                               self.val_df, stage='train')
+                                               self.val_df, stage='validate')
         self.epochs = self.config['training']['epochs']
         self.optimizer = get_optimizer(self.framework, self.config)
         self.lr = self.config['training']['lr']
