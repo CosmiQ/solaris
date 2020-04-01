@@ -124,38 +124,33 @@ class TestTilers(object):
             data_dir, 'vectortile_test_filled_expected')))
 
         raster_tiling_result_files = os.listdir(os.path.join(
-            data_dir, 'rastertile_test_filled_result'))
+            data_dir, 'rastertile_test_fill_nodata_result'))
         assert len(raster_tiling_result_files) == len(os.listdir(os.path.join(
-            data_dir, 'rastertile_test_filled_expected')))
+            data_dir, 'rastertile_test_fill_nodata_expected')))
 
-        raster_tiling_result_files_nonfilled = os.listdir(os.path.join(
-            data_dir, 'rastertile_test_nonfilled_result'))
-        assert len(raster_tiling_result_files) == len(os.listdir(os.path.join(
-            data_dir, 'rastertile_test_nonfilled_expected')))
+        vector_tiling_result_files_nonfilled = os.listdir(os.path.join(
+            data_dir, 'vectortile_test_nonfilled_result'))
+        assert len(vector_tiling_result_files) == len(os.listdir(os.path.join(
+            data_dir, 'vectortile_test_nonfilled_expected')))
         
         # check if the filling worked for both img and vector tiles
         for f in raster_tiling_result_files:
             result = skimage.io.imread(os.path.join(data_dir,
-                                                    'rastertile_test_filled_result',
+                                                    'rastertile_test_fill_nodata_result',
                                                     f))
             expected = skimage.io.imread(
-                os.path.join(data_dir, 'rastertile_test_filled_expected', f))
+                os.path.join(data_dir, 'rastertile_test_fill_nodata_expected', f))
             assert np.array_equal(result, expected)
 
 
         for f in vector_tiling_result_files:
-            result = gpd.read_file(os.path.join(data_dir,
+            result = skimage.io.imread(os.path.join(data_dir,
                                                 'vectortile_test_filled_result',
                                                 f))
-            expected = gpd.read_file(os.path.join(data_dir,
+            expected = skimage.io.imread(os.path.join(data_dir,
                                                   'vectortile_test_filled_expected',
                                                   f))
-            if len(result) == 0:
-                assert len(expected) == 0
-            else:
-                result = cascaded_union(result.geometry)
-                expected = cascaded_union(expected.geometry)
-                assert result.intersection(expected).area/result.area > 0.99999
+            assert np.array_equal(result, expected)
 
         #cleanup
         for f in vector_tiling_result_files_nonfilled:
@@ -165,6 +160,6 @@ class TestTilers(object):
             os.remove(os.path.join(data_dir, 'vectortile_test_filled_result', f))
         os.rmdir(os.path.join(data_dir, 'vectortile_test_filled_result'))
         for f in raster_tiling_result_files:
-            os.remove(os.path.join(data_dir, 'rastertile_test_filled_result', f))
-        os.rmdir(os.path.join(data_dir, 'rastertile_test_filled_result'))
+            os.remove(os.path.join(data_dir, 'rastertile_test_fill_nodata_result', f))
+        os.rmdir(os.path.join(data_dir, 'rastertile_test_fill_nodata_result'))
 
