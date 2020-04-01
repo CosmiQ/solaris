@@ -284,7 +284,7 @@ class RasterTiler(object):
         if channel_idxs is None:  # if not provided, include them all
             channel_idxs = list(range(1, self.src.count + 1))
             print(channel_idxs)
-        self.src_crs = _check_crs(self.src.crs)
+        self.src_crs = _check_crs(self.src.crs, rasterio_crs_required=True) # necessary to use rasterio crs for reproject
         if self.verbose:
             print('Source CRS: EPSG:{}'.format(self.src_crs.to_epsg()))
         if self.dest_crs is None:

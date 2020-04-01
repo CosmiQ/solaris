@@ -7,6 +7,7 @@ import pandas as pd
 import geopandas as gpd
 import pyproj
 import rasterio
+from distutils.version import LooseVersion
 import skimage
 from fiona._err import CPLE_OpenFailedError
 from fiona.errors import DriverError
@@ -84,10 +85,17 @@ def _check_geom(geom):
         return Point(geom)
 
 
-def _check_crs(input_crs):
+def _check_crs(input_crs, rasterio_crs_required=False):
     """Convert CRS to the ``pyproj.CRS`` object passed by ``solaris``."""
-    if not isinstance(input_crs, pyproj.CRS) and input_crs is not None:
+    if not isinstance(input_crs, pyproj.CRS) and input_crs is not None and rasterio_crs_required==False:
         return pyproj.CRS(input_crs)
+    elif isinstance(input_crs, rasterio.crs.CRS) and rasterio_crs_required == True:
+        return input_crs
+    elif not isinstance(input_crs, rasterio.crs.CRS) and rasterio_crs_required == True:
+        if LooseVersion(rasterio.__gdal_version__) >= LooseVersion("3.0.0"):
+            return input_crs.from_wkt(pyproj_crs.to_wkt())
+        else:
+            return input_crs.from_wkt(pyproj_crs.to_wkt("WKT1_GDAL"))
     else:
         return input_crs
 

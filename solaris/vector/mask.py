@@ -890,6 +890,8 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         The value to use for nodata pixels in the mask. Defaults to 0 (the
         min value for ``uint8`` arrays). Used if reference_im nodata value is a float.
         Ignored if reference_im nodata value is an int or if reference_im is not used.
+        Take care when visualizing these masks, the nodata value may cause labels to not 
+        be visualized if nodata values are automatically masked by the software.
 
     Returns
     -------
@@ -905,7 +907,7 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
 
-    if len(df) == 0:
+    if len(df) == 0: # for saving an empty mask.
         reference_im = _check_rasterio_im_load(reference_im)
         shape = reference_im.shape
         return np.zeros(shape=shape, dtype='uint8')
@@ -954,6 +956,7 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         bad_data_mask = (reference_im.read() == reference_im.nodata).any(axis=0) # take logical and along all dims so that all pixxels not -9999 across bands
     except AttributeError as ae:  # raise another, more verbose AttributeError
         raise AttributeError("A nodata value is not defined for the source image. Make sure the reference_im has a nodata value defined.") from ae
+    if len(bad_data_mask.shape) > 2:
         bad_data_mask = np.dstack([bad_data_mask]*output_arr.shape[2])
         output_arr = np.where(bad_data_mask, 0, output_arr) # mask is broadcasted to filter labels where there are non-nan image values
 
@@ -987,13 +990,15 @@ def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value
     vtiler : VectorTiler
         The VectorTiler that has had it's `.tile()` method called.
     label_tile_dir : str
-        The folder path to save rasterized labels.
+        The folder path to save rasterized labels. This is created if it doesn't already exist.
     fill_value : str, optional
         The value to use to fill nodata values in images. Defaults to 0.
     """
     rasterized_label_paths = []
     print("starting label mask generation")
-    for img_tile, geojson_tile in zip(sorted(rtiler.tile_paths)), sorted(vtiler.tile_paths):
+    if not os.path.exists(label_tile_dir):
+        os.mkdir(label_tile_dir)
+    for img_tile, geojson_tile in zip(sorted(rtiler.tile_paths), sorted(vtiler.tile_paths)):
         fid = os.path.basename(geojson_tile).split(".geojson")[0]
         rasterized_label_path = os.path.join(label_tile_dir, fid + ".tif")
         rasterized_label_paths.append(rasterized_label_path)
@@ -1014,6 +1019,6 @@ def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value
             with rasterio.open(rasterized_label_path, 'w', **meta) as dst:
                 dst.write(np.expand_dims(arr, axis=0))
                 dst.close()
-    return rtiler.raster_tiler.fill_all_nodata(fill_value)       
-#         return self for debugging
+    rtiler.fill_all_nodata(nodata_fill=fill_value)
+    return rasterized_label_paths
 
