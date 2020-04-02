@@ -103,6 +103,7 @@ class VectorTiler(object):
                                                        output_ext))
             self.tile_paths.append(dest_path)
             if len(tile_gdf) > 0:
+                assert tile_gdf.crs is not None
                 tile_gdf.to_file(dest_path, driver='GeoJSON')
             else:
                 save_empty_geojson(dest_path, self.dest_crs)
