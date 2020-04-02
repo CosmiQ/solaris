@@ -31,6 +31,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 - 20200401, rbavery: new tiler method `fill_all_nodata` to fill nodata with `"mean"` or custom value (#328)
 - 20200401, rbavery: option to ignore MultiPolygon and GeometryCollection types in `geojson2coco` since these cannot be converted to COCO.
 - 20200401, rbavery: new function `solaris.vector.mask.geojsons_to_masks_and_fill_nodata`, which rasterized vector labels according to raster tile extents. Fills nodata areas in raster tile and corresponding rasterized label raster.
+- 20200401, rbavery: new test/example of tiling and creating instance masks with nodata values filled in tile outputs
   
 ### Fixed
 - 20200401, rbavery: restrict_to_aoi implemented, sets values outside aoi to nodata value (#327, #240)

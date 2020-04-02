@@ -31,4 +31,4 @@ dependencies:
   - cuda100
   - pip
   - pip:
-    - git+https://github.com/Toblerity/shapely.git@master#egg=shapely-1.7.1dev # temporary, 1.8dev required for numpy array support
+    - git+https://github.com/Toblerity/shapely.git@master#egg=shapely-1.7.1dev # temporary, dev required for numpy array support

@@ -984,7 +984,8 @@ def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value
     Geojson labels are first converted to rasterized masks, then the labels are set to 0 
     where the reference image, the corresponding image tile, has nodata values. Then, nodata 
     areas in the image tile are filled  in place with the fill_value. Only works for rasterizing 
-    all geometries as a single category with a burn value of 1.
+    all geometries as a single category with a burn value of 1. See test_tiler_fill_nodata in 
+    tests/test_tile/test_tile.py for an example.
 
     Args
     -------
