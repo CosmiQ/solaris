@@ -293,7 +293,7 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
     if im is not None:
         im = _check_rasterio_im_load(im)
         # currently, convert CRSs to WKT strings here to accommodate rasterio.
-        bbox = transform_bounds(im.crs, _check_crs(gdf.crs).to_epsg(),
+        bbox = transform_bounds(im.crs, _check_crs(gdf.crs, return_rasterio=True),
                                 *im.bounds)
         bbox_crs = im.crs
     # use transform_bounds in case the crs is different - no effect if not
@@ -301,15 +301,15 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
         bbox = bbox.bounds
     if bbox_crs is None:
         try:
-            bbox_crs = _check_crs(gdf.crs)
+            bbox_crs = _check_crs(gdf.crs, return_rasterio=True)
         except AttributeError:
             raise ValueError('If `im` and `bbox_crs` are not provided, `gdf`'
                              'must provide a coordinate reference system.')
     else:
-        bbox_crs = _check_crs(bbox_crs)
+        bbox_crs = _check_crs(bbox_crs, return_rasterio=True)
     # currently, convert CRSs to WKT strings here to accommodate rasterio.
-    bbox = transform_bounds(bbox_crs.to_wkt("WKT1_GDAL"),
-                            _check_crs(gdf.crs).to_wkt("WKT1_GDAL"),
+    bbox = transform_bounds(bbox_crs,
+                            _check_crs(gdf.crs, return_rasterio=True),
                             *bbox)
     try:
         intersectors = list(sindex.intersection(bbox))
