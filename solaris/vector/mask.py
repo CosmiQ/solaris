@@ -14,6 +14,7 @@ from rasterio import features
 from affine import Affine
 from skimage.morphology import square, erosion, dilation
 import os
+from tqdm.auto import tqdm
 
 def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
                   geom_col='geometry', do_transform=None, affine_obj=None,
@@ -985,6 +986,8 @@ def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value
     areas in the image tile are filled  in place with the fill_value. Only works for rasterizing 
     all geometries as a single category with a burn value of 1.
 
+    Args
+    -------
     rtiler : RasterTiler
         The RasterTiler that has had it's `.tile()` method called.
     vtiler : VectorTiler
@@ -993,12 +996,17 @@ def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value
         The folder path to save rasterized labels. This is created if it doesn't already exist.
     fill_value : str, optional
         The value to use to fill nodata values in images. Defaults to 0.
+
+    Returns
+    -------
+    rasterized_label_paths : list
+        A list of the paths to the rasterized instance masks.
     """
     rasterized_label_paths = []
     print("starting label mask generation")
     if not os.path.exists(label_tile_dir):
         os.mkdir(label_tile_dir)
-    for img_tile, geojson_tile in zip(sorted(rtiler.tile_paths), sorted(vtiler.tile_paths)):
+    for img_tile, geojson_tile in tqdm(zip(sorted(rtiler.tile_paths), sorted(vtiler.tile_paths))):
         fid = os.path.basename(geojson_tile).split(".geojson")[0]
         rasterized_label_path = os.path.join(label_tile_dir, fid + ".tif")
         rasterized_label_paths.append(rasterized_label_path)

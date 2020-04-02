@@ -6,7 +6,7 @@ from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
 from ..utils.geo import get_projection_unit, split_multi_geometries
 from ..utils.geo import reproject_geometry
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 class VectorTiler(object):
@@ -209,7 +209,6 @@ def search_gdf_polygon(gdf, tile_polygon):
         :py:class:`geopandas.GeoDataFrame`.
 
     """
-    crs = gdf.crs
     sindex = gdf.sindex
     possible_matches_index = list(sindex.intersection(tile_polygon.bounds))
     possible_matches = gdf.iloc[possible_matches_index]

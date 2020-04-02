@@ -10,7 +10,7 @@ from ..utils.core import _check_crs, _check_rasterio_im_load
 from ..utils.geo import reproject, split_geom, raster_get_projection_unit
 import numpy as np
 from shapely.geometry import box
-
+from tqdm.auto import tqdm
 
 class RasterTiler(object):
     """An object to tile geospatial image strips into smaller pieces.
@@ -191,7 +191,7 @@ class RasterTiler(object):
                 raise ValueError("nodata_threshold should be expressed as a float less than 1.")
             print("nodata value threshold supplied, filtering based on this percentage.")
             new_tile_bounds = []
-            for tile_data, mask, profile, tb in tile_gen:
+            for tile_data, mask, profile, tb in tqdm(tile_gen):
                 nodata_count = np.logical_or.reduce((tile_data == profile['nodata']), axis=0).sum()
                 nodata_perc = nodata_count / (tile_data.shape[1] * tile_data.shape[2])
                 if nodata_perc < nodata_threshold:
@@ -203,7 +203,7 @@ class RasterTiler(object):
                     print("{} of nodata is over the nodata_threshold, tile not saved.".format(nodata_perc))
             self.tile_bounds = new_tile_bounds # only keep the tile bounds that make it past the nodata threshold
         else:
-            for tile_data, mask, profile, tb in tile_gen:
+            for tile_data, mask, profile, tb in tqdm(tile_gen):
                 dest_path = self.save_tile(
                     tile_data, mask, profile, dest_fname_base)
                 self.tile_paths.append(dest_path)

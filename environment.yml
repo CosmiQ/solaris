@@ -30,3 +30,5 @@ dependencies:
   - torchvision>=0.5.0
   - tqdm>=4.40.0
   - urllib3>=1.25.7
+  - pip:
+    - git+https://github.com/Toblerity/shapely.git@master#egg=shapely-1.7.1dev # temporary, 1.8dev required for numpy array support

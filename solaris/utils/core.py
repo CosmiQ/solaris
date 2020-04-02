@@ -91,11 +91,11 @@ def _check_crs(input_crs, rasterio_crs_required=False):
         return pyproj.CRS(input_crs)
     elif isinstance(input_crs, rasterio.crs.CRS) and rasterio_crs_required == True:
         return input_crs
-    elif not isinstance(input_crs, rasterio.crs.CRS) and rasterio_crs_required == True:
+    elif isinstance(input_crs, pyproj.CRS) and rasterio_crs_required == True:
         if LooseVersion(rasterio.__gdal_version__) >= LooseVersion("3.0.0"):
-            return input_crs.from_wkt(pyproj_crs.to_wkt())
+            return rasterio.crs.CRS.from_wkt(input_crs.to_wkt())
         else:
-            return input_crs.from_wkt(pyproj_crs.to_wkt("WKT1_GDAL"))
+            return rasterio.crs.CRS.from_wkt(input_crs.to_wkt("WKT1_GDAL"))
     else:
         return input_crs
 

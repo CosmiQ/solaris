@@ -16,7 +16,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                  matching_re=None, category_attribute=None, score_attribute=None,
                  preset_categories=None, include_other=True, info_dict=None,
                  license_dict=None, recursive=False, remove_all_multipolygons=False, 
-                 override_crs=False, verbose=0):
+                 verbose=0):
     """Generate COCO-formatted labels from one or multiple geojsons and images.
 
     This function ingests optionally georegistered polygon labels in geojson
@@ -216,8 +216,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                 curr_gdf = geojson_to_px_gdf(
                     curr_gdf,
                     im_path=match_df.loc[match_df['label_fname'] == gj,
-                                         'image_fname'].values[0],
-                    override_crs=override_crs)
+                                         'image_fname'].values[0])
                 curr_gdf['image_id'] = image_ref[match_df.loc[
                     match_df['label_fname'] == gj, 'image_fname'].values[0]]
         # handle case with multiple images, one big geojson
@@ -230,8 +229,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
             logger.debug('Converting to pixel coordinates.')
             # match the two images
             curr_gdf = geojson_to_px_gdf(curr_gdf,
-                                         im_path=list(image_ref.keys())[0], 
-                                         override_crs=override_crs)
+                                         im_path=list(image_ref.keys())[0])
             curr_gdf['image_id'] = list(image_ref.values())[0]
         curr_gdf = curr_gdf.rename(
             columns={tmp_category_attribute: 'category_str'})
