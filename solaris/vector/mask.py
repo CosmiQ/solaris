@@ -14,7 +14,7 @@ from rasterio import features
 from affine import Affine
 from skimage.morphology import square, erosion, dilation
 import os
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
                   geom_col='geometry', do_transform=None, affine_obj=None,

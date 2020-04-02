@@ -6,7 +6,7 @@ from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
 from ..utils.geo import get_projection_unit, split_multi_geometries
 from ..utils.geo import reproject_geometry
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 
 class VectorTiler(object):

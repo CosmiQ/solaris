@@ -1,7 +1,7 @@
 import shapely.wkt
 import geopandas as gpd
 import pandas as pd
-from tqdm.auto import tqdm
+from tqdm import tqdm
 import os
 from . import iou
 from fiona.errors import DriverError

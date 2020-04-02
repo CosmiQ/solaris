@@ -730,7 +730,7 @@ def polygon_to_coco(polygon):
     elif isinstance(polygon, str):  # assume it's WKT
         coords = loads(polygon).exterior.coords.xy
     elif isinstance(polygon, MultiPolygon):
-        raise ValueError("You have MultiPolygon types in your label df. Remove or fix these to be Polygon geometry types.")
+        raise ValueError("You have MultiPolygon types in your label df. Remove, explode, or fix these to be Polygon geometry types.")
     else:
         raise ValueError('polygon must be a shapely geometry or WKT.')
     # zip together x,y pairs
