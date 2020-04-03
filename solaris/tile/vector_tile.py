@@ -83,6 +83,10 @@ class VectorTiler(object):
         output_ext : str, optional, (default: geojson)
             Extension of output files, can be 'geojson' or 'json'.
         """
+
+        if isinstance(src, gpd.GeoDataFrame) and src.crs is None:
+            raise ValueError("If the src input is a geopandas.GeoDataFrame, it must have a crs attribute.")
+
         tile_gen = self.tile_generator(src, tile_bounds, tile_bounds_crs,
                                        geom_type, split_multi_geoms,
                                        min_partial_perc,
@@ -103,7 +107,6 @@ class VectorTiler(object):
                                                        output_ext))
             self.tile_paths.append(dest_path)
             if len(tile_gdf) > 0:
-                assert tile_gdf.crs is not None
                 tile_gdf.to_file(dest_path, driver='GeoJSON')
             else:
                 save_empty_geojson(dest_path, self.dest_crs)
