@@ -729,6 +729,8 @@ def polygon_to_coco(polygon):
         coords = polygon.exterior.coords.xy
     elif isinstance(polygon, str):  # assume it's WKT
         coords = loads(polygon).exterior.coords.xy
+    elif isinstance(polygon, MultiPolygon):
+        raise ValueError("You have MultiPolygon types in your label df. Remove, explode, or fix these to be Polygon geometry types.")
     else:
         raise ValueError('polygon must be a shapely geometry or WKT.')
     # zip together x,y pairs
@@ -807,8 +809,14 @@ def split_geom(geometry, tile_size, resolution=None,
                          tile_size[1]*resolution[1]]
     else:
         tmp_tile_size = tile_size
-
-    bounds = geometry.bounds
+        
+    if src_img is not None:
+        src_img = _check_rasterio_im_load(src_img)
+        geometry = geometry.intersection(box(*src_img.bounds))
+        bounds = geometry.bounds
+    else:
+        bounds = geometry.bounds
+        
     xmin = bounds[0]
     xmax = bounds[2]
     ymin = bounds[1]

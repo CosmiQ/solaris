@@ -83,6 +83,10 @@ class VectorTiler(object):
         output_ext : str, optional, (default: geojson)
             Extension of output files, can be 'geojson' or 'json'.
         """
+
+        if isinstance(src, gpd.GeoDataFrame) and src.crs is None:
+            raise ValueError("If the src input is a geopandas.GeoDataFrame, it must have a crs attribute.")
+
         tile_gen = self.tile_generator(src, tile_bounds, tile_bounds_crs,
                                        geom_type, split_multi_geoms,
                                        min_partial_perc,
@@ -209,7 +213,6 @@ def search_gdf_polygon(gdf, tile_polygon):
         :py:class:`geopandas.GeoDataFrame`.
 
     """
-
     sindex = gdf.sindex
     possible_matches_index = list(sindex.intersection(tile_polygon.bounds))
     possible_matches = gdf.iloc[possible_matches_index]
@@ -296,7 +299,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
             gdf['origlen'] = 0
     # TODO must implement different case for lines and for spatialIndex
     # (Assume RTree is already performed)
-
+    
     cut_gdf = gdf.copy()
     cut_gdf.geometry = gdf.intersection(tb)
 

@@ -2,13 +2,15 @@ import os
 import rasterio
 from rasterio.warp import Resampling, calculate_default_transform
 from rasterio.vrt import WarpedVRT
-# efrom rio_cogeo.cogeo import cog_validate, cog_translate
+from rasterio.mask import mask as rasterio_mask
+# from rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
 # removing the following until COG functionality is implemented
 # from ..utils.tile import read_cog_tile
 from ..utils.geo import reproject, split_geom, raster_get_projection_unit
 import numpy as np
-
+from shapely.geometry import box
+from tqdm import tqdm
 
 class RasterTiler(object):
     """An object to tile geospatial image strips into smaller pieces.
@@ -148,24 +150,70 @@ class RasterTiler(object):
                 print('Resampling is set to None')
 
     def tile(self, src, dest_dir=None, channel_idxs=None, nodata=None,
-             alpha=None, aoi_boundary=None, restrict_to_aoi=False,
-             dest_fname_base=None):
+             alpha=None, restrict_to_aoi=False,
+             dest_fname_base=None, nodata_threshold = None):
+        """An object to tile geospatial image strips into smaller pieces.
 
+        Arguments
+        ---------
+        src : :class:`rasterio.io.DatasetReader` or str
+            The source dataset to tile.
+        nodata_threshold : float, optional
+            Nodata percentages greater than this threshold will not be saved as tiles.
+        restrict_to_aoi : bool, optional
+            Requires aoi_boundary. Sets all pixel values outside the aoi_boundary to the nodata value of the src image.
+        """
+        src = _check_rasterio_im_load(src)
+        restricted_im_path = os.path.join(self.dest_dir, "aoi_restricted_"+ os.path.basename(src.name))
+        self.src_name = src.name # preserves original src name in case restrict is used
+        if restrict_to_aoi is True:
+            if self.aoi_boundary is None:
+                raise ValueError("aoi_boundary must be specified when RasterTiler is called.")
+            mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
+            index_lst = list(np.arange(1,src.meta['count']+1))
+            # no need to use transform t since we don't crop. cropping messes up transform of tiled outputs
+            arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'], 
+                         filled=True, crop=False, pad=False, pad_width=0.5, indexes=list(index_lst))
+            with rasterio.open(restricted_im_path, 'w', **src.profile) as dest:
+                dest.write(arr)
+                dest.close()
+                src.close()
+            src = _check_rasterio_im_load(restricted_im_path) #if restrict_to_aoi, we overwrite the src to be the masked raster
+            
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
-                                       alpha, aoi_boundary, restrict_to_aoi)
+                                       alpha, self.aoi_boundary, restrict_to_aoi)
 
         if self.verbose:
-            print('Beginning tiling...')
+            print('Beginning tiling...')   
         self.tile_paths = []
-        for tile_data, mask, profile in tile_gen:
-            dest_path = self.save_tile(
-                tile_data, mask, profile, dest_fname_base)
-            self.tile_paths.append(dest_path)
+        if nodata_threshold is not None:
+            if nodata_threshold > 1:
+                raise ValueError("nodata_threshold should be expressed as a float less than 1.")
+            print("nodata value threshold supplied, filtering based on this percentage.")
+            new_tile_bounds = []
+            for tile_data, mask, profile, tb in tqdm(tile_gen):
+                nodata_count = np.logical_or.reduce((tile_data == profile['nodata']), axis=0).sum()
+                nodata_perc = nodata_count / (tile_data.shape[1] * tile_data.shape[2])
+                if nodata_perc < nodata_threshold:
+                    dest_path = self.save_tile(
+                        tile_data, mask, profile, dest_fname_base)
+                    self.tile_paths.append(dest_path)
+                    new_tile_bounds.append(tb)
+                else:
+                    print("{} of nodata is over the nodata_threshold, tile not saved.".format(nodata_perc))
+            self.tile_bounds = new_tile_bounds # only keep the tile bounds that make it past the nodata threshold
+        else:
+            for tile_data, mask, profile, tb in tqdm(tile_gen):
+                dest_path = self.save_tile(
+                    tile_data, mask, profile, dest_fname_base)
+                self.tile_paths.append(dest_path)
         if self.verbose:
             print('Tiling complete. Cleaning up...')
         self.src.close()
         if os.path.exists(os.path.join(self.dest_dir, 'tmp.tif')):
             os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
+        if os.path.exists(restricted_im_path):
+            os.remove(restricted_im_path)
         if self.verbose:
             print("Done. CRS returned for vector tiling.")
         return _check_crs(profile['crs'])  # returns the crs to be used for vector tiling
@@ -236,7 +284,7 @@ class RasterTiler(object):
         if channel_idxs is None:  # if not provided, include them all
             channel_idxs = list(range(1, self.src.count + 1))
             print(channel_idxs)
-        self.src_crs = _check_crs(self.src.crs)
+        self.src_crs = _check_crs(self.src.crs, return_rasterio=True) # necessary to use rasterio crs for reproject
         if self.verbose:
             print('Source CRS: EPSG:{}'.format(self.src_crs.to_epsg()))
         if self.dest_crs is None:
@@ -359,7 +407,7 @@ class RasterTiler(object):
             else:
                 profile.update(count=tile_data.shape[0])
 
-            yield tile_data, mask, profile
+            yield tile_data, mask, profile, tb
 
     def save_tile(self, tile_data, mask, profile, dest_fname_base=None):
         """Save a tile created by ``Tiler.tile_generator()``."""
@@ -403,6 +451,49 @@ class RasterTiler(object):
         #     self._create_cog(os.path.join(self.dest_dir, 'tmp.tif'),
         #                      os.path.join(self.dest_dir, dest_fname))
         #     os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
+        
+    def fill_all_nodata(self, nodata_fill):
+        """
+        Fills all tile nodata values with a fill value.
+        
+        The standard workflow is to run this function only after generating label masks and using the original output 
+        from the raster tiler to filter out label pixels that overlap nodata pixels in a tile. For example, 
+        solaris.vector.mask.instance_mask will filter out nodata pixels from a label mask if a reference_im is provided,
+        and after this step nodata pixels may be filled by calling this method.
+        
+        nodata_fill : int, float, or str, optional
+            Default is to not fill any nodata values. Otherwise, pixels outside of the aoi_boundary and pixels inside 
+            the aoi_boundary with the nodata value will be filled. "mean" will fill pixels with the channel-wise mean. 
+            Providing an int or float will fill pixels in all channels with the provided value.
+            
+        Returns: list
+            The fill values, in case the mean of the src image should be used for normalization later.
+        """
+        src = _check_rasterio_im_load(self.src_name)
+        if nodata_fill == "mean":
+            arr = src.read()
+            arr_nan = np.where(arr!=src.nodata, arr, np.nan)
+            fill_values = np.nanmean(arr_nan, axis=tuple(range(1, arr_nan.ndim)))
+            print('Fill values set to {}'.format(fill_values))
+        elif isinstance(nodata_fill, (float, int)):
+            fill_values = src.meta['count'] * [nodata_fill]
+            print('Fill values set to {}'.format(fill_values))
+        else:
+            raise TypeError('nodata_fill must be "mean", int, or float. {} was supplied.'.format(nodata_fill))
+        src.close()
+        for tile_path in self.tile_paths:
+            tile_src = rasterio.open(tile_path, "r+")
+            tile_data = tile_src.read()
+            for i in np.arange(tile_data.shape[0]):
+                tile_data[i,...][tile_data[i,...] == tile_src.nodata] = fill_values[i] # set fill value for each band
+            if tile_src.meta['count'] == 1:
+                tile_src.write(tile_data[0, :, :], 1)
+            else:
+                for band in range(1, tile_src.meta['count'] + 1):
+                    # base-1 vs. base-0 indexing...bleh
+                    tile_src.write(tile_data[band-1, :, :], band)
+            tile_src.close()
+        return fill_values
 
     def _create_cog(self, src_path, dest_path):
         """Overwrite non-cloud-optimized GeoTIFF with a COG."""
