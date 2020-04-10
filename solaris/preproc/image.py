@@ -26,6 +26,10 @@ class Identity(PipeSegment):
 
 
 class LoadImageFromDisk(LoadSegment):
+    """
+    Load an image from the file system using GDAL, so it can be fed
+    into subsequent PipeSegments.
+    """
     def __init__(self, pathstring, name=None, verbose=False):
         super().__init__()
         self.pathstring = pathstring
@@ -52,6 +56,10 @@ class LoadImageFromDisk(LoadSegment):
 
 
 class LoadImageFromMemory(LoadSegment):
+    """
+    Points to an 'Image'-class image so it can be fed
+    into subsequent PipeSegments.
+    """
     def __init__(self, imageobj, name=None, verbose=False):
         super().__init__()
         self.imageobj = imageobj
@@ -70,6 +78,11 @@ class LoadImageFromMemory(LoadSegment):
 
 
 class LoadImage(LoadImageFromDisk, LoadImageFromMemory):
+    """
+    Makes an image available to subsequent PipeSegments, whether the image
+    is in the filesystem (in which case 'imageinput' is the path) or an
+    Image-class variable (in which case 'imageinput' is the variable name).
+    """
     def __init__(self, imageinput, name=None, verbose=False):
         PipeSegment.__init__(self)
         self.imageinput = imageinput
@@ -85,6 +98,9 @@ class LoadImage(LoadImageFromDisk, LoadImageFromMemory):
 
 
 class SaveImage(PipeSegment):
+    """
+    Save an image to disk using GDAL.
+    """
     def __init__(self, pathstring, return_image=True):
         super().__init__()
         self.pathstring = pathstring
@@ -105,6 +121,9 @@ class SaveImage(PipeSegment):
 
 
 class ShowImage(PipeSegment):
+    """
+    Display an RGB image using matplotlib.
+    """
     def __init__(self, show_text=True, show_image=True):
         super().__init__()
         self.show_text = show_text
@@ -117,3 +136,20 @@ class ShowImage(PipeSegment):
             plt.imshow(pyplot_order)
             plt.show()
         return pin
+
+
+class MergeIntoList(PipeSegment):
+    """
+    Flatten a nested tuple into a single list.  This makes the output
+    of repeated merges easier to work with.
+    """
+    def transform(self, pin):
+        pout = []
+        def recurse(t):
+            for item in t:
+                if type(item) == tuple:
+                    recurse(item)
+                else:
+                    pout.append(item)
+        recurse(pin)
+        return pout
