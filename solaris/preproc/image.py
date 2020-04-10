@@ -16,10 +16,22 @@ class Image:
                                             self.metadata)
 
 
+class Identity(PipeSegment):
+    """
+    This class is an alias for the PipeSegment base class to emphasize
+    its role as the identity element.
+    """
+    pass
+
+
 class LoadImageFromDisk(LoadSegment):
     def __init__(self, pathstring, name=None, verbose=False):
         super().__init__()
-        self.load_from_disk(pathstring, name, verbose)
+        self.pathstring = pathstring
+        self.name = name
+        self.verbose = verbose
+    def process(self):
+        return self.load_from_disk(self.pathstring, self.name, self.verbose)
     def load_from_disk(self, pathstring, name=None, verbose=False):
         #Use GDAL to open image file
         dataset = gdal.Open(pathstring)
@@ -29,31 +41,56 @@ class LoadImageFromDisk(LoadSegment):
         metadata = {'projection': dataset.GetGCPProjection()}
         if name is None:
             name = os.path.splitext(os.path.split(pathstring)[1])[0]
-        #Create an Image-class object, and set it as the source
-        self.source = Image(data, name, metadata)
+        #Create an Image-class object, and return it
+        image = Image(data, name, metadata)
         if verbose:
-            print(self.source)
+            print(image)
+        return image
 
 
 class LoadImageFromMemory(LoadSegment):
-    def __init__(self, imageinput, name=None, verbose=False):
+    def __init__(self, imageobj, name=None, verbose=False):
         super().__init__()
-        self.load_from_memory(imageinput, name, verbose)
-    def load_from_memory(self, imageinput, name=None, verbose=False):
-        if type(imageinput) is Image:
-            self.source = imageinput
-        else:
+        self.imageobj = imageobj
+        self.name = name
+        self.verbose = verbose
+    def process(self):
+        return self.load_from_memory(self.imageobj, self.name, self.verbose)
+    def load_from_memory(self, imageobj, name=None, verbose=False):
+        if type(imageobj) is not Image:
             raise Exception('! Invalid input type in LoadImageFromMemory.')
+        if name is not None:
+            imageobj.name = name
         if verbose:
-            print(self.source)
+            print(imageobj)
+        return(imageobj)
 
 
 class LoadImage(LoadImageFromDisk, LoadImageFromMemory):
     def __init__(self, imageinput, name=None, verbose=False):
-        LoadSegment.__init__(self)
-        if type(imageinput) is Image:
-            self.load_from_memory(imageinput, name, verbose)
-        elif type(imageinput) is str:
-            self.load_from_disk(imageinput, name, verbose)
+        PipeSegment.__init__(self)
+        self.imageinput = imageinput
+        self.name = name
+        self.verbose = verbose
+    def process(self):
+        if type(self.imageinput) is Image:
+            return self.load_from_memory(self.imageinput, self.name, self.verbose)
+        elif type(self.imageinput) is str:
+            return self.load_from_disk(self.imageinput, self.name, self.verbose)
         else:
             raise Exception('! Invalid input type in LoadImage.')
+
+
+class SaveImage(PipeSegment):
+    def __init__(self, pathstring, return_image=True):
+        super().__init__()
+        self.pathstring = pathstring
+        self.return_image = return_image
+    def transform(self, pin):
+        #Save image to disk
+        
+        #Optionally return image
+        if return_image:
+            return pin
+        else:
+            return None
