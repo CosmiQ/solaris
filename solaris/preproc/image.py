@@ -1,4 +1,5 @@
 import gdal
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 
@@ -38,9 +39,11 @@ class LoadImageFromDisk(LoadSegment):
         if dataset is None:
             raise Exception('! Image file not found.')
         data = dataset.ReadAsArray()
-        metadata = {'projection': dataset.GetGCPProjection()}
+        metadata = {'projection': dataset.GetGCPProjection(),
+                    'meta':dataset.GetMetadata()}
         if name is None:
             name = os.path.splitext(os.path.split(pathstring)[1])[0]
+        dataset = None
         #Create an Image-class object, and return it
         image = Image(data, name, metadata)
         if verbose:
@@ -88,9 +91,29 @@ class SaveImage(PipeSegment):
         self.return_image = return_image
     def transform(self, pin):
         #Save image to disk
-        
+        driver = gdal.GetDriverByName('GTiff')
+        dataset = driver.Create(self.pathstring, pin.data.shape[2], pin.data.shape[1], pin.data.shape[0], gdal.GDT_Float32)
+        for band in range(pin.data.shape[0]):
+            dataset.GetRasterBand(band+1).WriteArray(pin.data[band, :, :])
+        dataset.SetProjection(pin.metadata['projection'])
+        dataset.FlushCache()
         #Optionally return image
-        if return_image:
+        if self.return_image:
             return pin
         else:
             return None
+
+
+class ShowImage(PipeSegment):
+    def __init__(self, show_text=True, show_image=True):
+        super().__init__()
+        self.show_text = show_text
+        self.show_image = show_image
+    def transform(self, pin):
+        if self.show_text:
+            print(pin)
+        if self.show_image:
+            pyplot_order = np.moveaxis(pin.data, 0, -1).astype(int)
+            plt.imshow(pyplot_order)
+            plt.show()
+        return pin
