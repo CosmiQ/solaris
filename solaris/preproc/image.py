@@ -153,3 +153,18 @@ class MergeIntoList(PipeSegment):
                     pout.append(item)
         recurse(pin)
         return pout
+
+
+class MergeIntoStack(PipeSegment):
+    """
+    Given an iterable or nested tuple of equal-sized images, combine
+    all of their bands into a single image.
+    """
+    def transform(self, pin, master=0):
+        #Make list of all the input bands
+        pmid = (pin * MergeIntoList())()
+        datalist = [image.data for image in pmid]
+        #Create output image, using name and metadata from designated source
+        pout = Image(None, pmid[master].name, pmid[master].metadata)
+        pout.data = np.concatenate(datalist, axis=0)
+        return pout
