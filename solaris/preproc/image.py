@@ -138,10 +138,10 @@ class ShowImage(PipeSegment):
         return pin
 
 
-class MergeIntoList(PipeSegment):
+class MergeToList(PipeSegment):
     """
     Flatten a nested tuple into a single list.  This makes the output
-    of repeated merges easier to work with.
+    of repeated merges (i.e., additions) easier to work with.
     """
     def transform(self, pin):
         pout = []
@@ -155,7 +155,7 @@ class MergeIntoList(PipeSegment):
         return pout
 
 
-class MergeIntoStack(PipeSegment):
+class MergeToStack(PipeSegment):
     """
     Given an iterable or nested tuple of equal-sized images, combine
     all of their bands into a single image.
@@ -165,7 +165,7 @@ class MergeIntoStack(PipeSegment):
         self.master = master
     def transform(self, pin):
         #Make list of all the input bands
-        pmid = (pin * MergeIntoList())()
+        pmid = (pin * MergeToList())()
         datalist = [imageobj.data for imageobj in pmid]
         #Create output image, using name and metadata from designated source
         pout = Image(None, pmid[self.master].name, pmid[self.master].metadata)
