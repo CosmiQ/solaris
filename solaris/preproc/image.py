@@ -49,10 +49,10 @@ class LoadImageFromDisk(LoadSegment):
             name = os.path.splitext(os.path.split(pathstring)[1])[0]
         dataset = None
         #Create an Image-class object, and return it
-        image = Image(data, name, metadata)
+        imageobj = Image(data, name, metadata)
         if verbose:
-            print(image)
-        return image
+            print(imageobj)
+        return imageobj
 
 
 class LoadImageFromMemory(LoadSegment):
@@ -166,7 +166,7 @@ class MergeIntoStack(PipeSegment):
     def transform(self, pin):
         #Make list of all the input bands
         pmid = (pin * MergeIntoList())()
-        datalist = [image.data for image in pmid]
+        datalist = [imageobj.data for imageobj in pmid]
         #Create output image, using name and metadata from designated source
         pout = Image(None, pmid[self.master].name, pmid[self.master].metadata)
         pout.data = np.concatenate(datalist, axis=0)
