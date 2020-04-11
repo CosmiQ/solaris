@@ -160,11 +160,26 @@ class MergeIntoStack(PipeSegment):
     Given an iterable or nested tuple of equal-sized images, combine
     all of their bands into a single image.
     """
-    def transform(self, pin, master=0):
+    def __init__(self, master=0):
+        super().__init__()
+        self.master = master
+    def transform(self, pin):
         #Make list of all the input bands
         pmid = (pin * MergeIntoList())()
         datalist = [image.data for image in pmid]
         #Create output image, using name and metadata from designated source
-        pout = Image(None, pmid[master].name, pmid[master].metadata)
+        pout = Image(None, pmid[self.master].name, pmid[self.master].metadata)
         pout.data = np.concatenate(datalist, axis=0)
         return pout
+
+
+class SelectBands(PipeSegment):
+    """
+    Reorganize the bands in an image.  This class can be used to
+    select, delete, duplicate, or reorder bands.
+    """
+    def __init__(self, bands=[0]):
+        super().__init__()
+        self.bands = bands
+    def transform(self, pin):
+        return Image(pin.data[self.bands, :, :], pin.name, pin.metadata)
