@@ -132,7 +132,7 @@ class ShowImage(PipeSegment):
         if self.show_text:
             print(pin)
         if self.show_image:
-            pyplot_order = np.moveaxis(pin.data, 0, -1).astype(int)
+            pyplot_order = np.squeeze(np.moveaxis(pin.data, 0, -1).astype(int))
             plt.imshow(pyplot_order)
             plt.show()
         return pin
