@@ -39,9 +39,32 @@ class Multilook(PipeSegment):
 
 
 class UnequalMultilook(PipeSegment):
-    def __init__(self, usize=5, vsize=5):
+    def __init__(self, usize=5, vsize=5, method='avg'):
         super().__init__()
         self.usize = usize
         self.vsize = vsize
+        self.method = method
     def transform(self, pin):
-        raise Exception('! Not written yet')
+        pout = Image(np.zeros(pin.data.shape, dtype=pin.data.dtype),
+                     pin.name, pin.metadata)
+        for i in range(pin.data.shape[0]):
+            if self.method =='avg':
+                pout.data[i, :, :] = scipy.ndimage.filters.uniform_filter(
+                    pin.data[i, :, :],
+                    size=(self.usize, self.vsize),
+                    mode='reflect')
+            elif self.method == 'med':
+                pout.data[i, :, :] = scipy.ndimage.filters.median_filter(
+                    pin.data[i, :, :],
+                    size=(self.usize, self.vsize),
+                    mode='reflect')
+            elif self.method == 'max':
+                pout.data[i, :, :] = scipy.ndimage.filters.maximum_filter(
+                    pin.data[i, :, :],
+                    size=(self.usize, self.vsize),
+                    mode='reflect')
+            elif self.method == 'non':
+                pass
+            else:
+                raise Exception('! Invalid method in Multilook.')
+        return pout
