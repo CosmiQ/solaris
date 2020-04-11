@@ -180,6 +180,8 @@ class SelectBands(PipeSegment):
     """
     def __init__(self, bands=[0]):
         super().__init__()
+        if not hasattr(bands, '__iter__'):
+            bands = [bands]
         self.bands = bands
     def transform(self, pin):
         return Image(pin.data[self.bands, :, :], pin.name, pin.metadata)
