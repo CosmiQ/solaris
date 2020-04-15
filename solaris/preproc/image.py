@@ -12,10 +12,13 @@ class Image:
         self.metadata = metadata
         self.data = data
     def __str__(self):
+        metastring = str(self.metadata)
+        if len(metastring)>400:
+            metastring = metastring[:360] + '...'
         return '%s: %d bands, %dx%d, %s, %s' % (self.name,
                                                 *np.shape(self.data),
                                                 str(self.data.dtype),
-                                                self.metadata)
+                                                metastring)
 
 
 class Identity(PipeSegment):
@@ -44,6 +47,8 @@ class LoadImageFromDisk(LoadSegment):
         if dataset is None:
             raise Exception('! Image file not found.')
         data = dataset.ReadAsArray()
+        if data.ndim == 2:
+            data = np.expand_dims(data, axis=0)
         metadata = {'projection': dataset.GetGCPProjection(),
                     'meta':dataset.GetMetadata()}
         if name is None:
