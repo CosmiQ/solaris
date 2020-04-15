@@ -17,10 +17,15 @@ class Amplitude(PipeSegment):
 
 class Intensity(PipeSegment):
     """
-    Convert amplitude to intensity, by squaring each pixel
+    Convert amplitude (or complex values) to intensity, by squaring each pixel
     """
     def transform(self, pin):
-        return Image(np.square(pin.data), pin.name, pin.metadata)
+        pout = Image(None, pin.name, pin.metadata)
+        if not np.iscomplexobj(pin.data):
+            pout.data = np.square(pin.data)
+        else:
+            pout.data = np.square(np.absolute(pin.data))
+        return pout
 
 
 class Decibels(PipeSegment):
