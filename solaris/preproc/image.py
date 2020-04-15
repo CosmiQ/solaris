@@ -128,17 +128,22 @@ class SaveImage(PipeSegment):
 
 class ShowImage(PipeSegment):
     """
-    Display an RGB image using matplotlib.
+    Display an image using matplotlib.
     """
-    def __init__(self, show_text=True, show_image=True):
+    def __init__(self, show_text=True, show_image=True, scale=True):
         super().__init__()
         self.show_text = show_text
         self.show_image = show_image
+        self.scale = scale
     def transform(self, pin):
         if self.show_text:
             print(pin)
         if self.show_image:
-            pyplot_order = np.squeeze(np.moveaxis(pin.data, 0, -1).astype(int))
+            pyplot_order = np.squeeze(np.moveaxis(pin.data, 0, -1))
+            if self.scale:
+                minval = np.min(pyplot_order)
+                maxval = np.max(pyplot_order)
+                pyplot_order = (pyplot_order.astype(float) - minval) / (maxval - minval)
             plt.imshow(pyplot_order)
             plt.show()
         return pin
