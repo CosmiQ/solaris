@@ -12,9 +12,10 @@ class Image:
         self.metadata = metadata
         self.data = data
     def __str__(self):
-        return '%s: %d bands, %dx%d, %s' % (self.name,
-                                            *np.shape(self.data),
-                                            self.metadata)
+        return '%s: %d bands, %dx%d, %s, %s' % (self.name,
+                                                *np.shape(self.data),
+                                                str(self.data.dtype),
+                                                self.metadata)
 
 
 class Identity(PipeSegment):
