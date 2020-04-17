@@ -2,6 +2,7 @@ import gdal
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pandas as pd
 
 from .pipesegment import PipeSegment, LoadSegment, MergeSegment
 
@@ -147,6 +148,42 @@ class ShowImage(PipeSegment):
             plt.imshow(pyplot_order)
             plt.show()
         return pin
+
+
+class ImageStats(PipeSegment):
+    """
+    Calculate descriptive statististics about an image
+    """
+    def __init__(self, print_desc=True, print_props=True, return_image=True, return_props=False):
+        super().__init__()
+        self.print_desc = print_desc
+        self.print_props = print_props
+        self.return_image = return_image
+        self.return_props = return_props
+    def transform(self, pin):
+        if self.print_desc:
+            print(pin)
+            print()
+        props = pd.DataFrame({
+            'min': np.nanmin(pin.data, (1,2)),
+            'max': np.nanmax(pin.data, (1,2)),
+            'mean': np.mean(pin.data, (1,2)),
+            'median': np.median(pin.data, (1,2)),
+            'pos': np.count_nonzero(pin.data>0, (1,2)),
+            'zero': np.count_nonzero(pin.data==0, (1,2)),
+            'neg': np.count_nonzero(pin.data<0, (1,2)),
+            'nan': np.count_nonzero(np.isnan(pin.data), (1,2)),
+            })
+        if self.print_props:
+            print(props)
+        if self.return_image and self.return_props:
+            return (pin, props)
+        elif self.return_image:
+            return pin
+        elif self.return_props:
+            return props
+        else:
+            return None
 
 
 class MergeToList(PipeSegment):
