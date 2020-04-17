@@ -32,20 +32,20 @@ class Decibels(PipeSegment):
     """
     Express quantity in decibels
     The 'flag' argument indicates how to handle nonpositive inputs:
-    'min' treats them as the smallest positive value, 'nan' outputs NaN,
-    and any other value is used as the flag value itself.
+    'min' outputs the log of the image's smallest positive value,
+    'nan' outputs NaN, and any other value is used as the flag value itself.
     """
     def __init__(self, flag='min'):
         super().__init__()
         self.flag = flag
     def transform(self, pin):
         pout = Image(None, pin.name, pin.metadata)
-        if self.flag.lower() == 'min':
+        if isinstance(self.flag, str) and self.flag.lower() == 'min':
             flagval = 10. * np.log10((pin.data)[pin.data>0].min())
-        elif self.flag.lower() == 'nan':
+        elif isinstance(self.flag, str) and self.flag.lower() == 'nan':
             flagval = math.nan
         else:
-            flagval = self.flag
+            flagval = self.flag / 10.
         pout.data = 10. * np.log10(
             pin.data,
             out=np.full(np.shape(pin.data), flagval).astype(pin.data.dtype),
