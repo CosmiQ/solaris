@@ -184,6 +184,17 @@ class MergeToStack(PipeSegment):
         return pout
 
 
+class SelectItem(PipeSegment):
+    """
+    Given an iterable, return one of its items.  This is useful when passing
+    a list of items into, or out of, a custom class.
+    """
+    def __init__(self, index=0):
+        self.index = index
+    def transform(self, pin):
+        return pin[self.index]
+
+
 class SelectBands(PipeSegment):
     """
     Reorganize the bands in an image.  This class can be used to
