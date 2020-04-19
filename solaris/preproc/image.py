@@ -125,7 +125,7 @@ class SaveImage(PipeSegment):
         dataset = driver.Create(self.pathstring, pin.data.shape[2], pin.data.shape[1], pin.data.shape[0], gdal.GDT_Float32)
         for band in range(pin.data.shape[0]):
             dataset.GetRasterBand(band+1).WriteArray(pin.data[band, :, :])
-        dataset.SetProjection(pin.metadata['projection'])
+        dataset.SetProjection(pin.metadata['gcp_projection'])
         dataset.FlushCache()
         #Optionally return image
         if self.return_image:
