@@ -1,3 +1,4 @@
+import json
 import math
 import numpy as np
 import scipy.signal
@@ -80,3 +81,14 @@ class Multilook(PipeSegment):
                 size=self.kernel_size,
                 mode='reflect')
         return pout
+
+
+class CapellaScaleFactor(PipeSegment):
+    """
+    Calibrate Capella single-look complex data (or amplitude thereof)
+    using the scale factor in the metadata
+    """
+    def transform(self, pin):
+        tiffjson = json.loads(pin.metadata['meta']['TIFFTAG_IMAGEDESCRIPTION'])
+        scale_factor = tiffjson['collect']['image']['scale_factor']
+        return Image(scale_factor * pin.data, pin.name, pin.metadata)
