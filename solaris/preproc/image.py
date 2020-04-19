@@ -50,8 +50,15 @@ class LoadImageFromDisk(LoadSegment):
         data = dataset.ReadAsArray()
         if data.ndim == 2:
             data = np.expand_dims(data, axis=0)
-        metadata = {'projection': dataset.GetGCPProjection(),
-                    'meta':dataset.GetMetadata()}
+        metadata = {
+            'geotransform': dataset.GetGeoTransform(),
+            'projection_ref': dataset.GetProjectionRef(),
+            'gcps': dataset.GetGCPs(),
+            'gcp_projection': dataset.GetGCPProjection(),
+            'meta': dataset.GetMetadata()
+        }
+        metadata['band_meta'] = [dataset.GetRasterBand(band).GetMetadata()
+                                 for band in range(1, dataset.RasterCount+1)]
         if name is None:
             name = os.path.splitext(os.path.split(pathstring)[1])[0]
         dataset = None
