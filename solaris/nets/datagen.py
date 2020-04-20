@@ -1,8 +1,10 @@
 from tensorflow import keras
 import numpy as np
+import rasterio
 from torch.utils.data import Dataset, DataLoader
 from .transform import _check_augs, process_aug_dict
 from ..utils.core import _check_df_load
+from ..utils.geo import split_geom
 from ..utils.io import imread, _check_channel_order
 
 
@@ -327,6 +329,9 @@ class TorchDataset(Dataset):
             mask[mask != 0] = 1
         if len(mask.shape) == 2:
             mask = mask[:, :, np.newaxis]
+        if len(image.shape) == 2:
+            image = image[:, :, np.newaxis]
+
         sample = {'image': image, 'mask': mask}
 
         if self.aug:

@@ -4,7 +4,7 @@ from shapely.geometry import box, Polygon
 import geopandas as gpd
 from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
-from ..utils.geo import gdf_get_projection_unit, split_multi_geometries
+from ..utils.geo import get_projection_unit, split_multi_geometries
 from ..utils.geo import reproject_geometry
 from tqdm import tqdm
 
@@ -83,6 +83,10 @@ class VectorTiler(object):
         output_ext : str, optional, (default: geojson)
             Extension of output files, can be 'geojson' or 'json'.
         """
+
+        if isinstance(src, gpd.GeoDataFrame) and src.crs is None:
+            raise ValueError("If the src input is a geopandas.GeoDataFrame, it must have a crs attribute.")
+
         tile_gen = self.tile_generator(src, tile_bounds, tile_bounds_crs,
                                        geom_type, split_multi_geoms,
                                        min_partial_perc,
@@ -168,7 +172,7 @@ class VectorTiler(object):
         else:
             reproject_bounds = False
 
-        self.proj_unit = self.src_crs.linear_units
+        self.proj_unit = get_projection_unit(self.src_crs)
         if getattr(self, 'dest_crs', None) is None:
             self.dest_crs = self.src_crs
         for i, tb in enumerate(tile_bounds):
@@ -209,7 +213,6 @@ def search_gdf_polygon(gdf, tile_polygon):
         :py:class:`geopandas.GeoDataFrame`.
 
     """
-
     sindex = gdf.sindex
     possible_matches_index = list(sindex.intersection(tile_polygon.bounds))
     possible_matches = gdf.iloc[possible_matches_index]
@@ -296,7 +299,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
             gdf['origlen'] = 0
     # TODO must implement different case for lines and for spatialIndex
     # (Assume RTree is already performed)
-
+    
     cut_gdf = gdf.copy()
     cut_gdf.geometry = gdf.intersection(tb)
 

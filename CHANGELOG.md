@@ -25,6 +25,24 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 
 ---
 
+## Version 0.2.2
+
+### Changed
+- 20200401, rbavery: new tiler method `fill_all_nodata` to fill nodata with `"mean"` or custom value (#328)
+- 20200401, rbavery: option to ignore MultiPolygon and GeometryCollection types in `geojson2coco` since these cannot be converted to COCO.
+- 20200401, rbavery: new function `solaris.vector.mask.geojsons_to_masks_and_fill_nodata`, which rasterized vector labels according to raster tile extents. Fills nodata areas in raster tile and corresponding rasterized label raster.
+- 20200401, rbavery: new test/example of tiling and creating instance masks with nodata values filled in tile outputs
+
+### Fixed
+- 20200401, rbavery: restrict_to_aoi implemented, sets values outside aoi to nodata value (#327, #240)
+- 20200401, rbavery: tqdm prints correctly in notebook and lab (if ipywidgets is enabled according to https://github.com/tqdm/tqdm/issues/394#issuecomment-384743637) (#335)
+- 20200401, rbavery: fixed bug where aoi boundary was not intersected with src_img extent prior to tiling
+- 20200401, rbavery/nrweir: adapted `_check_crs` to convert `pyproj.CRS` or pass through `rasterio.crs.CRS` class when rasterio crs object is required (for example, reprojecting in the tilers)
+- 20200414, zaburo-ch: fixed `val_datagen` to point to the correct augmentation pipeline
+---
+
+---
+
 ## Version 0.2.1
 
 ### Changed

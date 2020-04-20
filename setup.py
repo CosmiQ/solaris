@@ -9,7 +9,7 @@ import re
 def get_version():
     VERSIONFILE = os.path.join('solaris', '__init__.py')
     initfile_lines = open(VERSIONFILE, 'rt').readlines()
-    VSRE = r'^__version__ = [\"\']*([\d.]+)[\"\']'
+    VSRE = r'^__version__ = [\"\']*([\d\w.]+)[\"\']'
     for line in initfile_lines:
         mo = re.search(VSRE, line, re.M)
         if mo:
@@ -56,39 +56,42 @@ except Exception:
 
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
-
 if on_rtd:
     inst_reqs = ['sphinx_bootstrap_theme']
 else:
     inst_reqs = ['pip>=19.0.3',
                  'affine>=2.3.0',
                  'albumentations==0.4.3',
-                 'fiona>=1.8.13',
-                 'gdal>=3.0.2',
-                 'geopandas>=0.6.2',
+                 'fiona>=1.7.13',
+                 'gdal>=3.0.2'
+                 'geopandas>=0.7.0',
                  'matplotlib>=3.1.2',
                  'networkx>=2.4',
                  'numpy>=1.17.3',
-                 'opencv-python>=4.1.0.25',
+                 'opencv-python>=4.1',
                  'pandas>=0.25.3',
                  'pyproj>=2.1',
                  'torch>=1.3.1',
                  'pyyaml==5.2',
                  'rasterio>=1.0.23',
-                 'requests>=2.22.0',
-                 'rio-cogeo>=1.1.6',
+                 'requests==2.22.0',
                  'rtree>=0.9.3',
                  'scikit-image>=0.16.2',
                  'scipy>=1.3.2',
-                 'shapely>=1.6.4',
-                 'tensorflow==1.13.1',
+                 'shapely>=1.7.1dev',
                  'torchvision>=0.5.0',
                  'tqdm>=4.40.0',
-                 'urllib3>=1.25.7']
+                 'urllib3>=1.25.7',
+                 'tensorflow==1.13.1'
+                 ]
 
 
 extra_reqs = {
     'test': ['mock', 'pytest', 'pytest-cov', 'codecov']}
+
+# workaround until new shapely release is out
+os.system('pip install  git+git://github.com/toblerity/shapely@master')
+
 
 project_name = 'solaris'
 setup(name='solaris',
@@ -109,6 +112,7 @@ setup(name='solaris',
       include_package_data=True,
       install_requires=inst_reqs,
       extras_require=extra_reqs,
+      dependency_links=['https://github.com/toblerity/shapely/tarball/master#egg=shapely-1.7.1dev'],
       entry_points={'console_scripts': [
           'geotransform_footprints = solaris.bin.geotransform_footprints:main',
           'make_graphs = solaris.bin.make_graphs:main',

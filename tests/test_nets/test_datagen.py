@@ -84,7 +84,7 @@ class TestDataGenerator(object):
         expected_mask[expected_mask != 0] = 1  # this should be binary
         print(sample['mask'].shape)
         assert np.array_equal(sample['image'].numpy(),
-                              expected_im[np.newaxis, :, :])
+                              expected_im[np.newaxis, np.newaxis, :, :])
         assert np.array_equal(sample['mask'].numpy(),
                               expected_mask[np.newaxis, np.newaxis, :, :])
 
