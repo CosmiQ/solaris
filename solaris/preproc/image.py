@@ -116,15 +116,17 @@ class SaveImage(PipeSegment):
     Save an image to disk using GDAL.
     """
     def __init__(self, pathstring, return_image=True,
-                 save_projection=True, save_metadata=True):
+                 save_projection=True, save_metadata=True,
+                 driver='GTiff'):
         super().__init__()
         self.pathstring = pathstring
         self.return_image = return_image
         self.save_projection = save_projection
         self.save_metadata = save_metadata
+        self.driver = driver
     def transform(self, pin):
         #Save image to disk
-        driver = gdal.GetDriverByName('GTiff')
+        driver = gdal.GetDriverByName(self.driver)
         dataset = driver.Create(self.pathstring, pin.data.shape[2], pin.data.shape[1], pin.data.shape[0], gdal.GDT_Float32)
         for band in range(pin.data.shape[0]):
             dataset.GetRasterBand(band+1).WriteArray(pin.data[band, :, :])
