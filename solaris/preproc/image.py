@@ -115,9 +115,8 @@ class SaveImage(PipeSegment):
     """
     Save an image to disk using GDAL.
     """
-    def __init__(self, pathstring, return_image=True,
-                 save_projection=True, save_metadata=True,
-                 driver='GTiff'):
+    def __init__(self, pathstring, driver='GTiff', return_image=True,
+                 save_projection=True, save_metadata=True):
         super().__init__()
         self.pathstring = pathstring
         self.return_image = return_image
@@ -141,7 +140,9 @@ class SaveImage(PipeSegment):
             dataset.SetMetadata(pin.metadata['meta'])
         dataset.FlushCache()
         #Optionally return image
-        if self.return_image:
+        if self.driver.lower() == 'mem':
+            return dataset
+        elif self.return_image:
             return pin
         else:
             return None
