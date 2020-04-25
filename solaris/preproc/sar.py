@@ -99,7 +99,7 @@ class Orthorectify(PipeSegment):
         file2 = '/home/sol/src/sar/preproc/file2.tif'
         (pin * image.SaveImage(file1))()
         dataset = gdal.Open(file1)
-        gdal.Warp(file2, dataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res)
+        gdal.Warp(file2, dataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res, dstNodata=math.nan)
         pout = image.LoadImage(file2)()
         return pout
         """
