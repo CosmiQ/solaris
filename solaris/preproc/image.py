@@ -152,21 +152,21 @@ class ShowImage(PipeSegment):
     """
     Display an image using matplotlib.
     """
-    def __init__(self, show_text=True, show_image=True, scale=True):
+    def __init__(self, show_text=True, show_image=True, cmap='gray',
+                 vmin=None, vmax=None):
         super().__init__()
         self.show_text = show_text
         self.show_image = show_image
-        self.scale = scale
+        self.cmap = cmap
+        self.vmin = vmin
+        self.vmax = vmax
     def transform(self, pin):
         if self.show_text:
             print(pin)
         if self.show_image:
-            pyplot_order = np.squeeze(np.moveaxis(pin.data, 0, -1))
-            if self.scale:
-                minval = np.min(pyplot_order)
-                maxval = np.max(pyplot_order)
-                pyplot_order = (pyplot_order.astype(float) - minval) / (maxval - minval)
-            plt.imshow(pyplot_order)
+            pyplot_format = np.squeeze(np.moveaxis(pin.data, 0, -1))
+            plt.imshow(pyplot_format, cmap=self.cmap,
+                       vmin=self.vmin, vmax=self.vmax)
             plt.show()
         return pin
 
