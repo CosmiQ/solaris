@@ -95,22 +95,11 @@ class Orthorectify(PipeSegment):
         self.row_res = row_res
         self.col_res = col_res
     def transform(self, pin):
-        file1 = '/home/sol/src/sar/preproc/file1.tif'
-        file2 = '/home/sol/src/sar/preproc/file2.tif'
-        (pin * image.SaveImage(file1))()
-        dataset = gdal.Open(file1)
-        gdal.Warp(file2, dataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res, dstNodata=math.nan)
-        pout = image.LoadImage(file2)()
+        srcdataset = (pin * image.SaveImage('', driver='MEM'))()
+        dstfile = '/home/sol/src/sar/preproc/file.tif'
+        gdal.Warp(dstfile, srcdataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res, dstNodata=math.nan)
+        pout = image.LoadImage(dstfile)()
         return pout
-        """
-        dataset = (pin * image.SaveImage('', driver='MEM'))()
-        #dataset = (pin * image.SaveImage('/home/sol/src/preproc/sar0.tif'))()
-        print('before warp')
-        gdal.Warp('/home/sol/src/sar/preproc/sar.tif', dataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res)
-        print('after warp')
-        #print(type(var2))
-        return pin
-        """
 
 
 class CapellaGridFileToGCPs(PipeSegment):
