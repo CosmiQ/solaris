@@ -197,6 +197,7 @@ class ImageStats(PipeSegment):
             })
         if self.print_props:
             print(props)
+            print()
         if self.return_image and self.return_props:
             return (pin, props)
         elif self.return_image:
