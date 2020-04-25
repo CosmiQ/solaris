@@ -1,3 +1,4 @@
+import gdal
 import json
 import math
 import numpy as np
@@ -5,7 +6,7 @@ import scipy.signal
 
 from .pipesegment import PipeSegment, LoadSegment, MergeSegment
 from .image import Image
-#from . import image
+from . import image
 
 
 class Amplitude(PipeSegment):
@@ -82,6 +83,38 @@ class Multilook(PipeSegment):
                 mode='reflect')
         return pout
 
+
+class Orthorectify(PipeSegment):
+    """
+    Orthorectify an image using its ground control points (GCPs)
+    """
+    def __init__(self, projection=3857, algorithm='lanczos', row_res=1., col_res=1.):
+        super().__init__()
+        self.projection = projection
+        self.algorithm = algorithm
+        self.row_res = row_res
+        self.col_res = col_res
+    def transform(self, pin):
+        file1 = '/home/sol/src/sar/preproc/file1.tif'
+        file2 = '/home/sol/src/sar/preproc/file2.tif'
+        (pin * image.SaveImage(file1))()
+        dataset = gdal.Open(file1)
+        gdal.Warp(file2, dataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res)
+        pout = image.LoadImage(file2)()
+        return pout
+        """
+        dataset = (pin * image.SaveImage('', driver='MEM'))()
+        #dataset = (pin * image.SaveImage('/home/sol/src/preproc/sar0.tif'))()
+        print('before warp')
+        gdal.Warp('/home/sol/src/sar/preproc/sar.tif', dataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res)
+        print('after warp')
+        #print(type(var2))
+        return pin
+        """
+
+
+class CapellaGridFiletoGCPs(PipeSegment):
+    pass
 
 class CapellaScaleFactor(PipeSegment):
     """
