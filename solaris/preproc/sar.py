@@ -116,9 +116,57 @@ class Orthorectify(PipeSegment):
 class CapellaGridFiletoGCPs(PipeSegment):
     """
     Generate ground control points (GCPs) from a Capella grid file
-    and save them in a corresponding image's metadata
+    and save them in a corresponding image's metadata.  Input is a tuple
+    with the image in the 0 position and the grid in the 1 position.
+    Output is the image with modified metadata.  Spacing between points
+    is in pixels.
     """
-    pass
+    def __init__(self, reverse_order=False, row_range=None, col_range=None,
+                 spacing=100, row_spacing=None, col_spacing=None):
+        super().__init__()
+        self.reverse_order = reverse_order
+        self.row_range = row_range
+        self.col_range = col_range
+        self.spacing = spacing
+        self.row_spacing = row_spacing
+        self.col_spacing = col_spacing
+    def transform(self, pin):
+        if not self.reverse_order:
+            img = pin[0]
+            grid = pin[1]
+        else:
+            img = pin[1]
+            grid = pin[0]
+        pout = Image(img.data, img.name, img.metadata.copy())
+        if self.row_range is None:
+            rlo = 0
+            rhi = img.data.shape[1] - 1
+        else:
+            rlo = self.row_range[0]
+            rhi = self.row_range[1]
+        if self.col_range is None:
+            clo = 0
+            chi = img.data.shape[2] - 1
+        else:
+            clo = self.col_range[0]
+            chi = self.col_range[1]
+        rspace = self.spacing
+        cspace = self.spacing
+        if self.row_spacing is not None:
+            rspace = self.row_spacing
+        if self.col_spacing is not None:
+            cspace = self.col_spacing
+        gcps = []
+        for ri in range(rlo, rhi + 1, rspace):
+            for ci in range(clo, chi + 1, cspace):
+                gcps.append(gdal.GCP(
+                    grid.data[1, ri, ci], #y
+                    grid.data[0, ri, ci], #x
+                    grid.data[2, ri, ci], #z
+                    ci, ri
+                ))
+        pout.metadata['gcps'] = gcps
+        return pout
 
 
 class CapellaScaleFactor(PipeSegment):
