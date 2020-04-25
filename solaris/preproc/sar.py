@@ -114,7 +114,12 @@ class Orthorectify(PipeSegment):
 
 
 class CapellaGridFiletoGCPs(PipeSegment):
+    """
+    Generate ground control points (GCPs) from a Capella grid file
+    and save them in a corresponding image's metadata
+    """
     pass
+
 
 class CapellaScaleFactor(PipeSegment):
     """
