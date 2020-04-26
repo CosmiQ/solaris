@@ -114,7 +114,7 @@ class Orthorectify(PipeSegment):
         gdal.Warp(dstfile, srcdataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res, dstNodata=math.nan)
         if not self.disk_mode:
             pout = image.LoadImage(dstfile)()
-            #os.remove(dstfile)
+            os.remove(dstfile)
             return pout
         else:
             return None
