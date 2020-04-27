@@ -89,35 +89,29 @@ class Multilook(PipeSegment):
 class Orthorectify(PipeSegment):
     """
     Orthorectify an image using its ground control points (GCPs) with GDAL
-    Note: A temporary output file is written to disk at a location based on
-    'pathstring'.  To retain that file (instead of sending the resulting
-    image to the next PipeSegment) set 'disk_mode' to 'True'.
     """
     def __init__(self, projection=3857, algorithm='lanczos',
-                 row_res=1., col_res=1.,
-                 pathstring='./temp', disk_mode=False):
+                 row_res=1., col_res=1.):
         super().__init__()
         self.projection = projection
         self.algorithm = algorithm
         self.row_res = row_res
         self.col_res = col_res
-        self.pathstring = pathstring
-        self.disk_mode = disk_mode
     def transform(self, pin):
-        srcdataset = (pin * image.SaveImage('', driver='MEM'))()
-        if self.disk_mode:
-            dstfile = self.pathstring
-        elif os.path.isdir(self.pathstring):
-            dstfile = os.path.join(self.pathstring, str(uuid.uuid4()) + '.tif')
-        else:
-            dstfile = self.pathstring + str(uuid.uuid4()) + '.tif'
-        gdal.Warp(dstfile, srcdataset, dstSRS='epsg:' + str(self.projection), resampleAlg=self.algorithm, xRes=self.row_res, yRes=self.col_res, dstNodata=math.nan)
-        if not self.disk_mode:
-            pout = image.LoadImage(dstfile)()
-            os.remove(dstfile)
-            return pout
-        else:
-            return None
+        drivername = 'GTiff'
+        srcpath = '/vsimem/orthorectify_input_' + str(uuid.uuid4()) + '.tif'
+        dstpath = '/vsimem/orthorectify_output_' + str(uuid.uuid4()) + '.tif'
+        (pin * image.SaveImage(srcpath, driver=drivername))()
+        gdal.Warp(dstpath, srcpath,
+                  dstSRS='epsg:' + str(self.projection),
+                  resampleAlg=self.algorithm,
+                  xRes=self.row_res, yRes=self.col_res,
+                  dstNodata=math.nan)
+        pout = image.LoadImage(dstpath)()
+        driver = gdal.GetDriverByName(drivername)
+        driver.Delete(srcpath)
+        driver.Delete(dstpath)
+        return pout
 
 
 class CapellaGridFileToGCPs(PipeSegment):

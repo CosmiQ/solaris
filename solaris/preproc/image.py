@@ -194,7 +194,7 @@ class ImageStats(PipeSegment):
             'zero': np.count_nonzero(pin.data==0, (1,2)),
             'neg': np.count_nonzero(pin.data<0, (1,2)),
             'nan': np.count_nonzero(np.isnan(pin.data), (1,2)),
-            })
+        })
         if self.print_props:
             print(props)
             print()
