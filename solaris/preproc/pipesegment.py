@@ -30,16 +30,22 @@ class PipeSegment:
         return ' '*2*offset + type(self).__name__ + '\n'
     def __str__(self, offset=0):
         return self.selfstring(offset) + self.feeder.__str__(offset+1)
+    def attach_check(self, ps):
+        if not self.attach(ps):
+            raise Exception('(!) ' + type(ps).__name__
+                            + ' could not attach to '
+                            + type(self).__name__ + '.')
     def attach(self, ps):
         if self.feeder is None:
             self.feeder = ps
+            return True
         else:
-            self.feeder.attach(ps)
+            return self.feeder.attach(ps)
     def __mul__(self, other):
-        other.attach(self)
+        other.attach_check(self)
         return other
     def __or__(self, other):
-        other.attach(self)
+        other.attach_check(self)
         return other
     def __add__(self, other):
         return MergeSegment(self, other)
@@ -67,7 +73,7 @@ class LoadSegment(PipeSegment):
     def __str__(self, offset=0):
         return self.selfstring(offset)
     def attach(self, ps):
-        pass
+        return False
 
 
 class MergeSegment(PipeSegment):
@@ -90,9 +96,12 @@ class MergeSegment(PipeSegment):
     def attach(self, ps):
         if self.feeder1 is None:
             self.feeder1 = ps
+            flag1 = True
         else:
-            self.feeder1.attach(ps)
+            flag1 = self.feeder1.attach(ps)
         if self.feeder2 is None:
             self.feeder2 = ps
+            flag2 = True
         else:
-            self.feeder2.attach(ps)
+            flag2 = self.feeder2.attach(ps)
+        return flag1 or flag2
