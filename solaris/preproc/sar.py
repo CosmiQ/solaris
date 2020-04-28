@@ -114,7 +114,7 @@ class Orthorectify(PipeSegment):
         return pout
 
 
-class CapellaGridFileToGCPs(PipeSegment):
+class CapellaGridToGCPs(PipeSegment):
     """
     Generate ground control points (GCPs) from a Capella grid file
     and save them in a corresponding image's metadata.  Input is a tuple
