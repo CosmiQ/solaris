@@ -32,9 +32,9 @@ class PipeSegment:
         return self.selfstring(offset) + self.feeder.__str__(offset+1)
     def attach_check(self, ps):
         if not self.attach(ps):
-            raise Exception('(!) ' + type(ps).__name__
-                            + ' could not attach to '
-                            + type(self).__name__ + '.')
+            raise Exception('(!) ' + type(self).__name__
+                            + ' has no free input at which to attach '
+                            + type(ps).__name__ + '.')
     def attach(self, ps):
         if self.feeder is None:
             self.feeder = ps
