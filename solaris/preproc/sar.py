@@ -114,6 +114,17 @@ class Orthorectify(PipeSegment):
         return pout
 
 
+class CapellaScaleFactor(PipeSegment):
+    """
+    Calibrate Capella single-look complex data (or amplitude thereof)
+    using the scale factor in the metadata
+    """
+    def transform(self, pin):
+        tiffjson = json.loads(pin.metadata['meta']['TIFFTAG_IMAGEDESCRIPTION'])
+        scale_factor = tiffjson['collect']['image']['scale_factor']
+        return Image(scale_factor * pin.data, pin.name, pin.metadata)
+
+
 class CapellaGridToGCPs(PipeSegment):
     """
     Generate ground control points (GCPs) from a Capella grid file
@@ -170,12 +181,15 @@ class CapellaGridToGCPs(PipeSegment):
         return pout
 
 
-class CapellaScaleFactor(PipeSegment):
+class CapellaGridCommonWindow(PipeSegment):
     """
-    Calibrate Capella single-look complex data (or amplitude thereof)
-    using the scale factor in the metadata
+    Given a tuple or list of Capella grid files with equal orientations and
+    pixel sizes but translational offsets, find the overlapping region
+    and return its indices for each grid file. Also return the subpixel
+    offset for each grid file needed for exact alignment.
     """
+    def __init__(self, subpixel=True):
+        super().__init__()
+        self.subpixel = subpixel
     def transform(self, pin):
-        tiffjson = json.loads(pin.metadata['meta']['TIFFTAG_IMAGEDESCRIPTION'])
-        scale_factor = tiffjson['collect']['image']['scale_factor']
-        return Image(scale_factor * pin.data, pin.name, pin.metadata)
+        return [9999] * len(pin) #placeholder
