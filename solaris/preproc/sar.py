@@ -193,35 +193,112 @@ class CapellaGridCommonWindow(PipeSegment):
         self.master = master
         self.subpixel = subpixel
     def transform(self, pin):
+        pin = (pin * image.MergeToList())()
         print('start')
-        #Find the point in each grid that's closest to center of master grid
-        #Below, 'r' refers to row and 'c' refers to column
+        #Find the pixel in each grid that's closest to center of master grid
+        #'x' and 'y' are the latitude and longitude bands of the grid files,
+        #and (refx, refy) is the (lat, lon) of that center
         m = self.master
         l = len(pin)
         order = [m] + list(range(l)[:m]) + list(range(l)[m+1:])
-        localrefs = [] * len(pin)
-        fineoffests = [] * len(pin)
-        extents = [] * len(pin)
-        windows = [] * len(pin)
-        for step, index in enum(order):
-            r = pin[index].data[0]
-            c = pin[index].data[1]
+        localrefs = [[]] * len(pin)
+        fineoffsets = [[]] * len(pin)
+        extents = [[]] * len(pin)
+        windows = [[]] * len(pin)
+        for step, index in enumerate(order):
+            x = pin[index].data[0]
+            y = pin[index].data[1]
             if step==0:
-                localrefs[index] = (int(0.5 * r.shape[0]),
-                                    int(0.5 * r.shape[1]))
+                localrefs[index] = (int(0.5 * x.shape[0]),
+                                    int(0.5 * x.shape[1]))
                 fineoffsets[index] = (0., 0.)
-                refr = r[localrefs[index]]
-                refc = c[localrefs[index]]
+                refx = x[localrefs[index]]
+                refy = y[localrefs[index]]
             else:
-                localrefs[index] = self.courseoffset(r, c, refr, refc)
-                fineoffsets[index] = self.fineoffset(r, c, refr, refc,
+                #Find pixel closest to reference point
+                localrefs[index] = self.courseoffset(x, y, refx, refy)
+                #Find subpixel offset of reference point
+                fineoffsets[index] = self.fineoffset(x, y, refx, refy,
                                                      localrefs[index][0],
                                                      localrefs[index][1])
-
-
-        print('end')
+            #Find how far from the reference pixel each grid extends
+            extents[index] = [
+                localrefs[index][0],
+                x.shape[0] - localrefs[index][0] - 1,
+                localrefs[index][1],
+                x.shape[1] - localrefs[index][1] - 1
+            ]
+            if step==0:
+                minextents = extents[index].copy()
+            else:
+                for i in range(4):
+                    if extents[index][i] < minextents[i]:
+                        minextents[i] = extents[index][i]
+        for step, index in enumerate(order):
+            windows[index] = [
+                localrefs[index][0] - minextents[0],
+                localrefs[index][0] + minextents[1],
+                localrefs[index][1] - minextents[2],
+                localrefs[index][1] + minextents[3]
+            ]
+        #Optionally return subpixel offsets
+        if self.subpixel:
+            finearray = np.array(fineoffsets)
+            windows.append(finearray)
         return windows
-    def courseoffset(latgrid, longrid, lattarget, lontarget):
-        pass
-    def fineoffset(latgrid, longrid, lattarget, lontarget, uidx, vidx):
-        pass
+
+    def haversine(self, lat1, lon1, lat2, lon2, rad=False, radius=6.371E6):
+        """
+        Haversine formula for distance between two points given their
+        latitude and longitude, assuming a spherical earth.
+        """
+        if not rad:
+            lat1 = np.radians(lat1)
+            lon1 = np.radians(lon1)
+            lat2 = np.radians(lat2)
+            lon2 = np.radians(lon2)
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+        return 2 * radius * np.arcsin(np.sqrt(a))
+
+    def courseoffset(self, latgrid, longrid, lattarget, lontarget):
+        """
+        Given a latitude/longitude pair, find the closest point in
+        a grid of almost-regularly-spaced latitude/longitude pairs.
+        """
+        bound0 = np.shape(latgrid)[0] - 1
+        bound1 = np.shape(latgrid)[1] - 1
+        pos0 = int(bound0 / 2)
+        pos1 = int(bound1 / 2)
+        def score(pos0, pos1):
+            return self.haversine(latgrid[pos0, pos1], longrid[pos0, pos1], lattarget, lontarget)
+        while True:
+            scorenow = score(pos0, pos1)
+            if pos0>0 and score(pos0-1, pos1)<scorenow:
+                pos0 -= 1
+            elif pos0<bound0 and score(pos0+1, pos1)<scorenow:
+                pos0 += 1
+            elif pos1>0 and score(pos0, pos1-1)<scorenow:
+                pos1 -= 1
+            elif pos1<bound1 and score(pos0, pos1+1)<scorenow:
+                pos1 += 1
+            else:
+                return (pos0, pos1)
+
+    def fineoffset(self, latgrid, longrid, lattarget, lontarget, uidx, vidx):
+        """
+        Given grids of almost-equally-spaced latitude and longitude, and an 
+        exact latitude-longitude pair to aim for, and indices of the (ideally)
+        nearest point to that lat-long target, returns a first-order estimate
+        of the target offset, in pixels, relative to the specified point.
+        """
+        mlat = lattarget - latgrid[uidx, vidx]
+        mlon = lontarget - longrid[uidx, vidx]
+        ulat = latgrid[uidx+1, vidx] - latgrid[uidx, vidx]
+        ulon = longrid[uidx+1, vidx] - longrid[uidx, vidx]
+        vlat = latgrid[uidx, vidx+1] - latgrid[uidx, vidx]
+        vlon = longrid[uidx, vidx+1] - longrid[uidx, vidx]
+        uoffset = (mlat*ulat + mlon*ulon) / (ulat**2 + ulon**2)
+        voffset = (mlat*vlat + mlon*vlon) / (vlat**2 + vlon**2)
+        return uoffset, voffset
