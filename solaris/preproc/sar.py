@@ -114,6 +114,10 @@ class Orthorectify(PipeSegment):
         return pout
 
 
+class Crop(PipeSegment):
+    pass
+
+
 class CapellaScaleFactor(PipeSegment):
     """
     Calibrate Capella single-look complex data (or amplitude thereof)
@@ -224,8 +228,8 @@ class CapellaGridCommonWindow(PipeSegment):
             #Find how far from the reference pixel each grid extends
             extents[index] = [
                 localrefs[index][0],
-                x.shape[0] - localrefs[index][0] - 1,
                 localrefs[index][1],
+                x.shape[0] - localrefs[index][0] - 1,
                 x.shape[1] - localrefs[index][1] - 1
             ]
             if step==0:
@@ -237,8 +241,8 @@ class CapellaGridCommonWindow(PipeSegment):
         for step, index in enumerate(order):
             windows[index] = [
                 localrefs[index][0] - minextents[0],
-                localrefs[index][0] + minextents[1],
-                localrefs[index][1] - minextents[2],
+                localrefs[index][1] - minextents[1],
+                localrefs[index][0] + minextents[2],
                 localrefs[index][1] + minextents[3]
             ]
         #Optionally return subpixel offsets
