@@ -172,9 +172,9 @@ class CapellaGridToGCPs(PipeSegment):
         for ri in range(rlo, rhi + 1, rspace):
             for ci in range(clo, chi + 1, cspace):
                 gcps.append(gdal.GCP(
-                    grid.data[1, ri, ci], #y
-                    grid.data[0, ri, ci], #x
-                    grid.data[2, ri, ci], #z
+                    grid.data[1, ri, ci], #y, longitude
+                    grid.data[0, ri, ci], #x, latitude
+                    grid.data[2, ri, ci], #z, height
                     ci, ri
                 ))
         pout.metadata['gcps'] = gcps
@@ -183,13 +183,45 @@ class CapellaGridToGCPs(PipeSegment):
 
 class CapellaGridCommonWindow(PipeSegment):
     """
-    Given a tuple or list of Capella grid files with equal orientations and
+    Given an iterable of Capella grid files with equal orientations and
     pixel sizes but translational offsets, find the overlapping region
     and return its indices for each grid file. Also return the subpixel
-    offset for each grid file needed for exact alignment.
+    offset of each grid file needed for exact alignment.
     """
-    def __init__(self, subpixel=True):
+    def __init__(self, master=0, subpixel=True):
         super().__init__()
+        self.master = master
         self.subpixel = subpixel
     def transform(self, pin):
-        return [9999] * len(pin) #placeholder
+        print('start')
+        #Find the point in each grid that's closest to center of master grid
+        #Below, 'r' refers to row and 'c' refers to column
+        m = self.master
+        l = len(pin)
+        order = [m] + list(range(l)[:m]) + list(range(l)[m+1:])
+        localrefs = [] * len(pin)
+        fineoffests = [] * len(pin)
+        extents = [] * len(pin)
+        windows = [] * len(pin)
+        for step, index in enum(order):
+            r = pin[index].data[0]
+            c = pin[index].data[1]
+            if step==0:
+                localrefs[index] = (int(0.5 * r.shape[0]),
+                                    int(0.5 * r.shape[1]))
+                fineoffsets[index] = (0., 0.)
+                refr = r[localrefs[index]]
+                refc = c[localrefs[index]]
+            else:
+                localrefs[index] = self.courseoffset(r, c, refr, refc)
+                fineoffsets[index] = self.fineoffset(r, c, refr, refc,
+                                                     localrefs[index][0],
+                                                     localrefs[index][1])
+
+
+        print('end')
+        return windows
+    def courseoffset(latgrid, longrid, lattarget, lontarget):
+        pass
+    def fineoffset(latgrid, longrid, lattarget, lontarget, uidx, vidx):
+        pass
