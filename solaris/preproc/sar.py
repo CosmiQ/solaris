@@ -115,7 +115,38 @@ class Orthorectify(PipeSegment):
 
 
 class Crop(PipeSegment):
-    pass
+    """
+    Crop an image based on either pixel coordinates
+    or georeferenced coordinates
+    """
+    def __init__(self, xmin, ymin, xmax, ymax, mode='pixel'):
+        super().__init__()
+        self.xmin = xmin
+        self.ymin = ymin
+        self.xmax = xmax
+        self.ymax = ymax
+        self.mode = mode
+    def transform(self, pin):
+        return self.crop(pin, self.xmin, self.ymin, self.xmax, self.ymax, self.mode)
+    def crop(self, pin, xmin, ymin, xmax, ymax, mode):
+        if mode in ['pixel', 'p', 0]:
+            srcWin = [xmin, ymin, xmax-xmin, ymax-ymin]
+            projWin = None
+        elif mode in ['geo', 'g', 1]:
+            srcWin = None
+            projWin = [xmin, ymin, xmax, ymax]
+        else:
+            raise Exception('! Invalid mode in Crop')
+        drivername = 'GTiff'
+        srcpath = '/vsimem/crop_input_' + str(uuid.uuid4()) + '.tif'
+        dstpath = '/vsimem/crop_output_' + str(uuid.uuid4()) + '.tif'
+        (pin * image.SaveImage(srcpath, driver=drivername))()
+        gdal.Translate(dstpath, srcpath, srcWin=srcWin, projWin=projWin)
+        pout = image.LoadImage(dstpath)()
+        driver = gdal.GetDriverByName(drivername)
+        driver.Delete(srcpath)
+        driver.Delete(dstpath)
+        return pout
 
 
 class CapellaScaleFactor(PipeSegment):
