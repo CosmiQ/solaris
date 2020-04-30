@@ -119,22 +119,23 @@ class Crop(PipeSegment):
     Crop an image based on either pixel coordinates
     or georeferenced coordinates
     """
-    def __init__(self, xmin, ymin, xmax, ymax, mode='pixel'):
+    def __init__(self, row_min, row_max, col_min, col_max, mode='pixel'):
         super().__init__()
-        self.xmin = xmin
-        self.ymin = ymin
-        self.xmax = xmax
-        self.ymax = ymax
+        self.row_min = row_min
+        self.row_max = row_max
+        self.col_min = col_min
+        self.col_max = col_max
         self.mode = mode
     def transform(self, pin):
-        return self.crop(pin, self.xmin, self.ymin, self.xmax, self.ymax, self.mode)
-    def crop(self, pin, xmin, ymin, xmax, ymax, mode):
+        return self.crop(pin, self.row_min, self.row_max, self.col_min, self.col_max, self.mode)
+    def crop(self, pin, row_min, row_max, col_min, col_max, mode):
         if mode in ['pixel', 'p', 0]:
-            srcWin = [xmin, ymin, xmax-xmin, ymax-ymin]
+            srcWin = [col_min, row_min,
+                      col_max - col_min + 1, row_max - row_min + 1]
             projWin = None
         elif mode in ['geo', 'g', 1]:
             srcWin = None
-            projWin = [xmin, ymin, xmax, ymax]
+            projWin = [col_min, row_min, col_max, row_max]
         else:
             raise Exception('! Invalid mode in Crop')
         drivername = 'GTiff'
@@ -147,6 +148,21 @@ class Crop(PipeSegment):
         driver.Delete(srcpath)
         driver.Delete(dstpath)
         return pout
+
+
+class CropVariable(Crop):
+    """
+    Like 'Crop', but window coordinates are accepted from another
+    PipeSegment at runtime instead of via initialization arguments.
+    """
+    def __init__(self, mode='pixel'):
+        PipeSegment.__init__(self)
+        self.mode = mode
+    def transform(self, pin):
+        imagetocrop = pin[0]
+        window = pin[1]
+        return self.crop(imagetocrop, window[0], window[1],
+                         window[2], window[3], self.mode)
 
 
 class CapellaScaleFactor(PipeSegment):
@@ -260,8 +276,8 @@ class CapellaGridCommonWindow(PipeSegment):
             #Find how far from the reference pixel each grid extends
             extents[index] = [
                 localrefs[index][0],
-                localrefs[index][1],
                 x.shape[0] - localrefs[index][0] - 1,
+                localrefs[index][1],
                 x.shape[1] - localrefs[index][1] - 1
             ]
             if step==0:
@@ -270,11 +286,12 @@ class CapellaGridCommonWindow(PipeSegment):
                 for i in range(4):
                     if extents[index][i] < minextents[i]:
                         minextents[i] = extents[index][i]
+        #Calculate row_min, row_max, col_min, col_max of overlapping window
         for step, index in enumerate(order):
             windows[index] = [
                 localrefs[index][0] - minextents[0],
-                localrefs[index][1] - minextents[1],
-                localrefs[index][0] + minextents[2],
+                localrefs[index][0] + minextents[1],
+                localrefs[index][1] - minextents[2],
                 localrefs[index][1] + minextents[3]
             ]
         #Optionally return subpixel offsets
