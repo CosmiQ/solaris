@@ -207,10 +207,10 @@ class CapellaGridToGCPs(PipeSegment):
         for ri in range(rlo, rhi + 1, rspace):
             for ci in range(clo, chi + 1, cspace):
                 gcps.append(gdal.GCP(
-                    grid.data[1, ri, ci], #y, longitude
-                    grid.data[0, ri, ci], #x, latitude
-                    grid.data[2, ri, ci], #z, height
-                    ci, ri
+                    grid.data[1, ri, ci], #longitude
+                    grid.data[0, ri, ci], #latitude
+                    grid.data[2, ri, ci], #altitude
+                    ci, ri #pixel=column=x, line=row=y
                 ))
         pout.metadata['gcps'] = gcps
         return pout
@@ -218,9 +218,9 @@ class CapellaGridToGCPs(PipeSegment):
 
 class CapellaGridCommonWindow(PipeSegment):
     """
-    Given an iterable of Capella grid files with equal orientations and
-    pixel sizes but translational offsets, find the overlapping region
-    and return its indices for each grid file. Also return the subpixel
+    Given an iterable of Capella grid files with equal orientations and pixel
+    sizes but translational offsets, find the overlapping region and return
+    its array indices for each grid file. Optionally, also return the subpixel
     offset of each grid file needed for exact alignment.
     """
     def __init__(self, master=0, subpixel=True):
@@ -247,6 +247,7 @@ class CapellaGridCommonWindow(PipeSegment):
                 localrefs[index] = (int(0.5 * x.shape[0]),
                                     int(0.5 * x.shape[1]))
                 fineoffsets[index] = (0., 0.)
+                #Get latitude and longitude of the reference point
                 refx = x[localrefs[index]]
                 refy = y[localrefs[index]]
             else:
