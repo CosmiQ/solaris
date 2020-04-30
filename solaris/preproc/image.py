@@ -249,6 +249,7 @@ class SelectItem(PipeSegment):
     a list of items into, or out of, a custom class.
     """
     def __init__(self, index=0):
+        super().__init__()
         self.index = index
     def transform(self, pin):
         return pin[self.index]
