@@ -2,7 +2,9 @@ import gdal
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from osgeo import gdal_array
 import pandas as pd
+import warnings
 
 from .pipesegment import PipeSegment, LoadSegment, MergeSegment
 
@@ -126,7 +128,11 @@ class SaveImage(PipeSegment):
     def transform(self, pin):
         #Save image to disk
         driver = gdal.GetDriverByName(self.driver)
-        dataset = driver.Create(self.pathstring, pin.data.shape[2], pin.data.shape[1], pin.data.shape[0], gdal.GDT_Float32)
+        datatype = gdal_array.NumericTypeCodeToGDALTypeCode(pin.data.dtype)
+        if datatype is None:
+            warnings.warn('! SaveImage did not find data type match; saving as float.')
+            datatype = gdal.GDT_Float32
+        dataset = driver.Create(self.pathstring, pin.data.shape[2], pin.data.shape[1], pin.data.shape[0], datatype)
         for band in range(pin.data.shape[0]):
             dataset.GetRasterBand(band+1).WriteArray(pin.data[band, :, :])
         if self.save_projection:
