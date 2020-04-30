@@ -108,6 +108,7 @@ class Orthorectify(PipeSegment):
                   xRes=self.row_res, yRes=self.col_res,
                   dstNodata=math.nan)
         pout = image.LoadImage(dstpath)()
+        pout.name = pin.name
         driver = gdal.GetDriverByName(drivername)
         driver.Delete(srcpath)
         driver.Delete(dstpath)
@@ -144,6 +145,7 @@ class Crop(PipeSegment):
         (pin * image.SaveImage(srcpath, driver=drivername))()
         gdal.Translate(dstpath, srcpath, srcWin=srcWin, projWin=projWin)
         pout = image.LoadImage(dstpath)()
+        pout.name = pin.name
         driver = gdal.GetDriverByName(drivername)
         driver.Delete(srcpath)
         driver.Delete(dstpath)
@@ -245,7 +247,6 @@ class CapellaGridCommonWindow(PipeSegment):
         self.subpixel = subpixel
     def transform(self, pin):
         pin = (pin * image.MergeToList())()
-        print('start')
         #Find the pixel in each grid that's closest to center of master grid
         #'x' and 'y' are the latitude and longitude bands of the grid files,
         #and (refx, refy) is the (lat, lon) of that center

@@ -152,7 +152,7 @@ class ShowImage(PipeSegment):
     """
     Display an image using matplotlib.
     """
-    def __init__(self, show_text=True, show_image=True, cmap='gray',
+    def __init__(self, show_text=False, show_image=True, cmap='gray',
                  vmin=None, vmax=None):
         super().__init__()
         self.show_text = show_text
