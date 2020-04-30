@@ -40,7 +40,7 @@ class PipeSegment:
             self.feeder = ps
             return True
         else:
-            return self.feeder.attach(ps)
+            return self.feeder.attach(ps) or ps is self
     def __mul__(self, other):
         other.attach_check(self)
         return other
@@ -73,7 +73,7 @@ class LoadSegment(PipeSegment):
     def __str__(self, offset=0):
         return self.selfstring(offset)
     def attach(self, ps):
-        return False
+        return ps is self
 
 
 class MergeSegment(PipeSegment):
@@ -104,4 +104,4 @@ class MergeSegment(PipeSegment):
             flag2 = True
         else:
             flag2 = self.feeder2.attach(ps)
-        return flag1 or flag2
+        return flag1 or flag2 or ps is self
