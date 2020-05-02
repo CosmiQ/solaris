@@ -194,8 +194,8 @@ class ImageStats(PipeSegment):
         props = pd.DataFrame({
             'min': np.nanmin(pin.data, (1,2)),
             'max': np.nanmax(pin.data, (1,2)),
-            'mean': np.mean(pin.data, (1,2)),
-            'median': np.median(pin.data, (1,2)),
+            'mean': np.nanmean(pin.data, (1,2)),
+            'median': np.nanmedian(pin.data, (1,2)),
             'pos': np.count_nonzero(np.nan_to_num(pin.data, nan=-1.)>0, (1,2)),
             'zero': np.count_nonzero(pin.data==0, (1,2)),
             'neg': np.count_nonzero(np.nan_to_num(pin.data, nan=1.)<0, (1,2)),
