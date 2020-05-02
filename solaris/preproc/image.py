@@ -217,9 +217,6 @@ class ImageStats(PipeSegment):
 class MergeToTuple(PipeSegment):
     """
     Flatten a nested tuple into a tuple.
-    Merging (i.e., using the '+' sign) leaves input tuples intact unless they
-    come directly from another merge.  Adding a MergeToTuple class object
-    after the merge overrides this behavior by flattening a tuple of tuples.
     """
     def transform(self, pin):
         pout = []
@@ -236,7 +233,7 @@ class MergeToTuple(PipeSegment):
 
 class MergeToStack(PipeSegment):
     """
-    Given an iterable or nested tuple of equal-sized images, combine
+    Given an iterable of equal-sized images, combine
     all of their bands into a single image.
     """
     def __init__(self, master=0):
@@ -244,10 +241,9 @@ class MergeToStack(PipeSegment):
         self.master = master
     def transform(self, pin):
         #Make list of all the input bands
-        pmid = (pin * MergeToTuple())()
-        datalist = [imageobj.data for imageobj in pmid]
+        datalist = [imageobj.data for imageobj in pin]
         #Create output image, using name and metadata from designated source
-        pout = Image(None, pmid[self.master].name, pmid[self.master].metadata)
+        pout = Image(None, pin[self.master].name, pin[self.master].metadata)
         pout.data = np.concatenate(datalist, axis=0)
         return pout
 

@@ -246,7 +246,6 @@ class CapellaGridCommonWindow(PipeSegment):
         self.master = master
         self.subpixel = subpixel
     def transform(self, pin):
-        pin = (pin * image.MergeToList())()
         #Find the pixel in each grid that's closest to center of master grid
         #'x' and 'y' are the latitude and longitude bands of the grid files,
         #and (refx, refy) is the (lat, lon) of that center
