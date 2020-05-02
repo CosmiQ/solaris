@@ -214,10 +214,12 @@ class ImageStats(PipeSegment):
             return None
 
 
-class MergeToList(PipeSegment):
+class MergeToTuple(PipeSegment):
     """
-    Flatten a nested tuple into a single list.  This makes the output
-    of repeated merges (i.e., additions) easier to work with.
+    Flatten a nested tuple into a tuple.
+    Merging (i.e., using the '+' sign) leaves input tuples intact unless they
+    come directly from another merge.  Adding a MergeToTuple class object
+    after the merge overrides this behavior by flattening a tuple of tuples.
     """
     def transform(self, pin):
         pout = []
@@ -228,6 +230,7 @@ class MergeToList(PipeSegment):
                 else:
                     pout.append(item)
         recurse(pin)
+        pout = tuple(pout)
         return pout
 
 
@@ -241,7 +244,7 @@ class MergeToStack(PipeSegment):
         self.master = master
     def transform(self, pin):
         #Make list of all the input bands
-        pmid = (pin * MergeToList())()
+        pmid = (pin * MergeToTuple())()
         datalist = [imageobj.data for imageobj in pmid]
         #Create output image, using name and metadata from designated source
         pout = Image(None, pmid[self.master].name, pmid[self.master].metadata)
