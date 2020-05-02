@@ -82,15 +82,13 @@ class MergeSegment(PipeSegment):
         self.feeder1 = feeder1
         self.feeder2 = feeder2
     def process(self):
-        if isinstance(self.feeder1, MergeSegment):
-            tuple1 = self.feeder1()
-        else:
-            tuple1 = (self.feeder1(),)
-        if isinstance(self.feeder2, MergeSegment):
-            tuple2 = self.feeder2()
-        else:
-            tuple2 = (self.feeder2(),)
-        return tuple1 + tuple2
+        p1 = self.feeder1()
+        p2 = self.feeder2()
+        if not isinstance(p1, tuple):
+            p1 = (p1,)
+        if not isinstance(p2, tuple):
+            p2 = (p2,)
+        return p1 + p2
     def reset(self):
         self.procout = None
         self.procstart = False
