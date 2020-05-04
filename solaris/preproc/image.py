@@ -170,8 +170,10 @@ class ShowImage(PipeSegment):
         if self.show_text:
             print(pin)
         if self.show_image:
-            pyplot_format = np.squeeze(np.moveaxis(pin.data, 0, -1))
-            plt.imshow(pyplot_format, cmap=self.cmap,
+            pyplot_formatted = np.squeeze(np.moveaxis(pin.data, 0, -1))
+            if np.ndim(pyplot_formatted)==3 and self.vmin is not None and self.vmax is not None:
+                pyplot_formatted = np.clip((pyplot_formatted - self.vmin) / (self.vmax - self.vmin), 0., 1.)
+            plt.imshow(pyplot_formatted, cmap=self.cmap,
                        vmin=self.vmin, vmax=self.vmax)
             plt.show()
         return pin
