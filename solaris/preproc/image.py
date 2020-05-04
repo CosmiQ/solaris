@@ -214,23 +214,6 @@ class ImageStats(PipeSegment):
             return None
 
 
-class MergeToTuple(PipeSegment):
-    """
-    Flatten a nested tuple into a tuple.
-    """
-    def transform(self, pin):
-        pout = []
-        def recurse(t):
-            for item in t:
-                if type(item) == tuple:
-                    recurse(item)
-                else:
-                    pout.append(item)
-        recurse(pin)
-        pout = tuple(pout)
-        return pout
-
-
 class MergeToStack(PipeSegment):
     """
     Given an iterable of equal-sized images, combine
