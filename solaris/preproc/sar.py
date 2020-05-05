@@ -268,9 +268,20 @@ class CapellaGridToPolygon(PipeSegment):
             allci.extend(ci)
             cornerri.append(ri[0])
             cornerci.append(ci[0])
-        #Write latitudes & longitudes of the selected points to a JSON string
+        allri.append(allri[0])
+        allci.append(allci[0])
+        #Get latitude/longitude values, and ensure they're counterclockwise
         lats = [pin.data[0, ri, ci] for ri, ci in zip(allri, allci)]
         lons = [pin.data[1, ri, ci] for ri, ci in zip(allri, allci)]
+        cornerlats = [pin.data[0, ri, ci] for ri,ci in zip(cornerri, cornerci)]
+        cornerlons = [pin.data[1, ri, ci] for ri,ci in zip(cornerri, cornerci)]
+        vi = (cornerlats[1] - cornerlats[0], cornerlons[1] - cornerlons[0])
+        vf = (cornerlats[0] - cornerlats[3], cornerlons[0] - cornerlons[3])
+        counterclockwise = vf[0] * vi[1] - vf[1] * vi[0] > 0
+        if not counterclockwise:
+            lats.reverse()
+            lons.reverse()
+        #Write latitudes & longitudes of the selected points to a JSON string
         jsonstring = '{\n' \
                      '"type": "FeatureCollection",\n' \
                      '"name": "region_' + pin.name + '",\n' \
