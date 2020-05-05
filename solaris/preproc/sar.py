@@ -234,6 +234,57 @@ class CapellaGridToGCPs(PipeSegment):
         return pout
 
 
+class CapellaGridToPolygon(PipeSegment):
+    """
+    Given a Capella grid file, return a GeoJSON string indicating its boundary.
+    'step' is number of pixels between each recorded point.
+    """
+    def __init__(self, step=100):
+        super().__init__()
+        self.step = step
+    def transform(self, pin):
+        #Get indices of selected points along the edges of the grid file
+        nrows = pin.data.shape[1]
+        ncols = pin.data.shape[2]
+        step = self.step
+        allri = []
+        allci = []
+        cornerri = []
+        cornerci = []
+        for edge in range(4):
+            if edge == 0:
+                ri = list(range(0, nrows - 1, step))
+                ci = [0] * len(ri)
+            elif edge == 1:
+                ci = list(range(0, ncols - 1, step))
+                ri = [nrows - 1] * len(ci)
+            elif edge == 2:
+                ri = list(range(nrows - 1, 0, -step))
+                ci = [ncols - 1] * len(ri)
+            elif edge == 3:
+                ci = list(range(ncols - 1, 0, -step))
+                ri = [0] * len(ci)
+            allri.extend(ri)
+            allci.extend(ci)
+            cornerri.append(ri[0])
+            cornerci.append(ci[0])
+        #Write latitudes & longitudes of the selected points to a JSON string
+        lats = [pin.data[0, ri, ci] for ri, ci in zip(allri, allci)]
+        lons = [pin.data[1, ri, ci] for ri, ci in zip(allri, allci)]
+        jsonstring = '{\n' \
+                     '"type": "FeatureCollection",\n' \
+                     '"name": "region_' + pin.name + '",\n' \
+                     '"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },\n' \
+                     '"features": [\n' \
+                     '{ "type": "Feature", "properties": { }, "geometry": { "type": "Polygon", "coordinates": [ [ '
+        for i, (lat, lon) in enumerate(zip(lats, lons)):
+            if i>0:
+                jsonstring += ', '
+            jsonstring += '[ ' + str(lon) + ', ' + str(lat) + ', 0.0 ]'
+        jsonstring += '] ] } }\n]\n}'        
+        return jsonstring
+
+
 class CapellaGridCommonWindow(PipeSegment):
     """
     Given an iterable of Capella grid files with equal orientations and pixel
@@ -355,3 +406,19 @@ class CapellaGridCommonWindow(PipeSegment):
         uoffset = (mlat*ulat + mlon*ulon) / (ulat**2 + ulon**2)
         voffset = (mlat*vlat + mlon*vlon) / (vlat**2 + vlon**2)
         return uoffset, voffset
+
+
+class SaveString(PipeSegment):
+    """
+    Write a string to a file.
+    """
+    def __init__(self, pathstring, append=False):
+        super().__init__()
+        self.pathstring = pathstring
+        self.append = append
+    def transform(self, pin):
+        mode = 'a' if self.append else 'w'
+        outfile = open(self.pathstring, mode)
+        outfile.write(pin)
+        outfile.close()
+        return pin
