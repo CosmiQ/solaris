@@ -239,9 +239,10 @@ class CapellaGridToPolygon(PipeSegment):
     Given a Capella grid file, return a GeoJSON string indicating its boundary.
     'step' is number of pixels between each recorded point.
     """
-    def __init__(self, step=100):
+    def __init__(self, step=100, flags=False):
         super().__init__()
         self.step = step
+        self.flags = flags
     def transform(self, pin):
         #Get indices of selected points along the edges of the grid file
         nrows = pin.data.shape[1]
@@ -275,12 +276,17 @@ class CapellaGridToPolygon(PipeSegment):
         lons = [pin.data[1, ri, ci] for ri, ci in zip(allri, allci)]
         cornerlats = [pin.data[0, ri, ci] for ri,ci in zip(cornerri, cornerci)]
         cornerlons = [pin.data[1, ri, ci] for ri,ci in zip(cornerri, cornerci)]
-        vi = (cornerlats[1] - cornerlats[0], cornerlons[1] - cornerlons[0])
-        vf = (cornerlats[0] - cornerlats[3], cornerlons[0] - cornerlons[3])
+        vi = (cornerlons[1] - cornerlons[0], cornerlats[1] - cornerlats[0])
+        vf = (cornerlons[0] - cornerlons[3], cornerlats[0] - cornerlats[3])
         counterclockwise = vf[0] * vi[1] - vf[1] * vi[0] > 0
         if not counterclockwise:
             lats.reverse()
             lons.reverse()
+        print(cornerlats)
+        print(cornerlons)
+        northlooking = cornerlats[3] > cornerlats[0]
+        eastlooking = cornerlons[3] > cornerlons[0]
+        flags = (counterclockwise, northlooking, eastlooking)
         #Write latitudes & longitudes of the selected points to a JSON string
         jsonstring = '{\n' \
                      '"type": "FeatureCollection",\n' \
@@ -292,8 +298,11 @@ class CapellaGridToPolygon(PipeSegment):
             if i>0:
                 jsonstring += ', '
             jsonstring += '[ ' + str(lon) + ', ' + str(lat) + ', 0.0 ]'
-        jsonstring += '] ] } }\n]\n}'        
-        return jsonstring
+        jsonstring += '] ] } }\n]\n}'
+        if self.flags:
+            return (jsonstring,) + flags
+        else:
+            return jsonstring
 
 
 class CapellaGridCommonWindow(PipeSegment):
@@ -430,6 +439,6 @@ class SaveString(PipeSegment):
     def transform(self, pin):
         mode = 'a' if self.append else 'w'
         outfile = open(self.pathstring, mode)
-        outfile.write(pin)
+        outfile.write(str(pin))
         outfile.close()
         return pin
