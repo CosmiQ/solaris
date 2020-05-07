@@ -115,6 +115,45 @@ class Orthorectify(PipeSegment):
         return pout
 
 
+class DecompositionPauli(PipeSegment):
+    """
+    Compute the Pauli decomposition of quad-pol SAR data
+    """
+    def __init__(self, hh_band=0, vv_band=1, xx_band=2):
+        super().__init__()
+        self.hh_band = hh_band
+        self.vv_band = vv_band
+        self.xx_band = xx_band
+    def transform(self, pin):
+        #Convention is alpha-->red, beta-->blue, gamma-->green
+        hh = pin.data[self.hh_band]
+        vv = pin.data[self.vv_band]
+        xx = pin.data[self.xx_band]
+        alpha2 = 0.5 * np.square(np.absolute(hh + vv))
+        beta2 = 0.5 * np.square(np.absolute(hh - vv))
+        gamma2 = 2 * np.square(np.absolute(xx))
+        alpha2 = np.expand_dims(alpha2, axis=0)
+        beta2 = np.expand_dims(beta2, axis=0)
+        gamma2 = np.expand_dims(gamma2, axis=0)
+        pout = Image(np.concatenate((alpha2, beta2, gamma2), axis=0),
+                     pin.name,
+                     pin.metadata)
+        return pout
+
+
+class DecompositionFreemanDurden(PipeSegment):
+    """
+    Compute the three-component polarimetric decomposition of quad-pol SAR data
+    proposed by Freeman and Durden
+    """
+    def __init__(self, hh_band=0, vv_band=1, xx_band=2):
+        self.hh_band = hh_band
+        self.vv_band = vv_band
+        self.xx_band = xx_band
+    def transform(self, pin):
+        pass
+
+
 class Crop(PipeSegment):
     """
     Crop an image based on either pixel coordinates
