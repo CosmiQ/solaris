@@ -151,7 +151,23 @@ class DecompositionFreemanDurden(PipeSegment):
         self.vv_band = vv_band
         self.xx_band = xx_band
     def transform(self, pin):
-        pass
+        hh = np.expand_dims(pin.data[self.hh_band], axis=0)
+        vv = np.expand_dims(pin.data[self.vv_band], axis=0)
+        xx = np.expand_dims(pin.data[self.xx_band], axis=0)
+        C11 = np.square(np.absolute(hh))
+        C22 = np.square(np.absolute(vv))
+        C33 = np.square(np.absolute(xx))
+        C12 = hh * np.conj(vv)
+        mkwargs = {'kernel':5}
+        C11 = (Image(C11) * Multilook(**mkwargs))().data
+        C22 = (Image(C22) * Multilook(**mkwargs))().data
+        C33 = (Image(C33) * Multilook(**mkwargs))().data
+        C12 = (Image(C12) * Multilook(**mkwargs))().data
+        fv = 1.5 * C33
+        c11 = C11 - fv
+        c22 = C22 - fv
+        c12 = C12 - fv / 3.
+        return None
 
 
 class Crop(PipeSegment):
