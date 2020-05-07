@@ -481,3 +481,12 @@ class SaveString(PipeSegment):
         outfile.write(str(pin))
         outfile.close()
         return pin
+
+
+class ShowString(PipeSegment):
+    """
+    Print a string to the screen.
+    """
+    def transform(self, pin):
+        print(pin)
+        return pin
