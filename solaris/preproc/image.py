@@ -15,6 +15,8 @@ class Image:
         self.metadata = metadata
         self.data = data
     def __str__(self):
+        if self.data.ndim < 3:
+            raise Exception('! Image data has too few dimensions.')
         metastring = str(self.metadata)
         if len(metastring)>400:
             metastring = metastring[:360] + '...'
