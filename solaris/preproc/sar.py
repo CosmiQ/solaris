@@ -32,6 +32,22 @@ class Intensity(PipeSegment):
         return pout
 
 
+class InPhase(PipeSegment):
+    """
+    Get in-phase (real) component of complex-valued data
+    """
+    def transform(self, pin):
+        return Image(np.real(pin.data), pin.name, pin.metadata)
+
+
+class Quadrature(PipeSegment):
+    """
+    Get quadrature (imaginary) component of complex-valued data
+    """
+    def transform(self, pin):
+        return Image(np.imag(pin.data), pin.name, pin.metadata)
+
+
 class Decibels(PipeSegment):
     """
     Express quantity in decibels
@@ -117,7 +133,8 @@ class Orthorectify(PipeSegment):
 
 class DecompositionPauli(PipeSegment):
     """
-    Compute the Pauli decomposition of quad-pol SAR data
+    Compute the Pauli decomposition of quad-pol SAR data.
+    Note: Convention is alpha-->red, beta-->blue, gamma-->green
     """
     def __init__(self, hh_band=0, vv_band=1, xx_band=2):
         super().__init__()
@@ -125,7 +142,6 @@ class DecompositionPauli(PipeSegment):
         self.vv_band = vv_band
         self.xx_band = xx_band
     def transform(self, pin):
-        #Convention is alpha-->red, beta-->blue, gamma-->green
         hh = pin.data[self.hh_band]
         vv = pin.data[self.vv_band]
         xx = pin.data[self.xx_band]
@@ -144,30 +160,88 @@ class DecompositionPauli(PipeSegment):
 class DecompositionFreemanDurden(PipeSegment):
     """
     Compute the three-component polarimetric decomposition of quad-pol SAR data
-    proposed by Freeman and Durden
+    proposed by Freeman and Durden.
+    Note: Convention is Ps-->blue, Pd-->red, Pv-->green
     """
-    def __init__(self, hh_band=0, vv_band=1, xx_band=2):
+    def __init__(self, hh_band=0, vv_band=1, xx_band=2, kernel_size=5):
+        super().__init__()
         self.hh_band = hh_band
         self.vv_band = vv_band
         self.xx_band = xx_band
+        self.kernel_size = kernel_size
     def transform(self, pin):
-        hh = np.expand_dims(pin.data[self.hh_band], axis=0)
-        vv = np.expand_dims(pin.data[self.vv_band], axis=0)
-        xx = np.expand_dims(pin.data[self.xx_band], axis=0)
-        C11 = np.square(np.absolute(hh))
-        C22 = np.square(np.absolute(vv))
-        C33 = np.square(np.absolute(xx))
-        C12 = hh * np.conj(vv)
-        mkwargs = {'kernel':5}
-        C11 = (Image(C11) * Multilook(**mkwargs))().data
-        C22 = (Image(C22) * Multilook(**mkwargs))().data
-        C33 = (Image(C33) * Multilook(**mkwargs))().data
-        C12 = (Image(C12) * Multilook(**mkwargs))().data
-        fv = 1.5 * C33
-        c11 = C11 - fv
-        c22 = C22 - fv
-        c12 = C12 - fv / 3.
-        return None
+        #Scattering matrix terms
+        hh = (pin * image.SelectBands(self.hh_band))()
+        vv = (pin * image.SelectBands(self.vv_band))()
+        xx = (pin * image.SelectBands(self.xx_band))()
+        #Covariance matrix terms
+        C11 = (hh * Intensity())()
+        C22 = (vv * Intensity())()
+        C33 = (xx * Intensity())()
+        C12 = Image(hh.data * np.conj(vv.data))
+        hh = vv = xx = None
+        mkwargs = {'kernel_size':self.kernel_size, 'method':'avg'}
+        C11 = (C11 * Multilook(**mkwargs))()
+        C22 = (C22 * Multilook(**mkwargs))()
+        C33 = (C33 * Multilook(**mkwargs))()
+        C12 = (C12
+               * (InPhase() * Multilook(**mkwargs) * Scale(1.+0.j)
+                  + Quadrature() * Multilook(**mkwargs) * Scale(1.j))
+               * MergeToSum()
+        )()
+        #Volume amplitude, and volume-subtracted matrix terms
+        #(Also, convert from Image to np.array)
+        fv = 1.5 * C33.data
+        c11 = C11.data - fv
+        c22 = C22.data - fv
+        c12 = C12.data - fv / 3.
+        C11 = C22 = C33 = C12 = None
+        #Surface and dihedral amplitudes
+        surfacedominates = np.real(c12) >= 0
+        term1 = np.abs((c11*c22 - (np.real(c12))**2 - (np.imag(c12))**2) / (c11 + c22 + 2*np.real(c12)*np.where(surfacedominates, 1, -1)))
+        term2 = np.abs(c22 - term1)
+        term3 = (np.real(c12) + np.where(surfacedominates, 1, -1) * term1 + np.imag(c12) * 1.j) / term2
+        fs = term2 * surfacedominates + term1 * np.invert(surfacedominates)
+        fd = term1 * surfacedominates + term2 * np.invert(surfacedominates)
+        alpha = -1. * surfacedominates + term3 * np.invert(surfacedominates)
+        beta = term3 * surfacedominates + 1. * np.invert(surfacedominates)
+        #Power
+        Ps = fs * (1. + np.square(np.absolute(beta)))
+        Pd = fd * (1. + np.square(np.absolute(alpha)))
+        Pv = fv
+        surfacedominates = term1 = term2 = fs = fd = fv = alpha = beta = None
+        #Convert from np.array back to Image
+        pout = Image(np.concatenate((Ps, Pd, Pv), axis=0),
+                     pin.name,
+                     pin.metadata)
+        return pout
+
+
+class MergeToSum(PipeSegment):
+    """
+    Combine an iterable of images by summing the corresponding bands.
+    Assumes that images are of equal size and have equal numbers of bands.
+    """
+    def __init__(self, master=0):
+        super().__init__()
+        self.master = master
+    def transform(self, pin):
+        total = pin[self.master].data.copy()
+        for i in range(len(pin)):
+            if not i == self.master:
+                total += pin[i].data
+        return Image(total, pin[self.master].name, pin[self.master].metadata)
+
+
+class Scale(PipeSegment):
+    """
+    Scale data by a multiplicative factor.
+    """
+    def __init__(self, factor=1.):
+        super().__init__()
+        self.factor = factor
+    def transform(self, pin):
+        return Image(self.factor * pin.data, pin.name, pin.metadata)
 
 
 class Crop(PipeSegment):
