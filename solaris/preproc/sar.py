@@ -195,6 +195,7 @@ class DecompositionFreemanDurden(PipeSegment):
         c11 = C11.data - fv
         c22 = C22.data - fv
         c12 = C12.data - fv / 3.
+        c12 = np.where(c11*c22 < np.square(np.abs(c12)), np.sqrt(c11*c22) * c12/np.abs(c12), c12)
         C11 = C22 = C33 = C12 = None
         #Surface and dihedral amplitudes
         surfacedominates = np.real(c12) >= 0
@@ -209,7 +210,9 @@ class DecompositionFreemanDurden(PipeSegment):
         Ps = fs * (1. + np.square(np.absolute(beta)))
         Pd = fd * (1. + np.square(np.absolute(alpha)))
         Pv = fv
-        surfacedominates = term1 = term2 = fs = fd = fv = alpha = beta = None
+        Ps[np.logical_and(c11==0, c22==0)] = 0
+        Pd[np.logical_and(c11==0, c22==0)] = 0
+        surfacedominates = term1 = term2 = term3 = fs = fd = fv = alpha = beta = None
         #Convert from np.array back to Image
         pout = Image(np.concatenate((Ps, Pd, Pv), axis=0),
                      pin.name,
