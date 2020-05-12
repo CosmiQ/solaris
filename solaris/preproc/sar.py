@@ -11,6 +11,21 @@ from .image import Image
 from . import image
 
 
+class BandMath(PipeSegment):
+    """
+    Modify the array holding an image's pixel values,
+    using a user-supplied function.
+    """
+    def __init__(self, function):
+        super().__init__()
+        self.function = function
+    def transform(self, pin):
+        data = self.function(pin.data)
+        if data.ndim == 2:
+            data = np.expand_dims(data, axis=0)
+        return Image(data, pin.name, pin.metadata)
+
+
 class Amplitude(PipeSegment):
     """
     Convert complex image to amplitude, by taking the magnitude of each pixel
@@ -233,7 +248,7 @@ class DecompositionFreemanDurden(PipeSegment):
         c12 = np.where(c11*c22 < np.square(np.abs(c12)), np.sqrt(c11*c22) * c12/np.abs(c12), c12)
         C11 = C22 = C33 = C12 = None
         #Surface and dihedral amplitudes
-        surfacedominates = np.real(C12.data) >= 0
+        surfacedominates = np.real(c12.data) >= 0
         term1 = (c11*c22 - (np.real(c12))**2 - (np.imag(c12))**2) / (c11 + c22 + 2*np.real(c12)*np.where(surfacedominates, 1, -1))
         term1 = np.abs(term1)
         term2 = c22 - term1
@@ -261,26 +276,44 @@ class DecompositionHAlpha(PipeSegment):
     """
     Compute H-Alpha (Entropy-alpha) dual-polarization decomposition
     """
-    def __init(self, band0=0, band1=1, kernel_size=5):
+    def __init__(self, band0=0, band1=1, kernel_size=5):
         super().__init__()
         self.band0 = band0
         self.band1 = band1
         self.kernel_size = kernel_size
     def transform(self, pin):
         mkwargs = {'kernel_size':self.kernel_size, 'method':'avg'}
-        image0 = pin * image.SelectBand(self.band0)
-        image1 = pin * image.SelectBand(self.band1)
-        #Coherence matrix terms.  C=[[a,b],[c,d]]
+        image0 = pin * image.SelectBands(self.band0)
+        image1 = pin * image.SelectBands(self.band1)
+        #Coherence matrix terms
         a = image0 * Intensity() * Multilook(**mkwargs)
         b = (image0 + image1) * MultiplyConjugate() \
-            * Multilookcomplex(**mkwargs)
+            * MultilookComplex(**mkwargs)
         c = b * Conjugate()
         d = image1 * Intensity() * Multilook(**mkwargs)
-        #Calculate eigenvalues and eigenvectors
-        tr = (a + d) * MergeToSum()
-        det = ((a + d) * MergeToProduct() +
-               (b + c) * MergeToProduct * Scale(-1.)) * MergeToSum()
-        l1 = 0
+        coh = (a + b + c + d) * image.MergeToStack()
+        #Calculate eigenvalues and eigenvectors (assuming b != 0)
+        #tr=trace; det=determinant; l1,l2=eigenvalues; v..=eigenvector terms
+        tr = coh * BandMath(lambda x: x[0] + x[3])
+        det = coh * BandMath(lambda x: x[0]*x[3] - x[1]*x[2])
+        stats = (tr + det) * image.MergeToStack()
+        l1 = stats * BandMath(lambda x: 0.5*x[0] + np.sqrt(0.25*x[0]**2-x[1]))
+        l2 = stats * BandMath(lambda x: 0.5*x[0] - np.sqrt(0.25*x[0]**2-x[1]))
+        inputs = (coh + l1 + l2) * image.MergeToStack()
+        v11 = b
+        v12 = inputs * BandMath(lambda x: x[4] - x[0])
+        v21 = b
+        v22 = inputs * BandMath(lambda x: x[5] - x[0])
+        #Calculate entropy (H) and alpha
+        P1 = inputs * BandMath(lambda x: x[4] / (x[4] + x[5]))
+        P2 = inputs * BandMath(lambda x: x[5] / (x[4] + x[5]))
+        P = (P1 + P2) * image.MergeToStack()
+        H = P * BandMath(lambda x: x[0] * np.log(x[0]) + x[1] * np.log(x[1]))
+        alpha = H
+        print(v11().data**2 + v12().data**2)
+        print(v21().data**2 + v22().data**2)
+        outputs = (H + alpha) * image.MergeToStack()
+        return outputs()
 
 
 class MergeToSum(PipeSegment):
