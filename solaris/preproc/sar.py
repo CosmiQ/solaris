@@ -20,6 +20,8 @@ class BandMath(PipeSegment):
         super().__init__()
         self.function = function
     def transform(self, pin):
+        if isinstance(pin, tuple):
+            pin = (pin * image.MergeToStack())()
         data = self.function(pin.data)
         if data.ndim == 2:
             data = np.expand_dims(data, axis=0)
@@ -286,32 +288,27 @@ class DecompositionHAlpha(PipeSegment):
         image0 = pin * image.SelectBands(self.band0)
         image1 = pin * image.SelectBands(self.band1)
         #Coherence matrix terms
-        a = image0 * Intensity() * Multilook(**mkwargs)
-        b = (image0 + image1) * MultiplyConjugate() \
+        c00 = image0 * Intensity() * Multilook(**mkwargs)
+        c11 = image1 * Intensity() * Multilook(**mkwargs)
+        c01 = (image0 + image1) * MultiplyConjugate() \
             * MultilookComplex(**mkwargs)
-        c = b * Conjugate()
-        d = image1 * Intensity() * Multilook(**mkwargs)
-        coh = (a + b + c + d) * image.MergeToStack()
-        #Calculate eigenvalues and eigenvectors (assuming b != 0)
+        c01sq = c01 * Intensity()
+        #Calculate eigenvalues and some eigenvector terms (assumes c01 != 0)
         #tr=trace; det=determinant; l1,l2=eigenvalues; v..=eigenvector terms
-        tr = coh * BandMath(lambda x: x[0] + x[3])
-        det = coh * BandMath(lambda x: x[0]*x[3] - x[1]*x[2])
-        stats = (tr + det) * image.MergeToStack()
-        l1 = stats * BandMath(lambda x: 0.5*x[0] + np.sqrt(0.25*x[0]**2-x[1]))
-        l2 = stats * BandMath(lambda x: 0.5*x[0] - np.sqrt(0.25*x[0]**2-x[1]))
-        inputs = (coh + l1 + l2) * image.MergeToStack()
-        v11 = b
-        v12 = inputs * BandMath(lambda x: x[4] - x[0])
-        v21 = b
-        v22 = inputs * BandMath(lambda x: x[5] - x[0])
+        tr = (c00 + c11) * BandMath(lambda x: x[0] + x[1])
+        det = (c00 + c11 + c01sq) * BandMath(lambda x: x[0]*x[1] - x[2])
+        l1 = (tr + det) * BandMath(lambda x:
+                                   0.5*x[0] + np.sqrt(0.25*x[0]**2-x[1]))
+        l2 = (tr + det) * BandMath(lambda x:
+                                   0.5*x[0] - np.sqrt(0.25*x[0]**2-x[1]))
+        absv11 = (c00 + c01 + l1) * BandMath(lambda x: np.abs(x[1]) / np.sqrt(np.abs(x[1])**2 + np.abs(x[2] - x[0])**2))
+        absv12 = (c00 + c01 + l2) * BandMath(lambda x: np.abs(x[1]) / np.sqrt(np.abs(x[1])**2 + np.abs(x[2] - x[0])**2))
         #Calculate entropy (H) and alpha
-        P1 = inputs * BandMath(lambda x: x[4] / (x[4] + x[5]))
-        P2 = inputs * BandMath(lambda x: x[5] / (x[4] + x[5]))
-        P = (P1 + P2) * image.MergeToStack()
-        H = P * BandMath(lambda x: x[0] * np.log(x[0]) + x[1] * np.log(x[1]))
-        alpha = H
-        print(v11().data**2 + v12().data**2)
-        print(v21().data**2 + v22().data**2)
+        P1 = (l1 + l2) * BandMath(lambda x: x[0] / (x[0] + x[1]))
+        P2 = (l1 + l2) * BandMath(lambda x: x[1] / (x[0] + x[1]))
+        H = (P1 + P2) * BandMath(lambda x: -x[0] * np.log(x[0])
+                                 - x[1] * np.log(x[1]))
+        alpha = (P1 + P2 + absv11 + absv12) * BandMath(lambda x: x[0] * np.arccos(x[2]) + x[1] * np.arccos(x[3]))
         outputs = (H + alpha) * image.MergeToStack()
         return outputs()
 
