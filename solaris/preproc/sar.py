@@ -48,6 +48,30 @@ class Quadrature(PipeSegment):
         return Image(np.imag(pin.data), pin.name, pin.metadata)
 
 
+class Conjugate(PipeSegment):
+    """
+    Return complex conjugate of the input
+    """
+    def transform(self, pin):
+        return Image(np.conj(pin.data), pin.name, pin.metadata)
+
+
+class MultiplyConjugate(PipeSegment):
+    """
+    Given an iterable of two images, multiply the first 
+    by the complex conjugate of the second.
+    """
+    def __init__(self, master=0):
+        super().__init__()
+        self.master = master
+    def transform(self, pin):
+        return Image(
+            pin[0].data * np.conj(pin[1].data),
+            pin[self.master].name,
+            pin[self.master].metadata
+        )
+
+
 class Decibels(PipeSegment):
     """
     Express quantity in decibels
@@ -99,6 +123,20 @@ class Multilook(PipeSegment):
                 pin.data[i, :, :],
                 size=self.kernel_size,
                 mode='reflect')
+        return pout
+
+
+class MultilookComplex(Multilook):
+    """
+    Like 'Multilook', but supports complex input
+    """
+    def transform(self, pin):
+        mkwargs = {'kernel_size':self.kernel_size, 'method':self.method}
+        pout = (pin
+               * (InPhase() * Multilook(**mkwargs) * Scale(1.+0.j)
+                  + Quadrature() * Multilook(**mkwargs) * Scale(1.j))
+               * MergeToSum()
+        )()
         return pout
 
 
@@ -178,17 +216,14 @@ class DecompositionFreemanDurden(PipeSegment):
         C11 = (hh * Intensity())()
         C22 = (vv * Intensity())()
         C33 = (xx * Intensity())()
-        C12 = Image(hh.data * np.conj(vv.data))
+        C12 = ((image.LoadImage(hh) + image.LoadImage(vv))
+               * MultiplyConjugate())()
         hh = vv = xx = None
         mkwargs = {'kernel_size':self.kernel_size, 'method':'avg'}
         C11 = (C11 * Multilook(**mkwargs))()
         C22 = (C22 * Multilook(**mkwargs))()
         C33 = (C33 * Multilook(**mkwargs))()
-        C12 = (C12
-               * (InPhase() * Multilook(**mkwargs) * Scale(1.+0.j)
-                  + Quadrature() * Multilook(**mkwargs) * Scale(1.j))
-               * MergeToSum()
-        )()
+        C12 = (C12 * MultilookComplex(**mkwargs))()
         #Volume amplitude, and volume-subtracted matrix terms
         #(Also, convert from Image to np.array)
         fv = 1.5 * C33.data
@@ -198,9 +233,11 @@ class DecompositionFreemanDurden(PipeSegment):
         c12 = np.where(c11*c22 < np.square(np.abs(c12)), np.sqrt(c11*c22) * c12/np.abs(c12), c12)
         C11 = C22 = C33 = C12 = None
         #Surface and dihedral amplitudes
-        surfacedominates = np.real(c12) >= 0
-        term1 = np.abs((c11*c22 - (np.real(c12))**2 - (np.imag(c12))**2) / (c11 + c22 + 2*np.real(c12)*np.where(surfacedominates, 1, -1)))
-        term2 = np.abs(c22 - term1)
+        surfacedominates = np.real(C12.data) >= 0
+        term1 = (c11*c22 - (np.real(c12))**2 - (np.imag(c12))**2) / (c11 + c22 + 2*np.real(c12)*np.where(surfacedominates, 1, -1))
+        term1 = np.abs(term1)
+        term2 = c22 - term1
+        term2 = np.abs(term2)
         term3 = (np.real(c12) + np.where(surfacedominates, 1, -1) * term1 + np.imag(c12) * 1.j) / term2
         fs = term2 * surfacedominates + term1 * np.invert(surfacedominates)
         fd = term1 * surfacedominates + term2 * np.invert(surfacedominates)
@@ -220,6 +257,32 @@ class DecompositionFreemanDurden(PipeSegment):
         return pout
 
 
+class DecompositionHAlpha(PipeSegment):
+    """
+    Compute H-Alpha (Entropy-alpha) dual-polarization decomposition
+    """
+    def __init(self, band0=0, band1=1, kernel_size=5):
+        super().__init__()
+        self.band0 = band0
+        self.band1 = band1
+        self.kernel_size = kernel_size
+    def transform(self, pin):
+        mkwargs = {'kernel_size':self.kernel_size, 'method':'avg'}
+        image0 = pin * image.SelectBand(self.band0)
+        image1 = pin * image.SelectBand(self.band1)
+        #Coherence matrix terms.  C=[[a,b],[c,d]]
+        a = image0 * Intensity() * Multilook(**mkwargs)
+        b = (image0 + image1) * MultiplyConjugate() \
+            * Multilookcomplex(**mkwargs)
+        c = b * Conjugate()
+        d = image1 * Intensity() * Multilook(**mkwargs)
+        #Calculate eigenvalues and eigenvectors
+        tr = (a + d) * MergeToSum()
+        det = ((a + d) * MergeToProduct() +
+               (b + c) * MergeToProduct * Scale(-1.)) * MergeToSum()
+        l1 = 0
+
+
 class MergeToSum(PipeSegment):
     """
     Combine an iterable of images by summing the corresponding bands.
@@ -234,6 +297,22 @@ class MergeToSum(PipeSegment):
             if not i == self.master:
                 total += pin[i].data
         return Image(total, pin[self.master].name, pin[self.master].metadata)
+
+
+class MergeToProduct(PipeSegment):
+    """
+    Combine an iterable of images by multiplying the corresponding bands.
+    Assumes that images are of equal size and have equal numbers of bands.
+    """
+    def __init__(self, master=0):
+        super().__init__()
+        self.master = master
+    def transform(self, pin):
+        product = pin[self.master].data.copy()
+        for i in range(len(pin)):
+            if not i == self.master:
+                product *= pin[i].data
+        return Image(product, pin[self.master].name, pin[self.master].metadata)
 
 
 class Scale(PipeSegment):
