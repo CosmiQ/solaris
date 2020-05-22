@@ -3,8 +3,10 @@ import json
 import math
 import numpy as np
 import os
+import osr
 import scipy.signal
 import uuid
+import xml.etree.ElementTree as ET
 
 from .pipesegment import PipeSegment, LoadSegment, MergeSegment
 from .image import Image
@@ -667,6 +669,79 @@ class CapellaGridCommonWindow(PipeSegment):
         uoffset = (mlat*ulat + mlon*ulon) / (ulat**2 + ulon**2)
         voffset = (mlat*vlat + mlon*vlon) / (vlat**2 + vlon**2)
         return uoffset, voffset
+
+
+class TerraSARXScaleFactor(PipeSegment):
+    """
+    Calibrate TerraSAR-X complex data using the scale factor in the
+    accompanying xml file.
+    """
+    def __init__(self, reverse_order=False):
+        super().__init__()
+        self.reverse_order = reverse_order
+    def transform(self, pin):
+        if not self.reverse_order:
+            img = pin[0]
+            info = pin[1]
+        else:
+            img = pin[1]
+            info = pin[0]
+        root = ET.fromstring(info)
+        scale_factor = float(list(root.iter('calFactor'))[0].text)
+        return Image(math.sqrt(scale_factor) * img.data, img.name, img.metadata)
+
+
+class TerraSARXGeorefToGCPs(PipeSegment):
+    """
+    Generate ground control points (GCPs) from a TerraSAR-X GEOREF.xml file
+    and save them in a corresponding image's metadata.  Input is a tuple
+    with the image in the 0 position and the georef file in the 1 position.
+    Output is the image with modified metadata.
+    """
+    def __init__(self, reverse_order=False):
+        super().__init__()
+        self.reverse_order = reverse_order
+    def transform(self, pin):
+        # Define output image
+        if not self.reverse_order:
+            img = pin[0]
+            georef = pin[1]
+        else:
+            img = pin[1]
+            georef = pin[0]
+        pout = Image(img.data, img.name, img.metadata.copy())
+        # Set GCP values
+        gcps = []
+        root = ET.fromstring(georef)
+        gcpentries = root.findall('./geolocationGrid/gridPoint')
+        for gcpentry in gcpentries:
+            gcps.append(gdal.GCP(
+                float(gcpentry.find('lon').text), #longitude
+                float(gcpentry.find('lat').text), #latitude
+                float(gcpentry.find('height').text), #altitude
+                float(gcpentry.find('col').text), #pixel=column=x
+                float(gcpentry.find('row').text) #line=row=y
+            ))
+        pout.metadata['gcps'] = gcps
+        # Set GCP projection
+        crs = osr.SpatialReference()
+        crs.ImportFromEPSG(4326)
+        pout.metadata['gcp_projection'] = crs.ExportToWkt()
+        return pout
+
+
+class LoadString(LoadSegment):
+    """
+    Load a string from a file.
+    """
+    def __init__(self, pathstring):
+        super().__init__()
+        self.pathstring = pathstring
+    def process(self):
+        infile = open(self.pathstring, 'r')
+        content = infile.read()
+        infile.close()
+        return content
 
 
 class SaveString(PipeSegment):
