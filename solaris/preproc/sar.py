@@ -227,11 +227,11 @@ class DecompositionFreemanDurden(PipeSegment):
         self.xx_band = xx_band
         self.kernel_size = kernel_size
     def transform(self, pin):
-        #Scattering matrix terms
+        # Scattering matrix terms
         hh = (pin * image.SelectBands(self.hh_band))()
         vv = (pin * image.SelectBands(self.vv_band))()
         xx = (pin * image.SelectBands(self.xx_band))()
-        #Covariance matrix terms
+        # Covariance matrix terms
         C11 = (hh * Intensity())()
         C22 = (vv * Intensity())()
         C33 = (xx * Intensity())()
@@ -243,15 +243,15 @@ class DecompositionFreemanDurden(PipeSegment):
         C22 = (C22 * Multilook(**mkwargs))()
         C33 = (C33 * Multilook(**mkwargs))()
         C12 = (C12 * MultilookComplex(**mkwargs))()
-        #Volume amplitude, and volume-subtracted matrix terms
-        #(Also, convert from Image to np.array)
+        # Volume amplitude, and volume-subtracted matrix terms
+        # (Also, convert from Image to np.array)
         fv = 1.5 * C33.data
         c11 = C11.data - fv
         c22 = C22.data - fv
         c12 = C12.data - fv / 3.
         c12 = np.where(c11*c22 < np.square(np.abs(c12)), np.sqrt(c11*c22) * c12/np.abs(c12), c12)
         C11 = C22 = C33 = C12 = None
-        #Surface and dihedral amplitudes
+        # Surface and dihedral amplitudes
         surfacedominates = np.real(c12.data) >= 0
         term1 = (c11*c22 - (np.real(c12))**2 - (np.imag(c12))**2) / (c11 + c22 + 2*np.real(c12)*np.where(surfacedominates, 1, -1))
         term1 = np.abs(term1)
@@ -262,14 +262,14 @@ class DecompositionFreemanDurden(PipeSegment):
         fd = term1 * surfacedominates + term2 * np.invert(surfacedominates)
         alpha = -1. * surfacedominates + term3 * np.invert(surfacedominates)
         beta = term3 * surfacedominates + 1. * np.invert(surfacedominates)
-        #Power
+        # Power
         Ps = fs * (1. + np.square(np.absolute(beta)))
         Pd = fd * (1. + np.square(np.absolute(alpha)))
         Pv = fv
         Ps[np.logical_and(c11==0, c22==0)] = 0
         Pd[np.logical_and(c11==0, c22==0)] = 0
         surfacedominates = term1 = term2 = term3 = fs = fd = fv = alpha = beta = None
-        #Convert from np.array back to Image
+        # Convert from np.array back to Image
         pout = Image(np.concatenate((Ps, Pd, Pv), axis=0),
                      pin.name,
                      pin.metadata)
@@ -289,14 +289,14 @@ class DecompositionHAlpha(PipeSegment):
         mkwargs = {'kernel_size':self.kernel_size, 'method':'avg'}
         image0 = pin * image.SelectBands(self.band0)
         image1 = pin * image.SelectBands(self.band1)
-        #Coherence matrix terms
+        # Coherence matrix terms
         c00 = image0 * Intensity() * Multilook(**mkwargs)
         c11 = image1 * Intensity() * Multilook(**mkwargs)
         c01 = (image0 + image1) * MultiplyConjugate() \
             * MultilookComplex(**mkwargs)
         c01sq = c01 * Intensity()
-        #Calculate eigenvalues and some eigenvector terms (assumes c01 != 0)
-        #tr=trace; det=determinant; l1,l2=eigenvalues; v..=eigenvector terms
+        # Calculate eigenvalues and some eigenvector terms (assumes c01 != 0)
+        # tr=trace; det=determinant; l1,l2=eigenvalues; v..=eigenvector terms
         tr = (c00 + c11) * BandMath(lambda x: x[0] + x[1])
         det = (c00 + c11 + c01sq) * BandMath(lambda x: x[0]*x[1] - x[2])
         l1 = (tr + det) * BandMath(lambda x:
@@ -305,7 +305,7 @@ class DecompositionHAlpha(PipeSegment):
                                    0.5*x[0] - np.sqrt(0.25*x[0]**2-x[1]))
         absv11 = (c00 + c01 + l1) * BandMath(lambda x: np.abs(x[1]) / np.sqrt(np.abs(x[1])**2 + np.abs(x[2] - x[0])**2))
         absv12 = (c00 + c01 + l2) * BandMath(lambda x: np.abs(x[1]) / np.sqrt(np.abs(x[1])**2 + np.abs(x[2] - x[0])**2))
-        #Calculate entropy (H) and alpha
+        # Calculate entropy (H) and alpha
         P1 = (l1 + l2) * BandMath(lambda x: x[0] / (x[0] + x[1]))
         P2 = (l1 + l2) * BandMath(lambda x: x[1] / (x[0] + x[1]))
         H = (P1 + P2) * BandMath(lambda x: -x[0] * np.log(x[0])
@@ -468,10 +468,10 @@ class CapellaGridToGCPs(PipeSegment):
         for ri in range(rlo, rhi + 1, rspace):
             for ci in range(clo, chi + 1, cspace):
                 gcps.append(gdal.GCP(
-                    grid.data[1, ri, ci], #longitude
-                    grid.data[0, ri, ci], #latitude
-                    grid.data[2, ri, ci], #altitude
-                    ci, ri #pixel=column=x, line=row=y
+                    grid.data[1, ri, ci],  #longitude
+                    grid.data[0, ri, ci],  #latitude
+                    grid.data[2, ri, ci],  #altitude
+                    ci, ri  #pixel=column=x, line=row=y
                 ))
         pout.metadata['gcps'] = gcps
         return pout
@@ -487,7 +487,7 @@ class CapellaGridToPolygon(PipeSegment):
         self.step = step
         self.flags = flags
     def transform(self, pin):
-        #Get indices of selected points along the edges of the grid file
+        # Get indices of selected points along the edges of the grid file
         nrows = pin.data.shape[1]
         ncols = pin.data.shape[2]
         step = self.step
@@ -514,7 +514,7 @@ class CapellaGridToPolygon(PipeSegment):
             cornerci.append(ci[0])
         allri.append(allri[0])
         allci.append(allci[0])
-        #Get latitude/longitude values, and ensure they're counterclockwise
+        # Get latitude/longitude values, and ensure they're counterclockwise
         lats = [pin.data[0, ri, ci] for ri, ci in zip(allri, allci)]
         lons = [pin.data[1, ri, ci] for ri, ci in zip(allri, allci)]
         cornerlats = [pin.data[0, ri, ci] for ri,ci in zip(cornerri, cornerci)]
@@ -530,7 +530,7 @@ class CapellaGridToPolygon(PipeSegment):
         northlooking = cornerlats[3] > cornerlats[0]
         eastlooking = cornerlons[3] > cornerlons[0]
         flags = (counterclockwise, northlooking, eastlooking)
-        #Write latitudes & longitudes of the selected points to a JSON string
+        # Write latitudes & longitudes of the selected points to a JSON string
         jsonstring = '{\n' \
                      '"type": "FeatureCollection",\n' \
                      '"name": "region_' + pin.name + '",\n' \
@@ -560,9 +560,9 @@ class CapellaGridCommonWindow(PipeSegment):
         self.master = master
         self.subpixel = subpixel
     def transform(self, pin):
-        #Find the pixel in each grid that's closest to center of master grid
-        #'x' and 'y' are the latitude and longitude bands of the grid files,
-        #and (refx, refy) is the (lat, lon) of that center
+        # Find the pixel in each grid that's closest to center of master grid
+        # 'x' and 'y' are the latitude and longitude bands of the grid files,
+        # and (refx, refy) is the (lat, lon) of that center
         m = self.master
         l = len(pin)
         order = [m] + list(range(l)[:m]) + list(range(l)[m+1:])
@@ -577,17 +577,17 @@ class CapellaGridCommonWindow(PipeSegment):
                 localrefs[index] = (int(0.5 * x.shape[0]),
                                     int(0.5 * x.shape[1]))
                 fineoffsets[index] = (0., 0.)
-                #Get latitude and longitude of the reference point
+                # Get latitude and longitude of the reference point
                 refx = x[localrefs[index]]
                 refy = y[localrefs[index]]
             else:
-                #Find pixel closest to reference point
+                # Find pixel closest to reference point
                 localrefs[index] = self.courseoffset(x, y, refx, refy)
-                #Find subpixel offset of reference point
+                # Find subpixel offset of reference point
                 fineoffsets[index] = self.fineoffset(x, y, refx, refy,
                                                      localrefs[index][0],
                                                      localrefs[index][1])
-            #Find how far from the reference pixel each grid extends
+            # Find how far from the reference pixel each grid extends
             extents[index] = [
                 localrefs[index][0],
                 x.shape[0] - localrefs[index][0] - 1,
@@ -600,7 +600,7 @@ class CapellaGridCommonWindow(PipeSegment):
                 for i in range(4):
                     if extents[index][i] < minextents[i]:
                         minextents[i] = extents[index][i]
-        #Calculate row_min, row_max, col_min, col_max of overlapping window
+        # Calculate row_min, row_max, col_min, col_max of overlapping window
         for step, index in enumerate(order):
             windows[index] = [
                 localrefs[index][0] - minextents[0],
@@ -608,7 +608,7 @@ class CapellaGridCommonWindow(PipeSegment):
                 localrefs[index][1] - minextents[2],
                 localrefs[index][1] + minextents[3]
             ]
-        #Optionally return subpixel offsets
+        # Optionally return subpixel offsets
         if self.subpixel:
             finearray = np.array(fineoffsets)
             windows.append(finearray)
@@ -716,11 +716,11 @@ class TerraSARXGeorefToGCPs(PipeSegment):
         gcpentries = root.findall('./geolocationGrid/gridPoint')
         for gcpentry in gcpentries:
             gcps.append(gdal.GCP(
-                float(gcpentry.find('lon').text), #longitude
-                float(gcpentry.find('lat').text), #latitude
-                float(gcpentry.find('height').text), #altitude
-                float(gcpentry.find('col').text), #pixel=column=x
-                float(gcpentry.find('row').text) #line=row=y
+                float(gcpentry.find('lon').text),     #longitude
+                float(gcpentry.find('lat').text),     #latitude
+                float(gcpentry.find('height').text),  #altitude
+                float(gcpentry.find('col').text),     #pixel=column=x
+                float(gcpentry.find('row').text)      #line=row=y
             ))
         pout.metadata['gcps'] = gcps
         # Set GCP projection

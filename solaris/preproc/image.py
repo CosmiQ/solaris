@@ -47,7 +47,7 @@ class LoadImageFromDisk(LoadSegment):
     def process(self):
         return self.load_from_disk(self.pathstring, self.name, self.verbose)
     def load_from_disk(self, pathstring, name=None, verbose=False):
-        #Use GDAL to open image file
+        # Use GDAL to open image file
         dataset = gdal.Open(pathstring)
         if dataset is None:
             raise Exception('! Image file not found.')
@@ -66,7 +66,7 @@ class LoadImageFromDisk(LoadSegment):
         if name is None:
             name = os.path.splitext(os.path.split(pathstring)[1])[0]
         dataset = None
-        #Create an Image-class object, and return it
+        # Create an Image-class object, and return it
         imageobj = Image(data, name, metadata)
         if verbose:
             print(imageobj)
@@ -128,7 +128,7 @@ class SaveImage(PipeSegment):
         self.save_metadata = save_metadata
         self.driver = driver
     def transform(self, pin):
-        #Save image to disk
+        # Save image to disk
         driver = gdal.GetDriverByName(self.driver)
         datatype = gdal_array.NumericTypeCodeToGDALTypeCode(pin.data.dtype)
         if datatype is None:
@@ -147,7 +147,7 @@ class SaveImage(PipeSegment):
         if self.save_metadata:
             dataset.SetMetadata(pin.metadata['meta'])
         dataset.FlushCache()
-        #Optionally return image
+        # Optionally return image
         if self.driver.lower() == 'mem':
             return dataset
         elif self.return_image:
@@ -227,9 +227,9 @@ class MergeToStack(PipeSegment):
         super().__init__()
         self.master = master
     def transform(self, pin):
-        #Make list of all the input bands
+        # Make list of all the input bands
         datalist = [imageobj.data for imageobj in pin]
-        #Create output image, using name and metadata from designated source
+        # Create output image, using name and metadata from designated source
         pout = Image(None, pin[self.master].name, pin[self.master].metadata)
         pout.data = np.concatenate(datalist, axis=0)
         return pout
