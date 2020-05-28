@@ -109,7 +109,7 @@ class LoadImage(LoadImageFromDisk, LoadImageFromMemory):
     def process(self):
         if type(self.imageinput) is Image:
             return self.load_from_memory(self.imageinput, self.name, self.verbose)
-        elif type(self.imageinput) is str:
+        elif type(self.imageinput) in (str, np.str_):
             return self.load_from_disk(self.imageinput, self.name, self.verbose)
         else:
             raise Exception('! Invalid input type in LoadImage.')
@@ -200,6 +200,7 @@ class ImageStats(PipeSegment):
             'max': np.nanmax(pin.data, (1,2)),
             'mean': np.nanmean(pin.data, (1,2)),
             'median': np.nanmedian(pin.data, (1,2)),
+            'std': np.nanstd(pin.data, (1,2)),
             'pos': np.count_nonzero(np.nan_to_num(pin.data, nan=-1.)>0, (1,2)),
             'zero': np.count_nonzero(pin.data==0, (1,2)),
             'neg': np.count_nonzero(np.nan_to_num(pin.data, nan=1.)<0, (1,2)),
@@ -259,3 +260,17 @@ class SelectBands(PipeSegment):
         self.bands = bands
     def transform(self, pin):
         return Image(pin.data[self.bands, :, :], pin.name, pin.metadata)
+
+
+class Bounds(PipeSegment):
+    """
+    Output the boundary coordinates [xmin, ymin, xmax, ymax] of an image.
+    Note: Requires the image to have an affine geotransform, not GCPs.
+    Note: Only works for a north-up image without rotation or shearing
+    """
+    def transform(self, pin):
+        gt = pin.metadata['geotransform']
+        numrows = pin.data.shape[1]
+        numcols = pin.data.shape[2]
+        bounds = [gt[0], gt[3] + gt[5]*numrows, gt[0] + gt[1]*numcols, gt[3]]
+        return bounds
