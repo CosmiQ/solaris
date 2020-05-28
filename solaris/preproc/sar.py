@@ -18,12 +18,13 @@ class BandMath(PipeSegment):
     Modify the array holding an image's pixel values,
     using a user-supplied function.
     """
-    def __init__(self, function):
+    def __init__(self, function, master=0):
         super().__init__()
         self.function = function
+        self.master = master
     def transform(self, pin):
         if isinstance(pin, tuple):
-            pin = (pin * image.MergeToStack())()
+            pin = (pin * image.MergeToStack(self.master))()
         data = self.function(pin.data)
         if data.ndim == 2:
             data = np.expand_dims(data, axis=0)
