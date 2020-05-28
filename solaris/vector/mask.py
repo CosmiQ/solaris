@@ -1,17 +1,20 @@
-from ..utils.core import _check_df_load, _check_geom
+from ..utils.core import _check_df_load, _check_geom, _check_crs
 from ..utils.core import _check_skimage_im_load, _check_rasterio_im_load
 from ..utils.geo import gdf_get_projection_unit, reproject
 from ..utils.geo import geometries_internal_intersection
+from ..utils.tile import save_empty_geojson
 from .polygon import georegister_px_df, geojson_to_px_gdf, affine_transform_gdf
 import numpy as np
 from shapely.geometry import shape
+from shapely.geometry import Polygon
 import geopandas as gpd
 import pandas as pd
 import rasterio
 from rasterio import features
 from affine import Affine
 from skimage.morphology import square, erosion, dilation
-
+import os
+from tqdm import tqdm
 
 def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
                   geom_col='geometry', do_transform=None, affine_obj=None,
@@ -188,7 +191,7 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
 
-    if len(df) == 0:
+    if len(df) == 0 and not out_file:
         return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
@@ -212,17 +215,21 @@ def footprint_mask(df, out_file=None, reference_im=None, geom_col='geometry',
                                     df[burn_field].astype('uint8')))
         else:
             feature_list = list(zip(df[geom_col],
-                                    df[burn_field].astype('uint8')))
+                                    df[burn_field].astype('float32')))
     else:
         feature_list = list(zip(df[geom_col], [burn_value]*len(df)))
 
-    output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
-                                    transform=affine_obj)
+    if len(df) > 0:
+        output_arr = features.rasterize(shapes=feature_list, out_shape=shape,
+                                        transform=affine_obj)
+    else:
+        output_arr = np.zeros(shape=shape, dtype='uint8')
     if out_file:
         meta = reference_im.meta.copy()
         meta.update(count=1)
         if out_type == 'int':
             meta.update(dtype='uint8')
+            meta.update(nodata=0)
         with rasterio.open(out_file, 'w', **meta) as dst:
             dst.write(output_arr, indexes=1)
 
@@ -379,7 +386,7 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
 
-    if len(df) == 0:
+    if len(df) == 0 and not out_file:
         return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
@@ -394,7 +401,10 @@ def contact_mask(df, contact_spacing=10, meters=False, out_file=None,
                                      geom_col=geom_col, affine_obj=affine_obj)
     buffered_geoms = buffered_geoms[geom_col]
     # create a single multipolygon that covers all of the intersections
-    intersect_poly = geometries_internal_intersection(buffered_geoms)
+    if len(df) > 0:
+        intersect_poly = geometries_internal_intersection(buffered_geoms)
+    else:
+        intersect_poly = Polygon()
 
     # handle case where there's no intersection
     if intersect_poly.is_empty:
@@ -602,7 +612,7 @@ def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
         reference_im = _check_rasterio_im_load(reference_im)
 
     if hasattr(df, 'crs'):
-        orig_crs = df.crs
+        orig_crs = _check_crs(df.crs)
     else:
         orig_crs = None  # will represent pixel crs
 
@@ -639,10 +649,10 @@ def buffer_df_geoms(df, buffer, meters=False, reference_im=None,
         lambda x: x.buffer(buffer))
 
     # return to original crs
-    if getattr(df_for_buffer, 'crs', None) != orig_crs:
+    if _check_crs(getattr(df_for_buffer, 'crs', None)) != orig_crs:
         if orig_crs is not None and \
                 getattr(df_for_buffer, 'crs', None) is not None:
-            buffered_df = df_for_buffer.to_crs(orig_crs)
+            buffered_df = df_for_buffer.to_crs(orig_crs.to_wkt())
         elif orig_crs is None:  # but df_for_buffer has one: meters=True case
             buffered_df = geojson_to_px_gdf(df_for_buffer, reference_im)
         else:  # orig_crs exists, but df_for_buffer doesn't have one
@@ -773,7 +783,7 @@ def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
             ref.close()
     else:
         transform = Affine(1, 0, 0, 0, 1, 0)  # identity transform
-        crs = None
+        crs = rasterio.crs.CRS()
 
     mask = mask_arr > bg_threshold
     mask = mask.astype('uint8')
@@ -790,7 +800,7 @@ def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
             values.append(value)
 
     polygon_gdf = gpd.GeoDataFrame({'geometry': polygons, 'value': values},
-                                   crs=crs)
+                                   crs=crs.to_wkt())
     if simplify:
         polygon_gdf['geometry'] = polygon_gdf['geometry'].apply(
             lambda x: x.simplify(tolerance=tolerance)
@@ -798,7 +808,10 @@ def mask_to_poly_geojson(pred_arr, channel_scaling=None, reference_im=None,
     # save output files
     if output_path is not None:
         if output_type.lower() == 'geojson':
-            polygon_gdf.to_file(output_path, driver='GeoJSON')
+            if len(polygon_gdf) > 0:
+                polygon_gdf.to_file(output_path, driver='GeoJSON')
+            else:
+                save_empty_geojson(output_path, polygon_gdf.crs.to_epsg())
         elif output_type.lower() == 'csv':
             polygon_gdf.to_csv(output_path, index=False)
 
@@ -831,7 +844,7 @@ def _check_do_transform(df, reference_im, affine_obj):
 
 def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
                   do_transform=None, affine_obj=None, shape=(900, 900),
-                  out_type='int', burn_value=255, burn_field=None):
+                  out_type='int', burn_value=255, burn_field=None, nodata_value=0):
     """Convert a dataframe of geometries to a pixel mask.
 
     Arguments
@@ -874,6 +887,12 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     burn_field : str, optional
         Name of a column in `df` that provides values for `burn_value` for each
         independent object. If provided, `burn_value` is ignored.
+    nodata_value : `int` or `float`, optional
+        The value to use for nodata pixels in the mask. Defaults to 0 (the
+        min value for ``uint8`` arrays). Used if reference_im nodata value is a float.
+        Ignored if reference_im nodata value is an int or if reference_im is not used.
+        Take care when visualizing these masks, the nodata value may cause labels to not 
+        be visualized if nodata values are automatically masked by the software.
 
     Returns
     -------
@@ -889,7 +908,9 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
             'If saving output to file, `reference_im` must be provided.')
     df = _check_df_load(df)
 
-    if len(df) == 0:
+    if len(df) == 0: # for saving an empty mask.
+        reference_im = _check_rasterio_im_load(reference_im)
+        shape = reference_im.shape
         return np.zeros(shape=shape, dtype='uint8')
 
     if do_transform is None:
@@ -929,14 +950,84 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
     for idx, feat in enumerate(feature_list):
         output_arr[:, :, idx] = features.rasterize([feat], out_shape=shape,
                                                    transform=affine_obj)
+
+    if reference_im:
+        reference_im = _check_rasterio_im_load(reference_im)
+    try:
+        bad_data_mask = (reference_im.read() == reference_im.nodata).any(axis=0) # take logical and along all dims so that all pixxels not -9999 across bands
+    except AttributeError as ae:  # raise another, more verbose AttributeError
+        raise AttributeError("A nodata value is not defined for the source image. Make sure the reference_im has a nodata value defined.") from ae
+    if len(bad_data_mask.shape) > 2:
+        bad_data_mask = np.dstack([bad_data_mask]*output_arr.shape[2])
+        output_arr = np.where(bad_data_mask, 0, output_arr) # mask is broadcasted to filter labels where there are non-nan image values
+
     if out_file:
         meta = reference_im.meta.copy()
         meta.update(count=output_arr.shape[-1])
         if out_type == 'int':
             meta.update(dtype='uint8')
+            if isinstance(meta['nodata'], float):
+                meta.update(nodata=nodata_value)
         with rasterio.open(out_file, 'w', **meta) as dst:
             for c in range(1, 1 + output_arr.shape[-1]):
                 dst.write(output_arr[:, :, c-1], indexes=c)
             dst.close()
 
     return output_arr
+
+def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value=0):
+    """
+    Converts tiled vectors to raster labels and fills nodata values in raster and vector tiles.
+    
+    This function must be run after a raster tiler and vector tiler have already been initialized 
+    and the `.tile()` method for each has been called to generate raster and vector tiles. 
+    Geojson labels are first converted to rasterized masks, then the labels are set to 0 
+    where the reference image, the corresponding image tile, has nodata values. Then, nodata 
+    areas in the image tile are filled  in place with the fill_value. Only works for rasterizing 
+    all geometries as a single category with a burn value of 1. See test_tiler_fill_nodata in 
+    tests/test_tile/test_tile.py for an example.
+
+    Args
+    -------
+    rtiler : RasterTiler
+        The RasterTiler that has had it's `.tile()` method called.
+    vtiler : VectorTiler
+        The VectorTiler that has had it's `.tile()` method called.
+    label_tile_dir : str
+        The folder path to save rasterized labels. This is created if it doesn't already exist.
+    fill_value : str, optional
+        The value to use to fill nodata values in images. Defaults to 0.
+
+    Returns
+    -------
+    rasterized_label_paths : list
+        A list of the paths to the rasterized instance masks.
+    """
+    rasterized_label_paths = []
+    print("starting label mask generation")
+    if not os.path.exists(label_tile_dir):
+        os.mkdir(label_tile_dir)
+    for img_tile, geojson_tile in tqdm(zip(sorted(rtiler.tile_paths), sorted(vtiler.tile_paths))):
+        fid = os.path.basename(geojson_tile).split(".geojson")[0]
+        rasterized_label_path = os.path.join(label_tile_dir, fid + ".tif")
+        rasterized_label_paths.append(rasterized_label_path)
+        gdf = gpd.read_file(geojson_tile)
+        # gdf.crs = rtiler.raster_bounds_crs # add this because gdfs can't be saved with wkt crs
+        arr = instance_mask(gdf, out_file=rasterized_label_path, reference_im=img_tile, 
+                                        geom_col='geometry', do_transform=None,
+                                        out_type='int', burn_value=1, burn_field=None) # this saves the file, unless it is empty in which case we deal with it below.
+        if not arr.any(): # in case no instances in a tile we save it with "empty" at the front of the basename
+            with rasterio.open(img_tile) as reference_im:
+                meta = reference_im.meta.copy()
+                reference_im.close()
+            meta.update(count=1)
+            meta.update(dtype='uint8')
+            if isinstance(meta['nodata'], float):
+                meta.update(nodata=0)
+            rasterized_label_path = os.path.join(label_tile_dir, "empty_" + fid + ".tif")
+            with rasterio.open(rasterized_label_path, 'w', **meta) as dst:
+                dst.write(np.expand_dims(arr, axis=0))
+                dst.close()
+    rtiler.fill_all_nodata(nodata_fill=fill_value)
+    return rasterized_label_paths
+

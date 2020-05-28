@@ -1,7 +1,7 @@
 from ..utils.core import _check_df_load, _check_geom, get_files_recursively
-from ..utils.geo import bbox_corners_to_coco, polygon_to_coco
+from ..utils.geo import bbox_corners_to_coco, polygon_to_coco, split_multi_geometries
 from ..utils.log import _get_logging_level
-from ..vector.polygon import geojson_to_px_gdf
+from ..vector.polygon import geojson_to_px_gdf, remove_multipolygons
 import numpy as np
 import rasterio
 from tqdm import tqdm
@@ -15,7 +15,9 @@ import logging
 def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
                  matching_re=None, category_attribute=None, score_attribute=None,
                  preset_categories=None, include_other=True, info_dict=None,
-                 license_dict=None, recursive=False, verbose=0):
+                 license_dict=None, recursive=False, override_crs=False,
+                 explode_all_multipolygons=False, remove_all_multipolygons=False, 
+                 verbose=0):
     """Generate COCO-formatted labels from one or multiple geojsons and images.
 
     This function ingests optionally georegistered polygon labels in geojson
@@ -108,6 +110,13 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         If `image_src` and/or `label_src` are directories, setting this flag
         to ``True`` will induce solaris to descend into subdirectories to find
         files. By default, solaris does not traverse the directory tree.
+    explode_all_multipolygons : bool, optional
+        Explode the multipolygons into individual geometries using sol.utils.geo.split_multi_geometries. 
+        Be sure to inspect which geometries are multigeometries, each individual geometries within these 
+        may represent artifacts rather than true labels.
+    remove_all_multipolygons : bool, optional
+        Filters MultiPolygons and GeometryCollections out of each tile geodataframe. Alternatively you 
+        can edit each polygon manually to be a polygon before converting to COCO format.
     verbose : int, optional
         Verbose text output. By default, none is provided; if ``True`` or
         ``1``, information-level outputs are provided; if ``2``, extremely
@@ -125,7 +134,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
     logger = logging.getLogger(__name__)
     logger.setLevel(_get_logging_level(int(verbose)))
     logger.debug('Preparing image filename: image ID dict.')
-
+    # pdb.set_trace()
     if isinstance(image_src, str):
         if image_src.endswith('json'):
             logger.debug('COCO json provided. Extracting fname:id dict.')
@@ -191,7 +200,17 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
     for gj in tqdm(label_list):
         logger.debug('Reading in {}'.format(gj))
         curr_gdf = gpd.read_file(gj)
+        
+        if remove_all_multipolygons is True and explode_all_multipolygons is True:
+            raise ValueError("Only one of remove_all_multipolygons or explode_all_multipolygons can be set to True.")
+        if remove_all_multipolygons is True and explode_all_multipolygons is False:
+            curr_gdf = remove_multipolygons(curr_gdf)
+        elif explode_all_multipolygons is True:
+            curr_gdf = split_multi_geometries(curr_gdf)
+        
         curr_gdf['label_fname'] = gj
+        curr_gdf['image_fname'] = ''
+        curr_gdf['image_id'] = np.nan
         if category_attribute is None:
             logger.debug('No category attribute provided. Creating a default '
                          '"other" category.')
@@ -202,12 +221,14 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
         if do_matches:  # multiple images: multiple labels
             logger.debug('do_matches is True, finding matching image')
             logger.debug('Converting to pixel coordinates.')
-            curr_gdf = geojson_to_px_gdf(
-                curr_gdf,
-                im_path=match_df.loc[match_df['label_fname'] == gj,
-                                     'image_fname'].values[0])
-            curr_gdf['image_id'] = image_ref[match_df.loc[
-                match_df['label_fname'] == gj, 'image_fname'].values[0]]
+            if len(curr_gdf) > 0:  # if there are geoms, reproj to px coords
+                curr_gdf = geojson_to_px_gdf(
+                    curr_gdf,
+                    override_crs=override_crs,
+                    im_path=match_df.loc[match_df['label_fname'] == gj,
+                                         'image_fname'].values[0])
+                curr_gdf['image_id'] = image_ref[match_df.loc[
+                    match_df['label_fname'] == gj, 'image_fname'].values[0]]
         # handle case with multiple images, one big geojson
         elif len(image_ref) > 1 and len(label_list) == 1:
             logger.debug('do_matches is False. Many images:1 label detected.')
@@ -218,6 +239,7 @@ def geojson2coco(image_src, label_src, output_path=None, image_ext='.tif',
             logger.debug('Converting to pixel coordinates.')
             # match the two images
             curr_gdf = geojson_to_px_gdf(curr_gdf,
+                                         override_crs=override_crs,
                                          im_path=list(image_ref.keys())[0])
             curr_gdf['image_id'] = list(image_ref.values())[0]
         curr_gdf = curr_gdf.rename(
@@ -400,6 +422,7 @@ def df_to_coco_annos(df, output_path=None, geom_col='geometry',
     def _row_to_coco(row, geom_col, category_id_col, image_id_col, score_col):
         "get a single annotation record from a row of temp_df."
         if score_col is None:
+            
             return {'id': row['annotation_id'],
                     'image_id': int(row[image_id_col]),
                     'category_id': int(row[category_id_col]),

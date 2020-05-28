@@ -2,7 +2,9 @@ from osgeo import gdal
 import rasterio
 from affine import Affine
 import numpy as np
+import logging
 from ..utils.raster import reorder_axes
+from ..utils.log import _get_logging_level
 
 
 def get_geo_transform(raster_src):
@@ -150,3 +152,99 @@ def stitch_images(im_arr, idx_refs=None, out_width=None,
     output_arr = output_arr.astype(im_arr.dtype)
 
     return output_arr
+
+
+def get_intensity_quantiles(dataset_dir, percentiles=[0, 100], ext="tif",
+                              recursive=False, channels=None, verbose=0):
+    """Get approximate dataset pixel intensity percentiles for normalization.
+
+    This function reads every image in a dataset directory and gets a rough
+    approximation of pixel intensity percentiles
+
+    Arguments
+    ---------
+    """
+    pass
+
+
+class ScaleFunction:
+    def __init__(self, compression_delta, **kwargs):
+        self.compression_delta = compression_delta
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def forward(self, quantile):
+        raise NotImplementedError
+
+    def inverse(self, k):
+        raise NotImplementedError
+
+
+class K1ScaleFunction(ScaleFunction):
+    """Calculate the k1 scale function for a quantile given a comp. factor."""
+
+    def __init__(self, compression_delta):
+        self.super().__init__(self, compression_delta)
+
+    def forward(self, quantile):
+        return (self.compression_delta/2*np.pi)*np.arcsin(2*quantile-1)
+
+    def inverse(self, k):
+        return np.sin((2*np.pi*k)/self.compression_delta)+1
+
+
+def get_tdigest(data_buffer, tdigest=None, scale_function=K1ScaleFunction,
+                compression_delta=0.01):
+    """Create a new t-digest or merge it with an existing digest.
+
+    This function is an implementation of Algorithm 1 from https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf
+
+    Arguments
+    ---------
+    data_buffer : :class:`numpy.ndarray`
+        An array of data to load into a tdigest. This will be flattened into
+        a vector.
+    tdigest : :class:`TDigest`, optional
+        An existing :class:`TDigest` object to merge with the new data.
+    """
+    buffer_centroids = data_buffer.flatten().astype(np.float32)
+    buffer_weights = np.ones(shape=buffer_centroids.shape, dtype=np.float32)
+    if tdigest:
+        buffer_centroids = np.concatenate((buffer_centroids,
+                                           tdigest.centroids))
+        buffer_weights = np.concatenate((buffer_weights, tdigest.weights))
+
+    # sort the data buffer on values (union with tdigest centroids if given)
+    sort_order = np.argsort(buffer_centroids)
+    buffer_centroids = buffer_centroids[sort_order]
+    buffer_weights = buffer_weights[sort_order]
+    S = buffer_weights.sum()
+    out_centroids = np.array([], dtype=np.float32)
+    out_weights = np.array([], dtype=np.float32)
+    q0 = 0.
+    q_limit = _get_q_limit(scale_function, q0, compression_delta)
+    sigma_centroid = buffer_centroids[0]
+    sigma_weight = buffer_weights[0]
+    for idx in range(1, len(buffer_centroids)):
+        q = q0 + (sigma_weight + buffer_weights[idx])/S
+        if q <= q_limit:
+            sigma_centroid = ((sigma_centroid*sigma_weight
+                               + buffer_centroids[idx]*buffer_weights[idx]) /
+                              (sigma_weight+buffer_weights[idx]))
+            sigma_weight = sigma_weight + buffer_weights[idx]
+        else:
+            np.append(out_centroids, sigma_centroid)
+            np.append(out_weights, sigma_weight)
+            q0 += sigma_weight/S
+            q_limit = _get_q_limit(scale_function, q0, compression_delta)
+            sigma_weight = buffer_weights[idx]
+            sigma_centroid = buffer_centroids[idx]
+    np.append(out_centroids, sigma_centroid)
+    np.append(out_weights, sigma_weight)
+
+    return out_centroids, out_weights
+
+
+def _get_q_limit(scale_function, q0, compression_delta):
+    return 1./(scale_function(scale_function(q0, compression_delta) + 1,
+                              compression_delta))
