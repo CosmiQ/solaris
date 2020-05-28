@@ -1,4 +1,5 @@
 import gdal
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -369,3 +370,40 @@ class CropVariable(Crop):
         window = pin[1]
         return self.crop(imagetocrop, window[0], window[1],
                          window[2], window[3], self.mode)
+
+
+class GetMask(PipeSegment):
+    """
+    Given an image where NaN is used to denote missing data, return a mask
+    """
+    def __init__(self, band=0):
+        super().__init__()
+        self.band = band
+    def transform(self, pin):
+        data = np.expand_dims(np.invert(np.isnan(pin.data[self.band])), axis=0)
+        return Image(data, pin.name, pin.metadata)
+
+
+class SetMask(PipeSegment):
+    """
+    Given an image and a mask, apply the mask to the image (i.e., set image
+    value to NaN for every pixel where the mask value is False).
+    """
+    def __init__(self, band=None, reverse_order=False):
+        super().__init__()
+        self.band = band
+        self.reverse_order = reverse_order
+    def transform(self, pin):
+        if not self.reverse_order:
+            img = pin[0]
+            mask = pin[1]
+        else:
+            img = pin[1]
+            mask = pin[0]
+        mark = np.invert(np.squeeze(mask.data))
+        data = np.copy(img.data)
+        if self.band is None:
+            data[:, mark] = math.nan
+        else:
+            data[self.band, mark] = math.nan
+        return Image(data, img.name, img.metadata)

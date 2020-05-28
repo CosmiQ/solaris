@@ -153,8 +153,8 @@ class MultilookComplex(Multilook):
     def transform(self, pin):
         mkwargs = {'kernel_size':self.kernel_size, 'method':self.method}
         pout = (pin
-               * (InPhase() * Multilook(**mkwargs) * Scale(1.+0.j)
-                  + Quadrature() * Multilook(**mkwargs) * Scale(1.j))
+               * (InPhase() * Multilook(**mkwargs) * image.Scale(1.+0.j)
+                  + Quadrature() * Multilook(**mkwargs) * image.Scale(1.j))
                * MergeToSum()
         )()
         return pout
