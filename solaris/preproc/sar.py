@@ -183,6 +183,8 @@ class Orthorectify(PipeSegment):
                   dstNodata=math.nan)
         pout = image.LoadImage(dstpath)()
         pout.name = pin.name
+        if pin.data.dtype in (bool, np.dtype('bool')):
+            pout.data = pout.data.astype('bool')
         driver = gdal.GetDriverByName(drivername)
         driver.Delete(srcpath)
         driver.Delete(dstpath)

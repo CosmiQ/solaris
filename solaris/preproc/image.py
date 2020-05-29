@@ -5,6 +5,7 @@ import numpy as np
 import os
 from osgeo import gdal_array
 import pandas as pd
+import uuid
 import warnings
 
 from .pipesegment import PipeSegment, LoadSegment, MergeSegment
@@ -133,8 +134,11 @@ class SaveImage(PipeSegment):
         driver = gdal.GetDriverByName(self.driver)
         datatype = gdal_array.NumericTypeCodeToGDALTypeCode(pin.data.dtype)
         if datatype is None:
-            warnings.warn('! SaveImage did not find data type match; saving as float.')
-            datatype = gdal.GDT_Float32
+            if pin.data.dtype in (bool, np.dtype('bool')):
+                datatype = gdal.GDT_Byte
+            else:
+                warnings.warn('! SaveImage did not find data type match; saving as float.')
+                datatype = gdal.GDT_Float32
         dataset = driver.Create(self.pathstring, pin.data.shape[2], pin.data.shape[1], pin.data.shape[0], datatype)
         for band in range(pin.data.shape[0]):
             dataset.GetRasterBand(band+1).WriteArray(pin.data[band, :, :])
@@ -347,10 +351,12 @@ class Crop(PipeSegment):
         drivername = 'GTiff'
         srcpath = '/vsimem/crop_input_' + str(uuid.uuid4()) + '.tif'
         dstpath = '/vsimem/crop_output_' + str(uuid.uuid4()) + '.tif'
-        (pin * image.SaveImage(srcpath, driver=drivername))()
+        (pin * SaveImage(srcpath, driver=drivername))()
         gdal.Translate(dstpath, srcpath, srcWin=srcWin, projWin=projWin)
-        pout = image.LoadImage(dstpath)()
+        pout = LoadImage(dstpath)()
         pout.name = pin.name
+        if pin.data.dtype in (bool, np.dtype('bool')):
+            pout.data = pout.data.astype('bool')
         driver = gdal.GetDriverByName(drivername)
         driver.Delete(srcpath)
         driver.Delete(dstpath)
@@ -370,6 +376,32 @@ class CropVariable(Crop):
         window = pin[1]
         return self.crop(imagetocrop, window[0], window[1],
                          window[2], window[3], self.mode)
+
+
+class Resize(PipeSegment):
+    """
+    Resize an image to the requested number of pixels
+    """
+    def __init__(self, rows, cols):
+        super().__init__()
+        self.rows = rows
+        self.cols = cols
+    def transform(self, pin):
+        return self.resize(pin, self.rows, self.cols)
+    def resize(self, pin, rows, cols):
+        drivername = 'GTiff'
+        srcpath = '/vsimem/resize_input_' + str(uuid.uuid4()) + '.tif'
+        dstpath = '/vsimem/resize_output_' + str(uuid.uuid4()) + '.tif'
+        (pin * SaveImage(srcpath, driver=drivername))()
+        gdal.Translate(dstpath, srcpath, width=cols, height=rows)
+        pout = LoadImage(dstpath)()
+        pout.name = pin.name
+        if pin.data.dtype in (bool, np.dtype('bool')):
+            pout.data = pout.data.astype('bool')
+        driver = gdal.GetDriverByName(drivername)
+        driver.Delete(srcpath)
+        driver.Delete(dstpath)
+        return pout
 
 
 class GetMask(PipeSegment):
