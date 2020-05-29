@@ -143,13 +143,19 @@ class SaveImage(PipeSegment):
         for band in range(pin.data.shape[0]):
             dataset.GetRasterBand(band+1).WriteArray(pin.data[band, :, :])
         if self.save_projection:
-            if len(pin.metadata['projection_ref']) >= len(pin.metadata['gcp_projection']):
+            #First determine which projection system, if any, is used
+            proj_lens = [0, 0]
+            proj_keys = ['projection_ref', 'gcp_projection']
+            for i, proj_key in enumerate(proj_keys):
+                if proj_key in pin.metadata.keys():
+                    proj_lens[i] = len(pin.metadata[proj_key])
+            if proj_lens[0] > 0 and proj_lens[0] >= proj_lens[1]:
                 dataset.SetGeoTransform(pin.metadata['geotransform'])
                 dataset.SetProjection(pin.metadata['projection_ref'])
-            else:
+            elif proj_lens[1] > 0 and proj_lens[1] >= proj_lens[0]:
                 dataset.SetGCPs(pin.metadata['gcps'],
                                 pin.metadata['gcp_projection'])
-        if self.save_metadata:
+        if self.save_metadata and 'meta' in pin.metadata.keys():
             dataset.SetMetadata(pin.metadata['meta'])
         dataset.FlushCache()
         # Optionally return image
