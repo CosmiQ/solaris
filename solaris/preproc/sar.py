@@ -468,12 +468,12 @@ class CapellaGridCommonWindow(PipeSegment):
         self.master = master
         self.subpixel = subpixel
     def transform(self, pin):
-        # Find the pixel in each grid that's closest to center of master grid
+        # Find the pixel in each grid that's closest to center of master grid.
         # 'x' and 'y' are the latitude and longitude bands of the grid files,
-        # and (refx, refy) is the (lat, lon) of that center
+        # and (refx, refy) is the (lat, lon) of that center.
         m = self.master
         l = len(pin)
-        order = [m] + list(range(l)[:m]) + list(range(l)[m+1:])
+        order = [m] + list(range(m)) + list(range(m+1, l))
         localrefs = [[]] * len(pin)
         fineoffsets = [[]] * len(pin)
         extents = [[]] * len(pin)
@@ -496,11 +496,12 @@ class CapellaGridCommonWindow(PipeSegment):
                                                      localrefs[index][0],
                                                      localrefs[index][1])
             # Find how far from the reference pixel each grid extends
+            # Convention is [left, bottom, right, top]
             extents[index] = [
-                localrefs[index][0],
-                x.shape[0] - localrefs[index][0] - 1,
                 localrefs[index][1],
-                x.shape[1] - localrefs[index][1] - 1
+                x.shape[0] - localrefs[index][0] - 1,
+                x.shape[1] - localrefs[index][1] - 1,
+                localrefs[index][0]
             ]
             if step==0:
                 minextents = extents[index].copy()
@@ -508,13 +509,13 @@ class CapellaGridCommonWindow(PipeSegment):
                 for i in range(4):
                     if extents[index][i] < minextents[i]:
                         minextents[i] = extents[index][i]
-        # Calculate row_min, row_max, col_min, col_max of overlapping window
+        # Calculate col_min, row_max, col_max, row_min of overlapping window
         for step, index in enumerate(order):
             windows[index] = [
-                localrefs[index][0] - minextents[0],
+                localrefs[index][1] - minextents[0],
                 localrefs[index][0] + minextents[1],
-                localrefs[index][1] - minextents[2],
-                localrefs[index][1] + minextents[3]
+                localrefs[index][1] + minextents[2],
+                localrefs[index][0] - minextents[3]
             ]
         # Optionally return subpixel offsets
         if self.subpixel:

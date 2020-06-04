@@ -332,24 +332,23 @@ class Scale(PipeSegment):
 
 class Crop(PipeSegment):
     """
-    Crop an image based on either pixel coordinates
-    or georeferenced coordinates
+    Crop image based on either pixel coordinates or georeferenced coordinates.
+    'bounds' is a list specifying the edges: [left, bottom, right, top]
     """
-    def __init__(self, row_min, row_max, col_min, col_max, mode='pixel'):
+    def __init__(self, bounds, mode='pixel'):
         super().__init__()
-        self.row_min = row_min
-        self.row_max = row_max
-        self.col_min = col_min
-        self.col_max = col_max
+        self.bounds = bounds
         self.mode = mode
     def transform(self, pin):
-        return self.crop(pin, self.row_min, self.row_max, self.col_min, self.col_max, self.mode)
-    def crop(self, pin, row_min, row_max, col_min, col_max, mode):
-        if mode in ['pixel', 'p', 0]:
+        row_min = self.bounds[3]
+        row_max = self.bounds[1]
+        col_min = self.bounds[0]
+        col_max = self.bounds[2]
+        if self.mode in ['pixel', 'p', 0]:
             srcWin = [col_min, row_min,
                       col_max - col_min + 1, row_max - row_min + 1]
             projWin = None
-        elif mode in ['geo', 'g', 1]:
+        elif self.mode in ['geo', 'g', 1]:
             srcWin = None
             projWin = [col_min, row_min, col_max, row_max]
         else:
@@ -379,9 +378,8 @@ class CropVariable(Crop):
         self.mode = mode
     def transform(self, pin):
         imagetocrop = pin[0]
-        window = pin[1]
-        return self.crop(imagetocrop, window[0], window[1],
-                         window[2], window[3], self.mode)
+        self.bounds = pin[1]
+        return super().transform(imagetocrop)
 
 
 class Resize(PipeSegment):
