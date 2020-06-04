@@ -44,7 +44,7 @@ class ShowString(PipeSegment):
 
 class LoadDataFrame(LoadSegment):
     """
-    Load a GeoPandas dataframe from a file.
+    Load a GeoPandas GeoDataFrame from a file.
     """
     def __init__(self, pathstring):
         super().__init__()
@@ -55,16 +55,31 @@ class LoadDataFrame(LoadSegment):
 
 class ExplodeDataFrame(PipeSegment):
     """
-    Given a GeoPandas DataFrame, break multi-part geometries
+    Given a GeoPandas GeoDataFrame, break multi-part geometries
     into multiple lines.
     """
     def transform(self, pin):
         return pin.explode().reset_index()
 
 
+class IntersectDataFrames(PipeSegment):
+    """
+    Given an iterable of GeoPandas GeoDataFrames, returns their intersection
+    """
+    def __init__(self, master=0):
+        super().__init__()
+        self.master = master
+    def transform(self, pin):
+        result = pin[self.master]
+        for i, gdf in enumerate(pin):
+            if not i==self.master:
+                result = gpd.overlay(result, gdf)
+        return result
+
+
 class DataFrameToString(PipeSegment):
     """
-    Given a GeoPandas DataFrame, convert it into a GeoJSON string.
+    Given a GeoPandas GeoDataFrame, convert it into a GeoJSON string.
     """
     def __init__(self, **kwargs):
         super().__init__()
