@@ -109,13 +109,18 @@ class DataFrameToString(PipeSegment):
     Caveat emptor: This follows the GeoJSON 2016 standard, which does
     not include any coordinate reference system information.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, crs=True, **kwargs):
         super().__init__()
+        self.crs = crs
         self.kwargs = kwargs
     def transform(self, pin):
-        print(pin)
-        print(pin.crs)
-        return pin.to_json(**(self.kwargs))
+        geojson = pin.to_json(**(self.kwargs))
+        if self.crs:
+            geojson = '{"type": "FeatureCollection", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::' \
+                      + str(pin.crs.to_epsg()) \
+                      + '" } }, ' \
+                      + geojson[30:]
+        return geojson
 
 
 class BoundsToDataFrame(PipeSegment):

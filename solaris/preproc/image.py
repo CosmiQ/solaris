@@ -425,7 +425,6 @@ class GetMask(PipeSegment):
         if self.flag == 'nan':
             data = np.expand_dims(np.invert(np.isnan(pin.data[self.band])), axis=0)
         else:
-            print('valflag')
             data = np.expand_dims(pin.data[self.band]==self.flag, axis=0)
         return Image(data, pin.name, pin.metadata)
 
