@@ -15,6 +15,10 @@ class Image:
     def __init__(self, data, name='image', metadata={}):
         self.name = name
         self.metadata = metadata
+        self.set_data(data)
+    def set_data(self, data):
+        if data.ndim == 2:
+            data = np.expand_dims(data, axis=0)
         self.data = data
     def __str__(self):
         if self.data.ndim < 3:
