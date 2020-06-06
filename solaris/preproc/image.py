@@ -414,24 +414,28 @@ class Resize(PipeSegment):
 
 class GetMask(PipeSegment):
     """
-    Given an image where NaN is used to denote missing data, return a mask
+    Extract a Boolean mask from an image band.  NaN is assumed to be the
+    mask value, unless otherwise specified.
     """
-    def __init__(self, band=0, flag=math.nan):
+    def __init__(self, band=0, flag='nan'):
         super().__init__()
         self.band = band
         self.flag = flag
     def transform(self, pin):
-        if self.flag==math.nan:
+        if self.flag == 'nan':
             data = np.expand_dims(np.invert(np.isnan(pin.data[self.band])), axis=0)
         else:
+            print('valflag')
             data = np.expand_dims(pin.data[self.band]==self.flag, axis=0)
         return Image(data, pin.name, pin.metadata)
 
 
 class SetMask(PipeSegment):
     """
-    Given an image and a mask, apply the mask to the image (i.e., set image
-    value to NaN for every pixel where the mask value is False).
+    Given an image and a mask, apply the mask to the image.
+    More specifically, set the image's pixel value to NaN
+    (or other specified value) for every pixel where the 
+    mask value is False.
     """
     def __init__(self, band=None, reverse_order=False, flag=math.nan):
         super().__init__()
@@ -452,3 +456,11 @@ class SetMask(PipeSegment):
         else:
             data[self.band, mark] = self.flag
         return Image(data, img.name, img.metadata)
+
+
+class InvertMask(PipeSegment):
+    """
+    Sets all True values in a mask to False and vice versa.
+    """
+    def transform(self, pin):
+        return Image(np.invert(pin.data), pin.name, pin.metadata)
