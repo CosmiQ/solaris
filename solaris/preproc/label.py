@@ -67,6 +67,15 @@ class SaveDataFrame(PipeSegment):
         return pin
 
 
+class ShowString(PipeSegment):
+    """
+    Print a GeoPandas GeoDataFrame to the screen.
+    """
+    def transform(self, pin):
+        print(pin)
+        return pin
+
+
 class ReprojectDataFrame(PipeSegment):
     """
     Reproject a GeoPandas GeoDataFrame.
