@@ -1,4 +1,5 @@
 import geopandas as gpd
+import shapely.geometry
 
 from .pipesegment import PipeSegment, LoadSegment, MergeSegment
 
@@ -53,6 +54,30 @@ class LoadDataFrame(LoadSegment):
         return gpd.read_file(self.pathstring)
 
 
+class SaveDataFrame(PipeSegment):
+    """
+    Save a GeoPandas GeoDataFrame to disk.
+    """
+    def __init__(self, pathstring, driver='GeoJSON'):
+        super().__init__()
+        self.pathstring = pathstring
+        self.driver = driver
+    def transform(self, pin):
+        pin.to_file(self.pathstring, driver=self.driver)
+        return pin
+
+
+class ReprojectDataFrame(PipeSegment):
+    """
+    Reproject a GeoPandas GeoDataFrame.
+    """
+    def __init__(self, projection=3857):
+        super().__init__()
+        self.projection = projection
+    def transform(self, pin):
+        return pin.to_crs('epsg:' + str(self.projection))
+
+
 class ExplodeDataFrame(PipeSegment):
     """
     Given a GeoPandas GeoDataFrame, break multi-part geometries
@@ -74,15 +99,38 @@ class IntersectDataFrames(PipeSegment):
         for i, gdf in enumerate(pin):
             if not i==self.master:
                 result = gpd.overlay(result, gdf)
+                result.crs = pin[self.master].crs
         return result
 
 
 class DataFrameToString(PipeSegment):
     """
     Given a GeoPandas GeoDataFrame, convert it into a GeoJSON string.
+    Caveat emptor: This follows the GeoJSON 2016 standard, which does
+    not include any coordinate reference system information.
     """
     def __init__(self, **kwargs):
         super().__init__()
         self.kwargs = kwargs
     def transform(self, pin):
+        print(pin)
+        print(pin.crs)
         return pin.to_json(**(self.kwargs))
+
+
+class BoundsToDataFrame(PipeSegment):
+    """
+    Given a set of tile bounds [left, lower, right, upper],
+    convert it to a GeoPandas GeoDataFrame.  Note: User must
+    specify projection, since a simple set of bounds doesn't
+    include that.
+    """
+    def __init__(self, projection=None):
+        super().__init__()
+        self.projection = projection
+    def transform(self, pin):
+        gdf = gpd.GeoDataFrame()
+        if self.projection is not None:
+            gdf.crs = 'epsg:' + str(self.projection)
+        gdf.loc[0, 'geometry'] = shapely.geometry.box(*pin)
+        return gdf
