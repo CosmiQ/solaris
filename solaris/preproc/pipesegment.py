@@ -1,6 +1,7 @@
 from multiprocessing import Pool
 def _parallel_compute_function(x):
     return (x[0])(*(x[1]))()
+verbose = 0
 
 
 class PipeSegment:
@@ -14,11 +15,14 @@ class PipeSegment:
             raise Exception('(!) Circular dependency in workflow.')
         if not self.procfinish:
             self.procstart = True
+            if 
             self.procout = self.process()
             self.procfinish = True
         return self.procout
     def process(self):
-        return self.transform(self.feeder())
+        pin = self.feeder()
+        self.printout(pin)
+        return self.transform(pin)
     def transform(self, pin):
         return pin
     def reset(self):
@@ -26,6 +30,16 @@ class PipeSegment:
         self.procstart = False
         self.procfinish = False
         self.feeder.reset()
+    def printout(*args):
+        if verbose >= 1:
+            print(type(self))
+        if verbose >= 2:
+            print(vars(self))
+        if verbose >= 3:
+            for x in args:
+                print(x)
+        if verbose >= 2:
+            print()
     def selfstring(self, offset=0):
         return ' '*2*offset + type(self).__name__ + '\n'
     def __str__(self, offset=0):
@@ -65,6 +79,9 @@ class LoadSegment(PipeSegment):
         super().__init__()
         self.source = source
     def process(self):
+        self.printout()
+        self.load()
+    def load(self):
         return self.source
     def reset(self):
         self.procout = None
@@ -84,6 +101,7 @@ class MergeSegment(PipeSegment):
     def process(self):
         p1 = self.feeder1()
         p2 = self.feeder2()
+        self.printout(p1, p2)
         if not isinstance(p1, tuple):
             p1 = (p1,)
         if not isinstance(p2, tuple):
@@ -111,3 +129,91 @@ class MergeSegment(PipeSegment):
         else:
             flag2 = self.feeder2.attach(ps)
         return flag1 or flag2 or ps is self
+
+
+class Identity(PipeSegment):
+    """
+    This class is an alias for the PipeSegment base class to emphasize
+    its role as the identity element (i.e., output = input).
+    """
+    pass
+
+
+class SelectItem(PipeSegment):
+    """
+    Given an iterable, return one of its items.  This can be used to select
+    a single output from a class that returns a tuple of outputs.
+    """
+    def __init__(self, index=0):
+        super().__init__()
+        self.index = index
+    def transform(self, pin):
+        return pin[self.index]
+
+
+class ReturnEmpty(PipeSegment):
+    """
+    Regardless of input, returns an empty tuple.
+    Used in Map and Conditional classes.
+    """
+    def transform(self, pin):
+        return ()
+
+
+class PipeArgs(PipeSegment):
+    """
+    Wrapper for any PipeSegment subclass which enables it to accept
+    initialization arguments from piped input.
+    """
+    def __init__(self, inner_class, *args, **kwargs):
+        super().__init__()
+        self.inner_class = inner_class
+        self.args = args
+        self.kwargs = kwargs
+    def transform(self, pin):
+        if issubclass(self.inner_class, LoadSegment):
+            isloadsegment = True
+            argstart = 0
+        else:
+            isloadsegment = False
+            argstart = 1
+            inner_pin = pin[0]
+        # Gather all initialization arguments
+        args = self.args
+        kwargs = self.kwargs.copy()
+        pargs = (pin if isinstance(pin, tuple) else (pin,))[argstart:]
+        for p in pargs:
+            if isinstance(p, dict):
+                kwargs.update(p)
+            else:
+                args = args + (p,)
+        #Initialize and call object
+        obj = self.inner_class(*args, **kwargs)
+        if isloadsegment:
+            return obj()
+        else:
+            return (inner_pin * obj)()
+
+
+class FunctionPipe(PipeSegment):
+    """
+    Turns a user-supplied function into a PipeSegment
+    """
+    def __init__(self, function):
+        super().__init()
+        self.function = function
+    def transform(self, pin):
+        return self.function(pin)
+
+
+def PipeFunction(inner_class=PipeSegment, pin=(), *args, **kwargs):
+    """
+    Turns a PipeSegment into a standalone function.
+    inner_class is the PipeSegment class, pin is the input to pipe into it,
+    and *args and **kwargs are sent to the PipeSegment's constructor.
+    """
+    psobject = inner_class(*args, **kwargs)
+    if issubclass(self.inner_class, LoadSegment):
+        return psobject()
+    else:
+        return (pin * psobject)()
