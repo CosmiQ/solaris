@@ -15,7 +15,6 @@ class PipeSegment:
             raise Exception('(!) Circular dependency in workflow.')
         if not self.procfinish:
             self.procstart = True
-            if 
             self.procout = self.process()
             self.procfinish = True
         return self.procout
@@ -30,7 +29,7 @@ class PipeSegment:
         self.procstart = False
         self.procfinish = False
         self.feeder.reset()
-    def printout(*args):
+    def printout(self, *args):
         if verbose >= 1:
             print(type(self))
         if verbose >= 2:
@@ -80,7 +79,7 @@ class LoadSegment(PipeSegment):
         self.source = source
     def process(self):
         self.printout()
-        self.load()
+        return self.load()
     def load(self):
         return self.source
     def reset(self):
