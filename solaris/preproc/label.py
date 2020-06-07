@@ -11,7 +11,7 @@ class LoadString(LoadSegment):
     def __init__(self, pathstring):
         super().__init__()
         self.pathstring = pathstring
-    def process(self):
+    def load(self):
         infile = open(self.pathstring, 'r')
         content = infile.read()
         infile.close()
@@ -50,7 +50,7 @@ class LoadDataFrame(LoadSegment):
     def __init__(self, pathstring):
         super().__init__()
         self.pathstring = pathstring
-    def process(self):
+    def load(self):
         return gpd.read_file(self.pathstring)
 
 

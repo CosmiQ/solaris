@@ -50,7 +50,7 @@ class LoadImageFromDisk(LoadSegment):
         self.pathstring = pathstring
         self.name = name
         self.verbose = verbose
-    def process(self):
+    def load(self):
         return self.load_from_disk(self.pathstring, self.name, self.verbose)
     def load_from_disk(self, pathstring, name=None, verbose=False):
         # Use GDAL to open image file
@@ -89,7 +89,7 @@ class LoadImageFromMemory(LoadSegment):
         self.imageobj = imageobj
         self.name = name
         self.verbose = verbose
-    def process(self):
+    def load(self):
         return self.load_from_memory(self.imageobj, self.name, self.verbose)
     def load_from_memory(self, imageobj, name=None, verbose=False):
         if type(imageobj) is not Image:
@@ -112,7 +112,7 @@ class LoadImage(LoadImageFromDisk, LoadImageFromMemory):
         self.imageinput = imageinput
         self.name = name
         self.verbose = verbose
-    def process(self):
+    def load(self):
         if type(self.imageinput) is Image:
             return self.load_from_memory(self.imageinput, self.name, self.verbose)
         elif type(self.imageinput) in (str, np.str_):
