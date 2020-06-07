@@ -433,8 +433,6 @@ class CapellaGridToPolygon(PipeSegment):
         if not counterclockwise:
             lats.reverse()
             lons.reverse()
-        print(cornerlats)
-        print(cornerlons)
         northlooking = cornerlats[3] > cornerlats[0]
         eastlooking = cornerlons[3] > cornerlons[0]
         flags = (counterclockwise, northlooking, eastlooking)

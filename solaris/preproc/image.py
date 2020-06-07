@@ -17,7 +17,7 @@ class Image:
         self.metadata = metadata
         self.set_data(data)
     def set_data(self, data):
-        if data.ndim == 2:
+        if isinstance(data, np.ndarray) and data.ndim == 2:
             data = np.expand_dims(data, axis=0)
         self.data = data
     def __str__(self):
