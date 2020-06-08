@@ -199,7 +199,7 @@ class FunctionPipe(PipeSegment):
     Turns a user-supplied function into a PipeSegment
     """
     def __init__(self, function):
-        super().__init()
+        super().__init__()
         self.function = function
     def transform(self, pin):
         return self.function(pin)
