@@ -56,7 +56,7 @@ class LoadImageFromDisk(LoadSegment):
         # Use GDAL to open image file
         dataset = gdal.Open(pathstring)
         if dataset is None:
-            raise Exception('! Image file not found.')
+            raise Exception('! Image file ' + pathstring + ' not found.')
         data = dataset.ReadAsArray()
         if data.ndim == 2:
             data = np.expand_dims(data, axis=0)
