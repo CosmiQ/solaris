@@ -24,11 +24,12 @@ class PipeSegment:
         return self.transform(pin)
     def transform(self, pin):
         return pin
-    def reset(self):
+    def reset(self, recursive=True):
         self.procout = None
         self.procstart = False
         self.procfinish = False
-        self.feeder.reset()
+        if recursive:
+            self.feeder.reset(recursive=True)
     def printout(self, *args):
         if verbose >= 1:
             print(type(self))
@@ -82,7 +83,7 @@ class LoadSegment(PipeSegment):
         return self.load()
     def load(self):
         return self.source
-    def reset(self):
+    def reset(self, recursive=True):
         self.procout = None
         self.procstart = False
         self.procfinish = False
@@ -106,12 +107,13 @@ class MergeSegment(PipeSegment):
         if not isinstance(p2, tuple):
             p2 = (p2,)
         return p1 + p2
-    def reset(self):
+    def reset(self, recursive=True):
         self.procout = None
         self.procstart = False
         self.procfinish = False
-        self.feeder1.reset()
-        self.feeder2.reset()
+        if recursive:
+            self.feeder1.reset(recursive=True)
+            self.feeder2.reset(recursive=True)
     def __str__(self, offset=0):
         return self.selfstring(offset) \
             + self.feeder1.__str__(offset+1) \
