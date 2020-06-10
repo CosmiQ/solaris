@@ -205,12 +205,13 @@ class ImageStats(PipeSegment):
     """
     Calculate descriptive statististics about an image
     """
-    def __init__(self, print_desc=True, print_props=True, return_image=True, return_props=False):
+    def __init__(self, print_desc=True, print_props=True, return_image=True, return_props=False, median=True):
         super().__init__()
         self.print_desc = print_desc
         self.print_props = print_props
         self.return_image = return_image
         self.return_props = return_props
+        self.median = median
     def transform(self, pin):
         if self.print_desc:
             print(pin)
@@ -219,13 +220,14 @@ class ImageStats(PipeSegment):
             'min': np.nanmin(pin.data, (1,2)),
             'max': np.nanmax(pin.data, (1,2)),
             'mean': np.nanmean(pin.data, (1,2)),
-            'median': np.nanmedian(pin.data, (1,2)),
             'std': np.nanstd(pin.data, (1,2)),
             'pos': np.count_nonzero(np.nan_to_num(pin.data, nan=-1.)>0, (1,2)),
             'zero': np.count_nonzero(pin.data==0, (1,2)),
             'neg': np.count_nonzero(np.nan_to_num(pin.data, nan=1.)<0, (1,2)),
             'nan': np.count_nonzero(np.isnan(pin.data), (1,2)),
         })
+        if self.median:
+            props.insert(3, 'median', np.nanmedian(pin.data, (1,2)))
         if self.print_props:
             print(props)
             print()
