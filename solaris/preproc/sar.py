@@ -155,7 +155,7 @@ class MultilookComplex(Multilook):
         pout = (pin
                * (InPhase() * Multilook(**mkwargs) * image.Scale(1.+0.j)
                   + Quadrature() * Multilook(**mkwargs) * image.Scale(1.j))
-               * MergeToSum()
+               * image.MergeToSum()
         )()
         return pout
 
@@ -194,7 +194,7 @@ class Orthorectify(PipeSegment):
 class DecompositionPauli(PipeSegment):
     """
     Compute the Pauli decomposition of quad-pol SAR data.
-    Note: Convention is alpha-->red, beta-->blue, gamma-->green
+    Note: Convention is alpha-->blue, beta-->red, gamma-->green
     """
     def __init__(self, hh_band=0, vv_band=1, xx_band=2):
         super().__init__()
