@@ -231,52 +231,61 @@ class DecompositionFreemanDurden(PipeSegment):
         self.kernel_size = kernel_size
     def transform(self, pin):
         # Scattering matrix terms
-        hh = (pin * image.SelectBands(self.hh_band))()
-        vv = (pin * image.SelectBands(self.vv_band))()
-        xx = (pin * image.SelectBands(self.xx_band))()
+        hh = pin * image.SelectBands(self.hh_band)
+        vv = pin * image.SelectBands(self.vv_band)
+        xx = pin * image.SelectBands(self.xx_band)
         # Covariance matrix terms
-        C11 = (hh * Intensity())()
-        C22 = (vv * Intensity())()
-        C33 = (xx * Intensity())()
-        C12 = ((image.LoadImage(hh) + image.LoadImage(vv))
-               * MultiplyConjugate())()
-        hh = vv = xx = None
+        C11 = hh * Intensity()
+        C22 = vv * Intensity()
+        C33 = xx * Intensity()
+        C12 = (hh + vv) * MultiplyConjugate()
         mkwargs = {'kernel_size':self.kernel_size, 'method':'avg'}
-        C11 = (C11 * Multilook(**mkwargs))()
-        C22 = (C22 * Multilook(**mkwargs))()
-        C33 = (C33 * Multilook(**mkwargs))()
-        C12 = (C12 * MultilookComplex(**mkwargs))()
+        C11 = C11 * Multilook(**mkwargs)
+        C22 = C22 * Multilook(**mkwargs)
+        C33 = C33 * Multilook(**mkwargs)
+        C12 = C12 * MultilookComplex(**mkwargs)
         # Volume amplitude, and volume-subtracted matrix terms
-        # (Also, convert from Image to np.array)
-        fv = 1.5 * C33.data
-        c11 = C11.data - fv
-        c22 = C22.data - fv
-        c12 = C12.data - fv / 3.
-        c12 = np.where(c11*c22 < np.square(np.abs(c12)), np.sqrt(c11*c22) * c12/np.abs(c12), c12)
-        C11 = C22 = C33 = C12 = None
+        fv = C33 * image.Scale(1.5)
+        c11 = (C11 + fv) * BandMath(lambda x: x[0] - x[1])
+        c22 = (C22 + fv) * BandMath(lambda x: x[0] - x[1])
+        c12 = (C12 + fv) * BandMath(lambda x: x[0] - x[1] / 3.)
+        c12 = (c11 + c22 + c12) * BandMath(lambda x: np.where(x[0]*x[1]
+            < np.square(np.abs(x[2])), np.sqrt(x[0]*x[1]) \
+            * x[2]/np.abs(x[2]), x[2]))#
         # Surface and dihedral amplitudes
-        surfacedominates = np.real(c12.data) >= 0
-        term1 = (c11*c22 - (np.real(c12))**2 - (np.imag(c12))**2) / (c11 + c22 + 2*np.real(c12)*np.where(surfacedominates, 1, -1))
-        term1 = np.abs(term1)
-        term2 = c22 - term1
-        term2 = np.abs(term2)
-        term3 = (np.real(c12) + np.where(surfacedominates, 1, -1) * term1 + np.imag(c12) * 1.j) / term2
-        fs = term2 * surfacedominates + term1 * np.invert(surfacedominates)
-        fd = term1 * surfacedominates + term2 * np.invert(surfacedominates)
-        alpha = -1. * surfacedominates + term3 * np.invert(surfacedominates)
-        beta = term3 * surfacedominates + 1. * np.invert(surfacedominates)
+        surfacedominates = c12 * BandMath(lambda x: np.real(x) >= 0)
+        term1 = (c11 + c22 + c12 * InPhase() + c12 * Quadrature()
+            + surfacedominates) * BandMath(lambda x:
+            (x[0]*x[1] - (x[2])**2 - (x[3])**2) /
+            (x[0] + x[1] + 2*x[2]*np.where(x[4], 1, -1)))
+        term1 = term1 * Amplitude()#
+        term2 = (c22 + term1) * BandMath(lambda x: x[0] - x[1])
+        term2 = term2 * Amplitude()#
+        term3 = (term1 + term2 + c12 * InPhase() + c12 * Quadrature()
+            + surfacedominates) * BandMath(lambda x:
+            (x[2] + np.where(x[4], 1, -1) * x[0] + x[3] * 1.j) / x[1])
+        fs = ((term2 + surfacedominates) * image.SetMask(0) + (term1
+            + surfacedominates * image.InvertMask() ) * image.SetMask(0)) \
+            * image.MergeToSum()
+        fd = ((term1 + surfacedominates) * image.SetMask(0) + (term2
+            + surfacedominates * image.InvertMask() ) * image.SetMask(0)) \
+            * image.MergeToSum()
+        alpha = (surfacedominates * image.Scale(-1.) + (term3
+            + surfacedominates * image.InvertMask()) * image.SetMask(0)) \
+            * BandMath(lambda x: x[0] + x[1])
+        beta = ((term3 + surfacedominates) * image.SetMask(0) \
+            + surfacedominates * image.InvertMask() * image.Scale(1.)) \
+            * BandMath(lambda x: x[0] + x[1])
         # Power
-        Ps = fs * (1. + np.square(np.absolute(beta)))
-        Pd = fd * (1. + np.square(np.absolute(alpha)))
+        Ps = (fs + beta * Intensity()) * BandMath(lambda x: x[0] * (1. + x[1]))
+        Pd = (fd + alpha *Intensity()) * BandMath(lambda x: x[0] * (1. + x[1]))
         Pv = fv
-        Ps[np.logical_and(c11==0, c22==0)] = 0
-        Pd[np.logical_and(c11==0, c22==0)] = 0
-        surfacedominates = term1 = term2 = term3 = fs = fd = fv = alpha = beta = None
-        # Convert from np.array back to Image
-        pout = Image(np.concatenate((Ps, Pd, Pv), axis=0),
-                     pin.name,
-                     pin.metadata)
-        return pout
+        Pmask = (c11 + c22) * BandMath(lambda x: np.logical_and(
+            x[0]==0, x[1]==0)) * image.InvertMask()
+        Ps = (Ps + Pmask) * image.SetMask(0)#
+        Pd = (Pd + Pmask) * image.SetMask(0)#
+        Pstack = (Ps + Pd + Pv) * image.MergeToStack()
+        return Pstack()
 
 
 class DecompositionHAlpha(PipeSegment):
