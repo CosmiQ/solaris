@@ -173,10 +173,58 @@ class SelectItem(PipeSegment):
 class ReturnEmpty(PipeSegment):
     """
     Regardless of input, returns an empty tuple.
-    Used in Map and Conditional classes.
+    This can be useful in Map and Conditional classes.
     """
     def transform(self, pin):
         return ()
+
+
+class Conditional(PipeSegment):
+    """
+    This is the pipesegment version of an if statement.
+    The input is fed into an object of the 'condition_class' class.
+    If 'True' is returned, then the input is fed through an 'if_class' object.
+    Otherwise, the input is fed through an 'else_class' object.
+    """
+    def __init__(self, condition_class,
+                 if_class=Identity, else_class=ReturnEmpty,
+                 condition_args=[], condition_kwargs={},
+                 if_args=[], if_kwargs={}, else_args=[], else_kwargs={}):
+        super().__init__()
+        self.condition_class = condition_class
+        self.if_class = if_class
+        self.else_class = else_class
+        self.condition_args = condition_args
+        self.condition_kwargs = condition_kwargs
+        self.if_args = if_args
+        self.if_kwargs = if_kwargs
+        self.else_args = else_args
+        self.else_kwargs = else_kwargs
+    def __call__(self, saveall=0, verbose=0):
+        self.saveall = saveall
+        self.verbose = verbose
+        super().__call__(saveall, verbose)
+    def transform(self, pin):
+        condition_obj = self.condition_class(*condition_args,
+                                             **condition_kwargs)
+        if not issubclass(self.condition_class, LoadSegment):
+            condition_obj = pin * condition_obj
+        if condition_obj(self.saveall, self.verbose):
+            if_obj = self.if_class(*if_args, **if_kwargs)
+            if not issubclass(self.if_class, LoadSegment):
+                if_obj = pin * if_obj
+            pout = if_obj(self.saveall, self.verbose)
+            else:
+                
+            
+        if (pin * self.conditional_class(*conditional_args,
+                                         **conditional_kwargs))():
+            pout = (pin * if_class(*if_args, **if_kwargs))(self.saveall,
+                                                           self.verbose)
+        else:
+            pout = (pin * else_class(*else_args, **else_kwargs))(self.saveall,
+                                                                 self.verbose)
+        return pout
 
 
 class PipeArgs(PipeSegment):
