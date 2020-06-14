@@ -1,8 +1,6 @@
 from multiprocessing import Pool
 def _parallel_compute_function(x):
     return (x[0])(*(x[1]))()
-verbose = 0
-saveall = 0
 
 
 class PipeSegment:
@@ -13,20 +11,21 @@ class PipeSegment:
         self.procfinish = False
         self.citedby = 0
         self.usedby = 0
-    def __call__(self):
+    def __call__(self, saveall=0, verbose=0):
         if self.procstart and not self.procfinish:
             raise Exception('(!) Circular dependency in workflow.')
         if not self.procfinish:
             self.procstart = True
-            self.procout = self.process()
+            self.procout = self.process(saveall, verbose)
             self.procfinish = True
         return self.procout
-    def process(self):
-        pin = self.feeder()
+    def process(self, saveall=0, verbose=0):
+        pin = self.feeder(saveall, verbose)
         self.feeder.usedby += 1
         if saveall == 0 and self.feeder.usedby == self.feeder.citedby:
             self.feeder.reset(recursive=False)
-        self.printout(pin)
+        if verbose > 0:
+            self.printout(verbose, pin)
         return self.transform(pin)
     def transform(self, pin):
         return pin
@@ -36,7 +35,7 @@ class PipeSegment:
         self.procfinish = False
         if recursive:
             self.feeder.reset(recursive=True)
-    def printout(self, *args):
+    def printout(self, verbose, *args):
         if verbose >= 1:
             print(type(self))
         if verbose >= 2:
@@ -85,8 +84,9 @@ class LoadSegment(PipeSegment):
     def __init__(self, source=None):
         super().__init__()
         self.source = source
-    def process(self):
-        self.printout()
+    def process(self, saveall=0, verbose=0):
+        if verbose > 0:
+            self.printout(verbose)
         return self.load()
     def load(self):
         return self.source
@@ -107,16 +107,17 @@ class MergeSegment(PipeSegment):
         self.feeder1.citedby += 1
         self.feeder2 = feeder2
         self.feeder2.citedby += 1
-    def process(self):
-        p1 = self.feeder1()
-        p2 = self.feeder2()
+    def process(self, saveall=0, verbose=0):
+        p1 = self.feeder1(saveall, verbose)
+        p2 = self.feeder2(saveall, verbose)
         self.feeder1.usedby += 1
         if saveall == 0 and self.feeder1.usedby == self.feeder1.citedby:
             self.feeder1.reset(recursive=False)
         self.feeder2.usedby += 1
         if saveall == 0 and self.feeder2.usedby == self.feeder2.citedby:
             self.feeder2.reset(recursive=False)
-        self.printout(p1, p2)
+        if verbose > 0:
+            self.printout(verbose, p1, p2)
         if not isinstance(p1, tuple):
             p1 = (p1,)
         if not isinstance(p2, tuple):
