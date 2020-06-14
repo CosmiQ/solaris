@@ -150,14 +150,6 @@ class MergeSegment(PipeSegment):
         return flag1 or flag2 or ps is self
 
 
-class Identity(PipeSegment):
-    """
-    This class is an alias for the PipeSegment base class to emphasize
-    its role as the identity element (i.e., output = input).
-    """
-    pass
-
-
 class SelectItem(PipeSegment):
     """
     Given an iterable, return one of its items.  This can be used to select
@@ -170,10 +162,20 @@ class SelectItem(PipeSegment):
         return pin[self.index]
 
 
+class Identity(PipeSegment):
+    """
+    This class is an alias for the PipeSegment base class, to
+    emphasize its property of passing data through unchanged.
+    Formally, this is the identity element for the '*' operation.
+    """
+    pass
+
+
 class ReturnEmpty(PipeSegment):
     """
     Regardless of input, returns an empty tuple.
     This can be useful in Map and Conditional classes.
+    Formally, this is the identity element for the '+' operation.
     """
     def transform(self, pin):
         return ()
@@ -182,7 +184,7 @@ class ReturnEmpty(PipeSegment):
 class Conditional(PipeSegment):
     """
     This is the pipesegment version of an if statement.
-    The input is fed into an object of the 'condition_class' class.
+    The piped input is fed into an object of the 'condition_class' class.
     If 'True' is returned, then the input is fed through an 'if_class' object.
     Otherwise, the input is fed through an 'else_class' object.
     """
@@ -200,6 +202,10 @@ class Conditional(PipeSegment):
         self.if_kwargs = if_kwargs
         self.else_args = else_args
         self.else_kwargs = else_kwargs
+        if issubclass(self.condition_class, LoadSegment) \
+           and issubclass(self.if_class, LoadSegment) \
+           and issubclass(self.else_class, LoadSegment):
+            self.feeder = LoadSegment(None)
     def __call__(self, saveall=0, verbose=0):
         self.saveall = saveall
         self.verbose = verbose
@@ -210,21 +216,12 @@ class Conditional(PipeSegment):
         if not issubclass(self.condition_class, LoadSegment):
             condition_obj = pin * condition_obj
         if condition_obj(self.saveall, self.verbose):
-            if_obj = self.if_class(*if_args, **if_kwargs)
-            if not issubclass(self.if_class, LoadSegment):
-                if_obj = pin * if_obj
-            pout = if_obj(self.saveall, self.verbose)
-            else:
-                
-            
-        if (pin * self.conditional_class(*conditional_args,
-                                         **conditional_kwargs))():
-            pout = (pin * if_class(*if_args, **if_kwargs))(self.saveall,
-                                                           self.verbose)
+            inner_obj = self.if_class(*if_args, **if_kwargs)
         else:
-            pout = (pin * else_class(*else_args, **else_kwargs))(self.saveall,
-                                                                 self.verbose)
-        return pout
+            inner_obj = self.else_class(*else_args, **else_kwargs)
+        if not issubclass(self.condition_class, LoadSegment):
+            inner_obj = pin * inner_obj
+        return inner_obj(self.saveall, self.verbose)
 
 
 class PipeArgs(PipeSegment):
