@@ -9,8 +9,8 @@ class PipeSegment:
         self.procout = None
         self.procstart = False
         self.procfinish = False
-        self._citedby = 0
-        self._usedby = 0
+        self._cited = 0
+        self._used = 0
         self._saveall = 0
         self._verbose = 0
     def __call__(self, saveall=0, verbose=0):
@@ -25,8 +25,8 @@ class PipeSegment:
         return self.procout
     def process(self):
         pin = self.feeder(self._saveall, self._verbose)
-        self.feeder._usedby += 1
-        if self._saveall == 0 and self.feeder._usedby == self.feeder._citedby:
+        self.feeder._used += 1
+        if self._saveall == 0 and self.feeder._used == self.feeder._cited:
             self.feeder.reset(recursive=False)
         if self._verbose > 0:
             self.printout(self._verbose, pin)
@@ -61,7 +61,7 @@ class PipeSegment:
     def attach(self, ps):
         if self.feeder is None:
             self.feeder = ps
-            self.feeder._citedby += 1
+            self.feeder._cited += 1
             return True
         else:
             return self.feeder.attach(ps) or ps is self
@@ -115,17 +115,17 @@ class MergeSegment(PipeSegment):
     def __init__(self, feeder1, feeder2):
         super().__init__()
         self.feeder1 = feeder1
-        self.feeder1._citedby += 1
+        self.feeder1._cited += 1
         self.feeder2 = feeder2
-        self.feeder2._citedby += 1
+        self.feeder2._cited += 1
     def process(self):
-        p1 = self.feeder1(saveall, verbose)
-        p2 = self.feeder2(saveall, verbose)
-        self.feeder1._usedby += 1
-        if self._saveall==0 and self.feeder1._usedby == self.feeder1._citedby:
+        p1 = self.feeder1(self._saveall, self._verbose)
+        p2 = self.feeder2(self._saveall, self._verbose)
+        self.feeder1._used += 1
+        if self._saveall == 0 and self.feeder1._used == self.feeder1._cited:
             self.feeder1.reset(recursive=False)
-        self.feeder2._usedby += 1
-        if self._saveall==0 and self.feeder2._usedby == self.feeder2._citedby:
+        self.feeder2._used += 1
+        if self._saveall == 0 and self.feeder2._used == self.feeder2._cited:
             self.feeder2.reset(recursive=False)
         if self._verbose > 0:
             self.printout(self._verbose, p1, p2)
@@ -148,13 +148,13 @@ class MergeSegment(PipeSegment):
     def attach(self, ps):
         if self.feeder1 is None:
             self.feeder1 = ps
-            self.feeder._citedby += 1
+            self.feeder._cited += 1
             flag1 = True
         else:
             flag1 = self.feeder1.attach(ps)
         if self.feeder2 is None:
             self.feeder2 = ps
-            self.feeder._citedby += 1
+            self.feeder._cited += 1
             flag2 = True
         else:
             flag2 = self.feeder2.attach(ps)
