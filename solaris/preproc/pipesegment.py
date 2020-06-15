@@ -9,23 +9,27 @@ class PipeSegment:
         self.procout = None
         self.procstart = False
         self.procfinish = False
-        self.citedby = 0
-        self.usedby = 0
+        self._citedby = 0
+        self._usedby = 0
+        self._saveall = 0
+        self._verbose = 0
     def __call__(self, saveall=0, verbose=0):
+        self._saveall = saveall
+        self._verbose = verbose
         if self.procstart and not self.procfinish:
             raise Exception('(!) Circular dependency in workflow.')
         if not self.procfinish:
             self.procstart = True
-            self.procout = self.process(saveall, verbose)
+            self.procout = self.process()
             self.procfinish = True
         return self.procout
-    def process(self, saveall=0, verbose=0):
-        pin = self.feeder(saveall, verbose)
-        self.feeder.usedby += 1
-        if saveall == 0 and self.feeder.usedby == self.feeder.citedby:
+    def process(self):
+        pin = self.feeder(self._saveall, self._verbose)
+        self.feeder._usedby += 1
+        if self._saveall == 0 and self.feeder._usedby == self.feeder._citedby:
             self.feeder.reset(recursive=False)
-        if verbose > 0:
-            self.printout(verbose, pin)
+        if self._verbose > 0:
+            self.printout(self._verbose, pin)
         return self.transform(pin)
     def transform(self, pin):
         return pin
@@ -57,7 +61,7 @@ class PipeSegment:
     def attach(self, ps):
         if self.feeder is None:
             self.feeder = ps
-            self.feeder.citedby += 1
+            self.feeder._citedby += 1
             return True
         else:
             return self.feeder.attach(ps) or ps is self
@@ -111,20 +115,20 @@ class MergeSegment(PipeSegment):
     def __init__(self, feeder1, feeder2):
         super().__init__()
         self.feeder1 = feeder1
-        self.feeder1.citedby += 1
+        self.feeder1._citedby += 1
         self.feeder2 = feeder2
-        self.feeder2.citedby += 1
-    def process(self, saveall=0, verbose=0):
+        self.feeder2._citedby += 1
+    def process(self):
         p1 = self.feeder1(saveall, verbose)
         p2 = self.feeder2(saveall, verbose)
-        self.feeder1.usedby += 1
-        if saveall == 0 and self.feeder1.usedby == self.feeder1.citedby:
+        self.feeder1._usedby += 1
+        if self._saveall==0 and self.feeder1._usedby == self.feeder1._citedby:
             self.feeder1.reset(recursive=False)
-        self.feeder2.usedby += 1
-        if saveall == 0 and self.feeder2.usedby == self.feeder2.citedby:
+        self.feeder2._usedby += 1
+        if self._saveall==0 and self.feeder2._usedby == self.feeder2._citedby:
             self.feeder2.reset(recursive=False)
-        if verbose > 0:
-            self.printout(verbose, p1, p2)
+        if self._verbose > 0:
+            self.printout(self._verbose, p1, p2)
         if not isinstance(p1, tuple):
             p1 = (p1,)
         if not isinstance(p2, tuple):
@@ -144,13 +148,13 @@ class MergeSegment(PipeSegment):
     def attach(self, ps):
         if self.feeder1 is None:
             self.feeder1 = ps
-            self.feeder.citedby += 1
+            self.feeder._citedby += 1
             flag1 = True
         else:
             flag1 = self.feeder1.attach(ps)
         if self.feeder2 is None:
             self.feeder2 = ps
-            self.feeder.citedby += 1
+            self.feeder._citedby += 1
             flag2 = True
         else:
             flag2 = self.feeder2.attach(ps)
