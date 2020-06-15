@@ -1,6 +1,6 @@
 from multiprocessing import Pool
 def _parallel_compute_function(x):
-    return (x[0])(*(x[1]))()
+    return (x[0])(*(x[1]),**(x[2]))()
 
 
 class PipeSegment:
@@ -74,10 +74,17 @@ class PipeSegment:
     def __ror__(self, other):
         return LoadSegment(other) * self
     @classmethod
-    def parallel(cls, inputargs, processes=None):
-        allinputs = list(zip([cls]*len(inputargs),inputargs))
+    def parallel(cls, input_args=None, input_kwargs=None, processes=None):
+        if input_args is not None and input_kwargs is None:
+            input_kwargs = [{}] * len(input_args)
+        elif input_kwargs is not None and input_args is None:
+            input_args = [[]] * len(input_kwargs)
+        elif input_args is None and input_kwargs is None:
+            input_args = [[]]
+            input_kwargs = [{}]
+        all_inputs = list(zip([cls]*len(input_args), input_args, input_kwargs))
         with Pool(processes) as pool:
-            return pool.map(_parallel_compute_function, allinputs)
+            return pool.map(_parallel_compute_function, all_inputs)
 
 
 class LoadSegment(PipeSegment):
@@ -190,38 +197,60 @@ class Conditional(PipeSegment):
     """
     def __init__(self, condition_class,
                  if_class=Identity, else_class=ReturnEmpty,
-                 condition_args=[], condition_kwargs={},
-                 if_args=[], if_kwargs={}, else_args=[], else_kwargs={}):
+                 condition_args=[], if_args=[], else_args=[],
+                 condition_kwargs={}, if_kwargs={}, else_kwargs={},
+                 inner_saveall=0, inner_verbose=0):
         super().__init__()
         self.condition_class = condition_class
         self.if_class = if_class
         self.else_class = else_class
         self.condition_args = condition_args
-        self.condition_kwargs = condition_kwargs
         self.if_args = if_args
-        self.if_kwargs = if_kwargs
         self.else_args = else_args
+        self.condition_kwargs = condition_kwargs
+        self.if_kwargs = if_kwargs
         self.else_kwargs = else_kwargs
+        self.inner_saveall = inner_saveall
+        self.inner_verbose = inner_verbose
         if issubclass(self.condition_class, LoadSegment) \
            and issubclass(self.if_class, LoadSegment) \
            and issubclass(self.else_class, LoadSegment):
-            self.feeder = LoadSegment(None)
-    def __call__(self, saveall=0, verbose=0):
-        self.saveall = saveall
-        self.verbose = verbose
-        super().__call__(saveall, verbose)
+            self.feeder = LoadSegment(())
     def transform(self, pin):
-        condition_obj = self.condition_class(*condition_args,
-                                             **condition_kwargs)
-        if not issubclass(self.condition_class, LoadSegment):
+        condition_obj = self.condition_class(*self.condition_args,
+                                             **self.condition_kwargs)
+        if not isinstance(condition_obj, LoadSegment):
             condition_obj = pin * condition_obj
-        if condition_obj(self.saveall, self.verbose):
-            inner_obj = self.if_class(*if_args, **if_kwargs)
+        if condition_obj(self.inner_saveall, self.inner_verbose):
+            inner_obj = self.if_class(*self.if_args, **self.if_kwargs)
         else:
-            inner_obj = self.else_class(*else_args, **else_kwargs)
-        if not issubclass(self.condition_class, LoadSegment):
+            inner_obj = self.else_class(*self.else_args, **self.else_kwargs)
+        if not isinstance(inner_obj, LoadSegment):
             inner_obj = pin * inner_obj
-        return inner_obj(self.saveall, self.verbose)
+        return inner_obj(self.inner_saveall, self.inner_verbose)
+
+
+class Map(PipeSegment):
+    """
+    This is the pipesegment version of a for-loop.
+    Given an iterable of inputs, applies the PipeSegment-derived class
+    specified by 'inner_class' to each one, then returns all the results
+    as a tuple.
+    """
+    def __init__(self, inner_class, *args, **kwargs):
+        super().__init__()
+        self.inner_class = inner_class
+        self.args = args
+        self.kwargs = kwargs
+    def transform(self, pin):
+        pout = ()
+        for entry in pin:
+            outp = (LoadSegment(entry)
+                    * self.inner_class(*self.args, **self.kwargs))()
+            if not isinstance(outp, tuple):
+                outp = (outp,)
+            pout = pout + outp
+        return pout
 
 
 class PipeArgs(PipeSegment):
