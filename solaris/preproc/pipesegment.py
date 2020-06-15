@@ -253,6 +253,35 @@ class Map(PipeSegment):
         return pout
 
 
+class While(PipeSegment):
+    """
+    This is the pipesegment version of a while-loop.
+    Applies the the PipeSegment-derived class specified by 'inner_class'
+    to the piped input over and over again, until sending the piped input
+    through an object of class 'condition_class' returns false.
+    """
+    def __init__(self, condition_class, inner_class,
+                 condition_args=[], inner_args=[],
+                 condition_kwargs={}, inner_kwargs={}):
+        super().__init__()
+        self.condition_class = condition_class
+        self.inner_class = inner_class
+        self.condition_args = condition_args
+        self.inner_args = inner_args
+        self.condition_kwargs = condition_kwargs
+        self.inner_kwargs = inner_kwargs
+    def transform(self, pin):
+        condition_obj = self.condition_class(*self.condition_args,
+                                             **self.condition_kwargs)
+        while (pin * condition_obj)():
+            inner_obj = self.inner_class(*self.inner_args,
+                                         **self.inner_kwargs)
+            pin = (pin * inner_obj)()
+            condition_obj = self.condition_class(*self.condition_args,
+                                                 **self.condition_kwargs)
+        return pin
+
+
 class PipeArgs(PipeSegment):
     """
     Wrapper for any PipeSegment subclass which enables it to accept
