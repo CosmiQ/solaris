@@ -446,11 +446,11 @@ class SetMask(PipeSegment):
     (or other specified value) for every pixel where the 
     mask value is False.
     """
-    def __init__(self, band=None, reverse_order=False, flag=math.nan):
+    def __init__(self, flag=math.nan, band=None, reverse_order=False):
         super().__init__()
+        self.flag = flag
         self.band = band
         self.reverse_order = reverse_order
-        self.flag = flag
     def transform(self, pin):
         if not self.reverse_order:
             img = pin[0]
