@@ -264,16 +264,16 @@ class DecompositionFreemanDurden(PipeSegment):
         term3 = (term1 + term2 + c12 * InPhase() + c12 * Quadrature()
             + surfacedominates) * BandMath(lambda x:
             (x[2] + np.where(x[4], 1, -1) * x[0] + x[3] * 1.j) / x[1])
-        fs = ((term2 + surfacedominates) * image.SetMask(0) + (term1
-            + surfacedominates * image.InvertMask() ) * image.SetMask(0)) \
+        fs = ((term2 + surfacedominates) * image.SetMask(flag=0) + (term1
+            + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)) \
             * image.MergeToSum()
-        fd = ((term1 + surfacedominates) * image.SetMask(0) + (term2
-            + surfacedominates * image.InvertMask() ) * image.SetMask(0)) \
+        fd = ((term1 + surfacedominates) * image.SetMask(flag=0) + (term2
+            + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)) \
             * image.MergeToSum()
         alpha = (surfacedominates * image.Scale(-1.) + (term3
-            + surfacedominates * image.InvertMask()) * image.SetMask(0)) \
+            + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)) \
             * BandMath(lambda x: x[0] + x[1])
-        beta = ((term3 + surfacedominates) * image.SetMask(0) \
+        beta = ((term3 + surfacedominates) * image.SetMask(flag=0) \
             + surfacedominates * image.InvertMask() * image.Scale(1.)) \
             * BandMath(lambda x: x[0] + x[1])
         # Power
@@ -282,8 +282,8 @@ class DecompositionFreemanDurden(PipeSegment):
         Pv = fv
         Pmask = (c11 + c22) * BandMath(lambda x: np.logical_and(
             x[0]==0, x[1]==0)) * image.InvertMask()
-        Ps = (Ps + Pmask) * image.SetMask(0)#
-        Pd = (Pd + Pmask) * image.SetMask(0)#
+        Ps = (Ps + Pmask) * image.SetMask(flag=0)#
+        Pd = (Pd + Pmask) * image.SetMask(flag=0)#
         Pstack = (Ps + Pd + Pv) * image.MergeToStack()
         return Pstack()
 
