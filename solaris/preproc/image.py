@@ -205,14 +205,17 @@ class ImageStats(PipeSegment):
     """
     Calculate descriptive statististics about an image
     """
-    def __init__(self, print_desc=True, print_props=True, return_image=True, return_props=False, median=True):
+    def __init__(self, print_desc=True, print_props=True, return_image=True, return_props=False, median=True, caption=None):
         super().__init__()
         self.print_desc = print_desc
         self.print_props = print_props
         self.return_image = return_image
         self.return_props = return_props
         self.median = median
+        self.caption = caption
     def transform(self, pin):
+        if self.caption is not None:
+            print(self.caption)
         if self.print_desc:
             print(pin)
             print()
