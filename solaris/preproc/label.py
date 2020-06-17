@@ -1,7 +1,10 @@
 import geopandas as gpd
+import pandas as pd
 import shapely.geometry
+import shapely.wkt
 
 from .pipesegment import PipeSegment, LoadSegment, MergeSegment
+from ..vector.polygon import convert_poly_coords
 
 
 class LoadString(LoadSegment):
@@ -47,11 +50,23 @@ class LoadDataFrame(LoadSegment):
     """
     Load a GeoPandas GeoDataFrame from a file.
     """
-    def __init__(self, pathstring):
+    def __init__(self, pathstring, geom_col='geometry', projection=None):
         super().__init__()
         self.pathstring = pathstring
+        self.geom_col = geom_col
+        self.projection = projection
     def load(self):
-        return gpd.read_file(self.pathstring)
+        if self.pathstring.lower()[-4:] == '.csv':
+            df = pd.read_csv(self.pathstring)
+            geometry = df.apply(lambda row:
+                shapely.wkt.loads(row[self.geom_col]), axis=1)
+            df.drop(columns=[self.geom_col])
+            gdf = gpd.GeoDataFrame(df, geometry=geometry)
+            if self.projection is not None:
+                gdf.crs = 'epsg:' + str(self.projection)
+            return gdf
+        else:
+            return gpd.read_file(self.pathstring)
 
 
 class SaveDataFrame(PipeSegment):
@@ -67,7 +82,7 @@ class SaveDataFrame(PipeSegment):
         return pin
 
 
-class ShowString(PipeSegment):
+class ShowDataFrame(PipeSegment):
     """
     Print a GeoPandas GeoDataFrame to the screen.
     """
@@ -110,6 +125,49 @@ class IntersectDataFrames(PipeSegment):
                 result = gpd.overlay(result, gdf)
                 result.crs = pin[self.master].crs
         return result
+
+
+class DataFrameToMask(PipeSegment):
+    """
+    Given a GeoPandas GeoDataFrame and an Image-class image,
+    convert the DataFrame to the corresponding Boolean mask
+    """
+    pass
+
+
+class MaskToDataFrame(PipeSegment):
+    """
+    Given a boolean mask, convert it to a GeoPandas GeoDataFrame of polygons.
+    """
+    pass
+
+
+class DataFramePixelCoords(PipeSegment):
+    """
+    Given a GeoPandas GeoDataFrame, converts between georeferenced
+    coordinates and pixel coordinates.  Assumes image has affine geotransform.
+    """
+    def __init__(self, inverse=False, reverse_order=False, *args, **kwargs):
+        super().__init__()
+        self.inverse = inverse
+        self.reverse_order = reverse_order
+        self.args = args
+        self.kwargs = kwargs
+    def transform(self, pin):
+        if not self.reverse_order:
+            gdf = pin[0]
+            img = pin[1]
+        else:
+            gdf = pin[1]
+            img = pin[0]
+        affine = img.metadata['geotransform']
+        gdf = gdf.copy()
+        newgeoms = gdf.apply(lambda row: convert_poly_coords(
+            row.geometry, affine_obj=affine, inverse=self.inverse,
+            *self.args, **self.kwargs
+        ), axis=1)
+        gdf.geometry = newgeoms
+        return gdf
 
 
 class DataFrameToString(PipeSegment):
