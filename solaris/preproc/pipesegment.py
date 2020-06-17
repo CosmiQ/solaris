@@ -318,7 +318,7 @@ class PipeArgs(PipeSegment):
         if isloadsegment:
             return obj(self._saveall, self._verbose)
         else:
-            return (PipeSegment(inner_pin) * obj)(self._saveall, self._verbose)
+            return (LoadSegment(inner_pin) * obj)(self._saveall, self._verbose)
 
 
 class FunctionPipe(PipeSegment):
