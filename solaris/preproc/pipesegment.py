@@ -1,6 +1,6 @@
 from multiprocessing import Pool
 def _parallel_compute_function(x):
-    return (x[0])(*(x[1]),**(x[2]))()
+    return (x[0])(*(x[1]),**(x[2]))(x[3],x[4])
 
 
 class PipeSegment:
@@ -78,7 +78,8 @@ class PipeSegment:
     def __ror__(self, other):
         return LoadSegment(other) * self
     @classmethod
-    def parallel(cls, input_args=None, input_kwargs=None, processes=None):
+    def parallel(cls, input_args=None, input_kwargs=None, processes=None,
+                 saveall=0, verbose=0):
         if input_args is not None and input_kwargs is None:
             input_kwargs = [{}] * len(input_args)
         elif input_kwargs is not None and input_args is None:
@@ -86,7 +87,9 @@ class PipeSegment:
         elif input_args is None and input_kwargs is None:
             input_args = [[]]
             input_kwargs = [{}]
-        all_inputs = list(zip([cls]*len(input_args), input_args, input_kwargs))
+        all_inputs = list(zip([cls]*len(input_args), input_args, input_kwargs,
+                              [saveall]*len(input_args),
+                              [verbose]*len(input_args)))
         with Pool(processes) as pool:
             return pool.map(_parallel_compute_function, all_inputs)
 
@@ -95,9 +98,9 @@ class LoadSegment(PipeSegment):
     def __init__(self, source=None):
         super().__init__()
         self.source = source
-    def process(self, saveall=0, verbose=0):
-        if verbose > 0:
-            self.printout(verbose)
+    def process(self):
+        if self._verbose > 0:
+            self.printout(self._verbose)
         return self.load()
     def load(self):
         return self.source
@@ -176,7 +179,7 @@ class SelectItem(PipeSegment):
 class Identity(PipeSegment):
     """
     This class is an alias for the PipeSegment base class, to
-    emphasize its property of passing data through unchanged.
+    emphasize its property of passing data through, unchanged.
     Formally, this is the identity element for the '*' operation.
     """
     pass
@@ -202,8 +205,7 @@ class Conditional(PipeSegment):
     def __init__(self, condition_class,
                  if_class=Identity, else_class=ReturnEmpty,
                  condition_args=[], if_args=[], else_args=[],
-                 condition_kwargs={}, if_kwargs={}, else_kwargs={},
-                 inner_saveall=0, inner_verbose=0):
+                 condition_kwargs={}, if_kwargs={}, else_kwargs={}):
         super().__init__()
         self.condition_class = condition_class
         self.if_class = if_class
@@ -214,8 +216,6 @@ class Conditional(PipeSegment):
         self.condition_kwargs = condition_kwargs
         self.if_kwargs = if_kwargs
         self.else_kwargs = else_kwargs
-        self.inner_saveall = inner_saveall
-        self.inner_verbose = inner_verbose
         if issubclass(self.condition_class, LoadSegment) \
            and issubclass(self.if_class, LoadSegment) \
            and issubclass(self.else_class, LoadSegment):
@@ -224,14 +224,14 @@ class Conditional(PipeSegment):
         condition_obj = self.condition_class(*self.condition_args,
                                              **self.condition_kwargs)
         if not isinstance(condition_obj, LoadSegment):
-            condition_obj = pin * condition_obj
-        if condition_obj(self.inner_saveall, self.inner_verbose):
+            condition_obj = LoadSegment(pin) * condition_obj
+        if condition_obj(self._saveall, self._verbose):
             inner_obj = self.if_class(*self.if_args, **self.if_kwargs)
         else:
             inner_obj = self.else_class(*self.else_args, **self.else_kwargs)
         if not isinstance(inner_obj, LoadSegment):
-            inner_obj = pin * inner_obj
-        return inner_obj(self.inner_saveall, self.inner_verbose)
+            inner_obj = LoadSegment(pin) * inner_obj
+        return inner_obj(self._saveall, self._verbose)
 
 
 class Map(PipeSegment):
@@ -249,8 +249,8 @@ class Map(PipeSegment):
     def transform(self, pin):
         pout = ()
         for entry in pin:
-            outp = (LoadSegment(entry)
-                    * self.inner_class(*self.args, **self.kwargs))()
+            outp = (LoadSegment(entry) * self.inner_class(*self.args,
+                **self.kwargs))(self._saveall, self._verbose)
             if not isinstance(outp, tuple):
                 outp = (outp,)
             pout = pout + outp
@@ -277,10 +277,10 @@ class While(PipeSegment):
     def transform(self, pin):
         condition_obj = self.condition_class(*self.condition_args,
                                              **self.condition_kwargs)
-        while (pin * condition_obj)():
+        while (LoadSegment(pin) * condition_obj)(self._saveall, self._verbose):
             inner_obj = self.inner_class(*self.inner_args,
                                          **self.inner_kwargs)
-            pin = (pin * inner_obj)()
+            pin = (LoadSegment(pin) * inner_obj)(self._saveall, self._verbose)
             condition_obj = self.condition_class(*self.condition_args,
                                                  **self.condition_kwargs)
         return pin
@@ -316,9 +316,9 @@ class PipeArgs(PipeSegment):
         #Initialize and call object
         obj = self.inner_class(*args, **kwargs)
         if isloadsegment:
-            return obj()
+            return obj(self._saveall, self._verbose)
         else:
-            return (inner_pin * obj)()
+            return (PipeSegment(inner_pin) * obj)(self._saveall, self._verbose)
 
 
 class FunctionPipe(PipeSegment):
