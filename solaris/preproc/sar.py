@@ -6,6 +6,7 @@ import os
 import osr
 import scipy.signal
 import uuid
+import warnings
 import xml.etree.ElementTree as ET
 
 from .pipesegment import PipeSegment, LoadSegment, MergeSegment
@@ -68,9 +69,17 @@ class Quadrature(PipeSegment):
         return Image(np.imag(pin.data), pin.name, pin.metadata)
 
 
+class Phase(PipeSegment):
+    """
+    Return the phase of the input image
+    """
+    def transform(self, pin):
+        return Image(np.angle(pin.data), pin.name, pin.metadata)
+
+
 class Conjugate(PipeSegment):
     """
-    Return complex conjugate of the input
+    Return complex conjugate of the input image
     """
     def transform(self, pin):
         return Image(np.conj(pin.data), pin.name, pin.metadata)
@@ -347,7 +356,7 @@ class CapellaGridToGCPs(PipeSegment):
     is in pixels.
     """
     def __init__(self, reverse_order=False, row_range=None, col_range=None,
-                 spacing=100, row_spacing=None, col_spacing=None):
+                 spacing=150, row_spacing=None, col_spacing=None):
         super().__init__()
         self.reverse_order = reverse_order
         self.row_range = row_range
@@ -390,6 +399,8 @@ class CapellaGridToGCPs(PipeSegment):
                     grid.data[2, ri, ci],  #altitude
                     ci, ri  #pixel=column=x, line=row=y
                 ))
+        if len(gcps) > 10922:
+            warnings.warn('! Many GCPs generated in CapellaGridToGCPs.')
         pout.metadata['gcps'] = gcps
         return pout
 
