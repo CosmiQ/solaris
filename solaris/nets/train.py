@@ -198,7 +198,6 @@ class Trainer(object):
 
     def _run_torch_callbacks(self, loss, val_loss):
         for cb in self.callbacks:
-
             if isinstance(cb, TorchEarlyStopping):
                 cb(val_loss)
                 if cb.stop:
@@ -216,12 +215,14 @@ class Trainer(object):
                     return False
 
             elif isinstance(cb, TorchModelCheckpoint):
-                print(val for val in self.config)
                 if cb.monitor == 'loss':
                     cb(self.model, loss_value=loss)
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
+                    print(self.config) # debugging
+                    print(self.callbacks) # debugging
+                    
                     cb(self.model, period=self.config['training']['checkpoint_frequency'])
         return True
 
