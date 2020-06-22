@@ -216,12 +216,13 @@ class Trainer(object):
                     return False
 
             elif isinstance(cb, TorchModelCheckpoint):
+                print(val for val in self.config)
                 if cb.monitor == 'loss':
                     cb(self.model, loss_value=loss)
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
-                    cb(self.model, period=self.config['training']['checkpoint_frequency']) 
+                    cb(self.model, period=self.config['training']['checkpoint_frequency'])
         return True
 
     def save_model(self):
