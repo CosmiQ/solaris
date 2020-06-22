@@ -222,8 +222,7 @@ class Trainer(object):
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
                     # cb(self.model, period=self.config['training']['checkpoint_frequency']) # THIS LINE IS THE ERROR -- I THINK I FIXED IT
-                    cb(self.model1)
-# abc test 123
+                    cb(self.model)
         return True
 
     def save_model(self):
