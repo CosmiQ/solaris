@@ -223,7 +223,7 @@ class Trainer(object):
                 elif cb.monitor == 'periodic':
                     # cb(self.model, period=self.config['training']['checkpoint_frequency']) # THIS LINE IS THE ERROR -- I THINK I FIXED IT
                     cb(self.model)
-
+# abc test 123 
         return True
 
     def save_model(self):
