@@ -217,7 +217,7 @@ class Trainer(object):
 
             elif isinstance(cb, TorchModelCheckpoint):
                 if cb.monitor == 'loss':
-                    cb(self.model, loss_value=loss)
+                    cb(self.model, loss_value=loss) 
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
