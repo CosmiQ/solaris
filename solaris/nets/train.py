@@ -141,7 +141,7 @@ class Trainer(object):
                     loss.backward()
                     self.optimizer.step()
 
-                    if self.verbose and batch_idx % 10 == 0:
+                    if self.verbose and batch_idx % 10 == 0: # MAYBE_CHANGE - RRAM
 
                         print('    loss at batch {}: {}'.format(
                             batch_idx, loss), flush=True)
@@ -221,7 +221,7 @@ class Trainer(object):
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
-                    cb(self.model)
+                    cb(self.model, loss_value=???, period=checkpoint_frequency) # THIS LINE IS THE ERROR -- I THINK I FIXED IT
 
         return True
 
