@@ -220,10 +220,10 @@ class Trainer(object):
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
-                    for val in self.config: print([x for x in val]) # debugging
-                    print('\n\n\n')
-                    for val in self.callbacks: print([x for x in val]) # debugging
-
+                    # for val in self.config: print([x for x in val]) # debugging
+                    # print('\n\n\n')
+                    # for val in self.callbacks: print([x for x in val]) # debugging
+                    print(self.config['training']['checkpoint_frequency']) # debugging
                     cb(self.model, period=self.config['training']['checkpoint_frequency'])
         return True
 
