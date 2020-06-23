@@ -221,18 +221,12 @@ class Trainer(object):
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
-                    # cb.period = self.config['training']['checkpoint_frequency']
-
-                    if self.config['training'].get('checkpoint_frequency'):
+                    if self.config['training'].get('checkpoint_frequency'): #rram
                         cb.period = self.config['training'].get('checkpoint_frequency')
 
-                    print('self.config: ', self.config, flush=True)
-                    cb(self.model)
-                    # for val in self.config: print([x for x in val]) # debugging
-                    # print('\n\n\n')
-                    # for val in self.callbacks: print([x for x in val]) # debugging
-                    # print(self.config['training']['checkpoint_frequency']) # debugging
-                    # cb(self.model, period=self.config['training']['checkpoint_frequency'])
+                    print('cb.period: ', cb.period, flush=True) # rram
+                    cb(self.model, loss_value=loss) # defaults to loss, # rram
+                                                    # no specification needed
 
         return True
 
