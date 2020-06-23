@@ -180,7 +180,7 @@ class TorchModelCheckpoint(object):
             if self.last_epoch + self.period <= self.epoch:
                 self.last_saved_value = loss_value if loss_value else 0
                 self.save(model, self.weights_only)
-                self.last_epoch = self.epoch
+                self.last_epoch = self.epoch 
 
 
         elif self.monitor in ['loss', 'val_loss']:
