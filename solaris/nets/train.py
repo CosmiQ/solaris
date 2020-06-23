@@ -143,8 +143,9 @@ class Trainer(object):
 
                     if self.verbose and batch_idx % 10 == 0: # MAYBE_CHANGE - RRAM
 
-                        print('    TEST loss at batch {}: {}'.format(
+                        print('    TEST loss at batch {}: {}'.format( # rram
                             batch_idx, loss), flush=True)
+                        print(self.callbacks, flush=True)
                         # calculate metrics
 #                        for metric in self.metrics['train']:
 #                            with tf_sess.as_default():
