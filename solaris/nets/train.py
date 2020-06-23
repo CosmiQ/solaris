@@ -226,6 +226,7 @@ class Trainer(object):
 
                     # if self.config['training'].get('checkpoint_frequency'):
                         # cb.period = self.config['training'].get('checkpoint_frequency')
+                    print(self.filepath, flush=True)
                     cb(self.model)
                     # for val in self.config: print([x for x in val]) # debugging
                     # print('\n\n\n')
