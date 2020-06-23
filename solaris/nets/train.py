@@ -13,7 +13,6 @@ from .metrics import get_metrics
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
 import tensorflow as tf
-import sys # rram debugging
 
 class Trainer(object):
     """Object for training `solaris` models using PyTorch or Keras."""
@@ -141,15 +140,11 @@ class Trainer(object):
                     loss.backward()
                     self.optimizer.step()
 
-                    if self.verbose and batch_idx % 10 == 0: # MAYBE_CHANGE - RRAM
+                    if self.verbose and batch_idx % 10 == 0:
 
-                        print('    TEST loss at batch {}: {}'.format( # rram
+                        print('    loss at batch {}: {}'.format(
                             batch_idx, loss), flush=True)
-                        # calculate metrics
-#                        for metric in self.metrics['train']:
-#                            with tf_sess.as_default():
-#                                print('{} score: {}'.format(
-#                                    metric, metric(tf.convert_to_tensor(target.detach().cpu().numpy(), dtype='float64'), tf.convert_to_tensor(output.detach().cpu().numpy(), dtype='float64')).eval()))
+
                 # VALIDATION
                 with torch.no_grad():
                     self.model.eval()
@@ -185,10 +180,6 @@ class Trainer(object):
                         epoch, val_loss))
                     print()
 
-#                    for metric in self.metrics['val']:
-#                        with tf_sess.as_default():
-#                            print('validation {} score: {}'.format(
-#                            metric, metric(tf.convert_to_tensor(target.detach().cpu().numpy(), dtype='float64'), tf.convert_to_tensor(output.detach().cpu().numpy(), dtype='float64')).eval()))
                 check_continue = self._run_torch_callbacks(
                     loss.detach().cpu().numpy(),
                     val_loss.detach().cpu().numpy())
@@ -221,11 +212,11 @@ class Trainer(object):
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
-                    if self.config['training'].get('checkpoint_frequency'): #rram
+                    if self.config['training'].get('checkpoint_frequency'):
                         cb.period = self.config['training'].get('checkpoint_frequency')
 
-                    print('cb.period: ', cb.period, flush=True) # rram
-                    cb(self.model, loss_value=loss) # defaults to loss, # rram
+                    print('cb.period: ', cb.period, flush=True)
+                    cb(self.model, loss_value=loss) # defaults to loss,
                                                     # no specification needed
 
         return True
