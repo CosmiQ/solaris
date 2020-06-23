@@ -207,15 +207,18 @@ class Trainer(object):
                     return False
 
             elif isinstance(cb, TorchModelCheckpoint):
+                # set minimum num of epochs btwn checkpoints (not periodic)
+                # or
+                # frequency of model saving (periodic)
+                if self.config['training'].get('checkpoint_frequency'):
+                    cb.period = self.config['training'].get('checkpoint_frequency')
+
                 if cb.monitor == 'loss':
                     cb(self.model, loss_value=loss)
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
-                    if self.config['training'].get('checkpoint_frequency'):
-                        cb.period = self.config['training'].get('checkpoint_frequency')
-                    cb(self.model, loss_value=loss) # defaults to loss,
-                                                    # no specification needed
+                    cb(self.model) # no loss_value specification needed
 
         return True
 
