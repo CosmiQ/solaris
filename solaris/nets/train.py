@@ -214,8 +214,6 @@ class Trainer(object):
                 elif cb.monitor == 'periodic':
                     if self.config['training'].get('checkpoint_frequency'):
                         cb.period = self.config['training'].get('checkpoint_frequency')
-
-                    print('cb.period: ', cb.period, flush=True)
                     cb(self.model, loss_value=loss) # defaults to loss,
                                                     # no specification needed
 
