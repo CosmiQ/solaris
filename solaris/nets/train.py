@@ -13,7 +13,7 @@ from .metrics import get_metrics
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
 import tensorflow as tf
-
+import sys # rram debugging
 
 class Trainer(object):
     """Object for training `solaris` models using PyTorch or Keras."""
@@ -97,7 +97,7 @@ class Trainer(object):
         self.is_initialized = True
 
     def train(self):
-        print(type(self.config))# rram debugging test
+        print(type(self.config), file=sys.stderr)# rram debugging test
         break # rram debugging test
 
         """Run training on the model."""
