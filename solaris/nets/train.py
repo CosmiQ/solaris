@@ -146,8 +146,8 @@ class Trainer(object):
                         print('    loss at batch {}: {}'.format(
                             batch_idx, loss), flush=True)
 
-                         print(type(self.config), flush=True)# rram debugging test
-                         break # rram debugging test# rram debugging test
+                        print(type(self.config), flush=True) # rram debugging test
+                        break # rram debugging test# rram debugging test
                         # calculate metrics
 #                        for metric in self.metrics['train']:
 #                            with tf_sess.as_default():
