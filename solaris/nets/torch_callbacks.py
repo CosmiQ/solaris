@@ -176,10 +176,14 @@ class TorchModelCheckpoint(object):
         """
 
         self.epoch += 1
-        if self.monitor == 'periodic':
-            # update based on period 
+        if self.monitor == 'periodic': # update based on period
+            if self.last_saved_value is None:
+                self.last_saved_value = loss_value
+                if self.last_epoch + self.period <= self.epoch:
+                    self.save(model, self.weights_only)
+                    self.last_epoch = self.epoch
             if self.last_epoch + self.period <= self.epoch:
-                self.last_saved_value = loss_value # no need for None check
+                self.last_saved_value = loss_value
                 self.save(model, self.weights_only)
                 self.last_epoch = self.epoch
 
