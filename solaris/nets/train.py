@@ -97,9 +97,6 @@ class Trainer(object):
         self.is_initialized = True
 
     def train(self):
-        print(type(self.config), file=sys.stderr)# rram debugging test
-        break # rram debugging test
-
         """Run training on the model."""
         if not self.is_initialized:
             self.initialize_model()
@@ -148,6 +145,9 @@ class Trainer(object):
 
                         print('    loss at batch {}: {}'.format(
                             batch_idx, loss), flush=True)
+
+                         print(type(self.config), flush=True)# rram debugging test
+                         break # rram debugging test# rram debugging test
                         # calculate metrics
 #                        for metric in self.metrics['train']:
 #                            with tf_sess.as_default():
@@ -187,6 +187,7 @@ class Trainer(object):
                     print('    Validation loss at epoch {}: {}'.format(
                         epoch, val_loss))
                     print()
+
 #                    for metric in self.metrics['val']:
 #                        with tf_sess.as_default():
 #                            print('validation {} score: {}'.format(
