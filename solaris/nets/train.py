@@ -145,7 +145,7 @@ class Trainer(object):
 
                         print('    TEST loss at batch {}: {}'.format( # rram
                             batch_idx, loss), flush=True)
-                        print(self.callbacks, flush=True)
+                        print(self.callbacks, flush=True) # rram debugging
                         # calculate metrics
 #                        for metric in self.metrics['train']:
 #                            with tf_sess.as_default():
@@ -223,8 +223,9 @@ class Trainer(object):
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
                     # cb.period = self.config['training']['checkpoint_frequency']
-                    if self.config['training'].get('checkpoint_frequency'):
-                        cb.period = self.config['training'].get('checkpoint_frequency')
+
+                    # if self.config['training'].get('checkpoint_frequency'):
+                        # cb.period = self.config['training'].get('checkpoint_frequency')
                     cb(self.model)
                     # for val in self.config: print([x for x in val]) # debugging
                     # print('\n\n\n')
