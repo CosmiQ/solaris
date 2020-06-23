@@ -97,6 +97,9 @@ class Trainer(object):
         self.is_initialized = True
 
     def train(self):
+        print(type(self.config))# rram debugging test
+        break # rram debugging test
+
         """Run training on the model."""
         if not self.is_initialized:
             self.initialize_model()
