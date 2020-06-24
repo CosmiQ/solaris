@@ -40,6 +40,8 @@ class Trainer(object):
                              self.config['training'].get('loss'),
                              self.config['training'].get('loss_weights'),
                              self.custom_losses)
+        self.checkpoint_frequency = self.config['training'].get('checkpoint_'
+                                                                + 'frequency')
         self.callbacks = get_callbacks(self.framework, self.config)
         self.metrics = get_metrics(self.framework, self.config)
         self.verbose = self.config['training']['verbose']
@@ -210,16 +212,15 @@ class Trainer(object):
                 # set minimum num of epochs btwn checkpoints (not periodic)
                 # or
                 # frequency of model saving (periodic)
-                if self.config['training'].get('checkpoint_frequency'):
-                    cb.period = self.config['training'].get('checkpoint_frequency')
+                cb.period = self.checkpoint_frequency
 
                 if cb.monitor == 'loss':
                     cb(self.model, loss_value=loss)
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
-                    cb(self.model, loss_value=loss) # no loss_value specification needed
-                                                    # defaults to `loss`
+                    # no loss_value specification needed; defaults to `loss`
+                    cb(self.model, loss_value=loss)
 
         return True
 
@@ -229,9 +230,11 @@ class Trainer(object):
             self.model.save(self.config['training']['model_dest_path'])
         elif self.framework == 'torch':
             if isinstance(self.model, torch.nn.DataParallel):
-                torch.save(self.model.module.state_dict(), self.config['training']['model_dest_path'])
+                torch.save(self.model.module.state_dict(),
+                           self.config['training']['model_dest_path'])
             else:
-                torch.save(self.model.state_dict(), self.config['training']['model_dest_path'])
+                torch.save(self.model.state_dict(),
+                           self.config['training']['model_dest_path'])
 
 
 def get_train_val_dfs(config):
