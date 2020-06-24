@@ -212,7 +212,7 @@ class Trainer(object):
                 # set minimum num of epochs btwn checkpoints (not periodic)
                 # or
                 # frequency of model saving (periodic)
-                cb.period = self.checkpoint_frequency
+                # cb.period = self.checkpoint_frequency
 
                 if cb.monitor == 'loss':
                     cb(self.model, loss_value=loss)
@@ -220,7 +220,8 @@ class Trainer(object):
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
                     # no loss_value specification needed; defaults to `loss`
-                    cb(self.model, loss_value=loss)
+                    # cb(self.model, loss_value=loss)
+                    cb(self.model)
 
         return True
 
