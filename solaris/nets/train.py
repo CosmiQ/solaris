@@ -218,7 +218,8 @@ class Trainer(object):
                 elif cb.monitor == 'val_loss':
                     cb(self.model, loss_value=val_loss)
                 elif cb.monitor == 'periodic':
-                    cb(self.model) # no loss_value specification needed
+                    cb(self.model, loss_value=loss) # no loss_value specification needed
+                                                    # defaults to `loss`
 
         return True
 
