@@ -126,13 +126,14 @@ class SaveImage(PipeSegment):
     Save an image to disk using GDAL.
     """
     def __init__(self, pathstring, driver='GTiff', return_image=True,
-                 save_projection=True, save_metadata=True):
+                 save_projection=True, save_metadata=True, no_data_value=None):
         super().__init__()
         self.pathstring = pathstring
+        self.driver = driver
         self.return_image = return_image
         self.save_projection = save_projection
         self.save_metadata = save_metadata
-        self.driver = driver
+        self.no_data_value = no_data_value
     def transform(self, pin):
         # Save image to disk
         driver = gdal.GetDriverByName(self.driver)
@@ -145,7 +146,14 @@ class SaveImage(PipeSegment):
                 datatype = gdal.GDT_Float32
         dataset = driver.Create(self.pathstring, pin.data.shape[2], pin.data.shape[1], pin.data.shape[0], datatype)
         for band in range(pin.data.shape[0]):
-            dataset.GetRasterBand(band+1).WriteArray(pin.data[band, :, :])
+            bandptr = dataset.GetRasterBand(band+1)
+            bandptr.WriteArray(pin.data[band, :, :])
+            if isinstance(self.no_data_value, str) \
+               and self.no_data_value.lower() == 'nan':
+                bandptr.SetNoDataValue(math.nan)
+            elif self.no_data_value is not None:
+                bandptr.SetNoDataValue(self.no_data_value)
+            bandptr.FlushCache()
         if self.save_projection:
             #First determine which projection system, if any, is used
             proj_lens = [0, 0]
