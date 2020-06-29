@@ -65,10 +65,10 @@ class TorchFocalLoss(nn.Module):
 
         if self.logits:
             BCE_loss = F.binary_cross_entropy_with_logits(outputs, targets,
-                                                          reduction='sum')
+                                                          reduction='none')
         else:
             BCE_loss = F.binary_cross_entropy(outputs, targets,
-                                              reduction='sum')
+                                              reduction='none')
         pt = torch.exp(-BCE_loss)
         F_loss = (1-pt)**self.gamma * BCE_loss
         if self.reduce:
