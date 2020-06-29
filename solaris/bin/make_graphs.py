@@ -1,6 +1,6 @@
 import argparse
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from multiprocessing import Pool
 from ..vector.graph import geojson_to_graph
 from ..utils.cli import _func_wrapper
