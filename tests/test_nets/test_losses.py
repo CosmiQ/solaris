@@ -39,7 +39,7 @@ class TestGetLoss(object):
         y_true = torch.tensor([0, 1, 1], dtype=torch.float)
         y_pred = torch.tensor([.1, .9, .4], dtype=torch.float)
         assert np.abs(
-            lf.forward(y_true, y_pred) - 8.3682727814) < epsilon
+            lf.forward(y_pred, y_true) - 1.1423372030) < epsilon
 
 
 class TestKerasCustomLosses(object):
@@ -96,4 +96,4 @@ class TestTorchCustomLosses(object):
         y_pred = torch.tensor([.1, .9, .4], dtype=torch.float)
         lf = torch_lovasz_hinge
         assert np.abs(
-            lf(y_pred, y_true) - 0.8517242074) < epsilon
+            lf(y_pred, y_true) - 0.6000000000) < epsilon
