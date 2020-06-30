@@ -25,7 +25,7 @@ class TestGetLoss(object):
         sess = tf.Session()
         with sess.as_default():
             assert np.abs(
-                lf(y_true, y_pred).eval() - 8.3682727814) < epsilon
+                lf(y_true, y_pred).eval() - 0.9423373) < epsilon
 
     def test_torch_vanilla_loss(self):
         loss_dict = {'bce' : {}}
@@ -51,7 +51,7 @@ class TestKerasCustomLosses(object):
         sess = tf.Session()
         with sess.as_default():
             foc_loss = k_focal_loss()(y_true, y_pred).eval()
-            assert np.abs(foc_loss - 0.1106572822) < epsilon
+            assert np.abs(foc_loss - 0.24845211) < epsilon
 
     def test_keras_lovasz_hinge(self):
         epsilon = 1e-6
@@ -60,7 +60,7 @@ class TestKerasCustomLosses(object):
         sess = tf.Session()
         with sess.as_default():
             lov_loss = k_lovasz_hinge()(y_true, y_pred).eval()
-            assert np.abs(lov_loss - 0.8517242074) < epsilon
+            assert np.abs(lov_loss - 0.70273256) < epsilon
 
     def test_keras_jaccard_loss(self):
         epsilon = 1e-6
@@ -69,7 +69,7 @@ class TestKerasCustomLosses(object):
         sess = tf.Session()
         with sess.as_default():
             jac_loss = k_jaccard_loss(y_true, y_pred).eval()
-            assert np.abs(jac_loss - 0.66666666667) < epsilon
+            assert np.abs(jac_loss - 0.38095242) < epsilon
 
 
 class TestTorchCustomLosses(object):
