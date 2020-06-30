@@ -20,12 +20,12 @@ class TestGetLoss(object):
         epsilon = 1e-6
         loss_dict = {'bce' : {}, 'hinge' : {}}
         lf = get_loss('keras', loss_dict)
-        y_true = tf.constant([1, 1, 1], dtype='float')
-        y_pred = tf.constant([0, 1, 0], dtype='float')
+        y_true = tf.constant([0, 1, 1], dtype='float')
+        y_pred = tf.constant([.1, .9, .4], dtype='float')
         sess = tf.Session()
         with sess.as_default():
             assert np.abs(
-                lf(y_true, y_pred).eval() - 11.41206380063888) < epsilon
+                lf(y_true, y_pred).eval() - 8.3682727814) < epsilon
 
     def test_torch_vanilla_loss(self):
         loss_dict = {'bce' : {}}
@@ -36,36 +36,36 @@ class TestGetLoss(object):
         epsilon = 1e-4
         loss_dict = {'bce' : {}, 'hinge' : {}}
         lf = get_loss('torch', loss_dict)
-        y_true = torch.tensor([1, 1, 1], dtype=torch.float)
-        y_pred = torch.tensor([0, 1, 0], dtype=torch.float)
+        y_true = torch.tensor([0, 1, 1], dtype=torch.float)
+        y_pred = torch.tensor([.1, .9, .4], dtype=torch.float)
         assert np.abs(
-            lf.forward(y_true, y_pred) - 19.4207) < epsilon
+            lf.forward(y_true, y_pred) - 8.3682727814) < epsilon
 
 
 class TestKerasCustomLosses(object):
 
     def test_keras_focal_loss(self):
         epsilon = 1e-6
-        y_true = tf.constant([1, 1, 1], dtype='float')
-        y_pred = tf.constant([0, 1, 0], dtype='float')
+        y_true = tf.constant([0, 1, 1], dtype='float')
+        y_pred = tf.constant([.1, .9, .4], dtype='float')
         sess = tf.Session()
         with sess.as_default():
             foc_loss = k_focal_loss()(y_true, y_pred).eval()
-            assert np.abs(foc_loss - 41.446533) < epsilon
+            assert np.abs(foc_loss - 0.1106572822) < epsilon
 
     def test_keras_lovasz_hinge(self):
         epsilon = 1e-6
-        y_true = tf.constant([1, 1, 1], dtype='float')
-        y_pred = tf.constant([0, 1, 0], dtype='float')
+        y_true = tf.constant([0, 1, 1], dtype='float')
+        y_pred = tf.constant([.1, .9, .4], dtype='float')
         sess = tf.Session()
         with sess.as_default():
             lov_loss = k_lovasz_hinge()(y_true, y_pred).eval()
-            assert np.abs(lov_loss - 19.087347) < epsilon
+            assert np.abs(lov_loss - 0.8517242074) < epsilon
 
     def test_keras_jaccard_loss(self):
         epsilon = 1e-6
-        y_true = tf.constant([1, 1, 1], dtype='float')
-        y_pred = tf.constant([0, 1, 0], dtype='float')
+        y_true = tf.constant([0, 1, 1], dtype='float')
+        y_pred = tf.constant([.1, .9, .4], dtype='float')
         sess = tf.Session()
         with sess.as_default():
             jac_loss = k_jaccard_loss(y_true, y_pred).eval()
@@ -76,24 +76,24 @@ class TestTorchCustomLosses(object):
 
     def test_torch_focal_loss(self):
         epsilon = 1e-6
-        y_true = torch.tensor([1, 1, 1], dtype=torch.float)
-        y_pred = torch.tensor([0, 1, 0], dtype=torch.float)
+        y_true = torch.tensor([0, 1, 1], dtype=torch.float)
+        y_pred = torch.tensor([.1, .9, .4], dtype=torch.float)
         lf = TorchFocalLoss()
         assert np.abs(
-            lf.forward(y_pred, y_true) - 18.420681) < epsilon
+            lf.forward(y_pred, y_true) - 0.1106572822) < epsilon
 
     def test_torch_focal_loss_same(self):
         epsilon = 1e-5
-        y_true = torch.tensor([0, 1, 0], dtype=torch.float)
-        y_pred = torch.tensor([0, 1, 0], dtype=torch.float)
+        y_true = torch.tensor([0, 1, 1], dtype=torch.float)
+        y_pred = torch.tensor([0, 1, 1], dtype=torch.float)
         lf = TorchFocalLoss()
         assert np.abs(
             lf.forward(y_pred, y_true) - 0.) < epsilon
 
     def test_torch_lovasz_hinge(self):
         epsilon = 1e-6
-        y_true = torch.tensor([1, 1, 1], dtype=torch.float)
-        y_pred = torch.tensor([0, 1, 0], dtype=torch.float)
+        y_true = torch.tensor([0, 1, 1], dtype=torch.float)
+        y_pred = torch.tensor([.1, .9, .4], dtype=torch.float)
         lf = torch_lovasz_hinge
         assert np.abs(
-            lf(y_pred, y_true) - 0.6666666269302368) < epsilon
+            lf(y_pred, y_true) - 0.8517242074) < epsilon
