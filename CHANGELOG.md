@@ -17,9 +17,11 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ## Unreleased
 
 ### Added
+- 20200701, dphogan: Added multimodal preprocessing subpackage (#360)
 ### Removed
 ### Changed
 ### Fixed
+- 20200630, dphogan: Remove edge case numeric values from loss function tests (#358)
 ### Deprecated
 ### Security
 
