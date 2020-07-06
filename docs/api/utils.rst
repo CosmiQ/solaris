@@ -40,3 +40,9 @@
 
 .. automodule:: solaris.utils.raster
    :members:
+
+``solaris.utils.data`` Dataset CSV utilities
+--------------------------------------------
+
+.. automodule:: solaris.utils.data
+   :members:
