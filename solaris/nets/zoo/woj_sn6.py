@@ -72,9 +72,9 @@ cv2.ocl.setUseOpenCL(False)
 
 ################################# MODEL
 
-class SpatialGather_Module(nn.Module):
+class Woj_SpaceNet6_SpatialGather_Module(nn.Module):
     def __init__(self, cls_num=0):
-        super(SpatialGather_Module, self).__init__()
+        super(Woj_SpaceNet6_SpatialGather_Module, self).__init__()
         self.cls_num = cls_num
 
     def forward(self, feats, probs):
@@ -85,9 +85,9 @@ class SpatialGather_Module(nn.Module):
         probs = F.softmax(probs, dim=2)# batch x k x hw
         return torch.matmul(probs, feats).permute(0, 2, 1).unsqueeze(3).contiguous() # batch x k x c x 1
 
-class ObjectAttentionBlock2D(nn.Module):
+class Woj_SpaceNet6_ObjectAttentionBlock2D(nn.Module):
     def __init__(self, inc, keyc, bn_type=None):
-        super(ObjectAttentionBlock2D, self).__init__()
+        super(Woj_SpaceNet6_ObjectAttentionBlock2D, self).__init__()
         self.keyc = keyc
         self.f_pixel = nn.Sequential(nn.Conv2d(inc, keyc, 1, bias=False), nn.BatchNorm2d(keyc), nn.ReLU(), nn.Conv2d(keyc, keyc, 1, bias=False), nn.BatchNorm2d(keyc), nn.ReLU())
         self.f_object = nn.Sequential(nn.Conv2d(inc, keyc, 1, bias=False), nn.BatchNorm2d(keyc), nn.ReLU(), nn.Conv2d(keyc, keyc, 1, bias=False), nn.BatchNorm2d(keyc), nn.ReLU())
@@ -112,10 +112,10 @@ class ObjectAttentionBlock2D(nn.Module):
         context = self.f_up(context)
         return context
 
-class SpatialOCR_Module(nn.Module):
+class Woj_SpaceNet6_SpatialOCR_Module(nn.Module):
     def __init__(self, in_channels, key_channels, out_channels, dropout=0.1):
-        super(SpatialOCR_Module, self).__init__()
-        self.object_context_block = ObjectAttentionBlock2D(in_channels, key_channels)
+        super(Woj_SpaceNet6_SpatialOCR_Module, self).__init__()
+        self.object_context_block = Woj_SpaceNet6_ObjectAttentionBlock2D(in_channels, key_channels)
         self.conv_bn_dropout = nn.Sequential(nn.Conv2d(2 * in_channels, out_channels, 1, bias=False), nn.BatchNorm2d(out_channels), nn.ReLU(), nn.Dropout2d(dropout))
 
     def forward(self, feats, proxy_feats):
@@ -125,9 +125,9 @@ class SpatialOCR_Module(nn.Module):
 def m(in_channels, out_channels, k, d=1):
     return nn.Sequential(nn.Conv2d(in_channels, out_channels, k, padding=d if d>1 else k//2, dilation=d, bias=False), nn.BatchNorm2d(out_channels), nn.ReLU())
 
-class ASPP(nn.Module):
+class Woj_SpaceNet6_ASPP(nn.Module):
     def __init__(self, in_channels, out_channels = 256, rates = [12, 24, 36]):
-        super(ASPP, self).__init__()
+        super(Woj_SpaceNet6_ASPP, self).__init__()
 
         self.c1 = m(in_channels, out_channels, 1)
         self.c2 = m(in_channels, out_channels, 3, rates[0])
@@ -149,10 +149,10 @@ class ASPP(nn.Module):
         return self.drop(c14 + cg)
 
 
-class GenEfficientNet(nn.Module):
+class Woj_SpaceNet6_GenEfficientNet(nn.Module):
     def __init__(self, block_args, num_classes=1000, in_chans=3, num_features=1280, stem_size=32, fix_stem=False, channel_multiplier=1.0, channel_divisor=8, channel_min=None,
                  pad_type='', act_layer=nn.ReLU, drop_connect_rate=0., se_kwargs=None, norm_layer=nn.BatchNorm2d, norm_kwargs=None, weight_init='goog', dilations=[False, False,False,False]):
-        super(GenEfficientNet, self).__init__()
+        super(Woj_SpaceNet6_GenEfficientNet, self).__init__()
 
         stem_size = round_channels(stem_size, channel_multiplier, channel_divisor, channel_min)
         self.conv_stem = select_conv2d(in_chans, stem_size, 3, stride=2, padding=pad_type)
@@ -175,7 +175,7 @@ class GenEfficientNet(nn.Module):
                 initialize_weight_default(m, n)
 
 
-class Unet(nn.Module):
+class Woj_SpaceNet6_UNet(nn.Module):
     def __init__(self, extra_num = 1, dec_ch = [32, 64, 128, 256, 1024], stride = 32, net='b5', bot1x1=False, glob=False, bn = False, aspp=False, ocr=False, aux = False):
         super().__init__()
 
@@ -229,7 +229,7 @@ class Unet(nn.Module):
                 return nn.Sequential(nn.Conv2d(cin, cout, k, padding=k//2), nn.ReLU(inplace=True))
 
         if self.aspp:
-            self.asppc = ASPP(enc_ch[4], 256)
+            self.asppc = Woj_SpaceNet6_ASPP(enc_ch[4], 256)
             enc_ch[4] = 256
         if self.ocr:
             midc = 512
@@ -240,8 +240,8 @@ class Unet(nn.Module):
             inpc = sum(enc_ch[1:])
             self.aux_head = nn.Sequential(nn.Conv2d(inpc, inpc, 3, padding=1, bias=False), nn.BatchNorm2d(inpc), nn.ReLU(inplace=True), nn.Conv2d(inpc, numcl, 1))
             self.conv3x3_ocr = nn.Sequential(nn.Conv2d(inpc, midc, 3, padding=1, bias=False), nn.BatchNorm2d(midc), nn.ReLU(inplace=True))
-            self.ocr_gather_head = SpatialGather_Module(numcl)
-            self.ocr_distri_head = SpatialOCR_Module(in_channels=midc, key_channels=keyc, out_channels=midc, dropout=0.05)
+            self.ocr_gather_head = Woj_SpaceNet6_SpatialGather_Module(numcl)
+            self.ocr_distri_head = Woj_SpaceNet6_SpatialOCR_Module(in_channels=midc, key_channels=keyc, out_channels=midc, dropout=0.05)
         if self.glob:
             self.global_f = nn.Sequential(nn.AdaptiveAvgPool2d(1), mod(enc_ch[4], dec_ch[4], 1))
 
@@ -286,7 +286,7 @@ class Unet(nn.Module):
             ['ir_r3_k5_s1_e6_c112_se0.25'],
             ['ir_r4_k5_s2_e6_c192_se0.25'],
             ['ir_r1_k3_s1_e6_c320_se0.25']]
-        enc = GenEfficientNet(in_chans=3, block_args=decode_arch_def(arch_def, depth_multiplier), num_features=round_channels(1280, channel_multiplier, 8, None), stem_size=32,
+        enc = Woj_SpaceNet6_GenEfficientNet(in_chans=3, block_args=decode_arch_def(arch_def, depth_multiplier), num_features=round_channels(1280, channel_multiplier, 8, None), stem_size=32,
             channel_multiplier=channel_multiplier, act_layer=resolve_act_layer({}, 'swish'), norm_kwargs=resolve_bn_args({'bn_eps': BN_EPS_TF_DEFAULT}), pad_type='same', dilations=dilations)
         state_dict = load_state_dict_from_url(url)
         enc.load_state_dict(state_dict, strict=True)

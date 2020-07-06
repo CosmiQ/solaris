@@ -4,6 +4,7 @@ from .xdxd_sn4 import XDXD_SpaceNet4_UNetVGG16
 from .selim_sef_sn4 import SelimSef_SpaceNet4_ResNet34UNet
 from .selim_sef_sn4 import SelimSef_SpaceNet4_DenseNet121UNet
 from .selim_sef_sn4 import SelimSef_SpaceNet4_DenseNet161UNet
+from .woj_sn6 import Woj_SpaceNet6_UNet # rram
 
 model_dict = {
     'xdxd_spacenet4': {
@@ -32,5 +33,12 @@ model_dict = {
         ),
         'weight_url': 'https://s3.amazonaws.com/spacenet-dataset/spacenet-model-weights/spacenet-4/selimsef_spacenet4_densenet161unet_solaris_weights.pth',
         'arch': SelimSef_SpaceNet4_DenseNet161UNet
+        },
+    # rram below
+    'zbigniewwojna_spacenet6': {
+        'weight_path': os.path.join(weights_dir,
+                                    'woj_spacenet6_solaris_weights.pth'),
+        'weight_url': 'empty for now -- NEED TO FILL THIS WITH AWS-HOSTED WEIGHT FILE LATER',
+        'arch': Woj_SpaceNet6_UNet
         }
     }

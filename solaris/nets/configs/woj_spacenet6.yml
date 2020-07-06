@@ -7,7 +7,7 @@ infer: true
 
 pretrained: true
 nn_framework:  torch
-batch_size: 12
+batch_size: 64 # ??
 
 data_specs:
   width: 512
@@ -111,9 +111,9 @@ training:
   checkpoint_frequency: 10
   callbacks:
     model_checkpoint:
-      filepath: 'xdxd_best.pth'
+      filepath: 'woj_best.pth'
       monitor: val_loss
-  model_dest_path: 'xdxd.pth'
+  model_dest_path: 'woj.pth'
   verbose: true
 
 inference:
