@@ -24,7 +24,7 @@
 .. automodule:: solaris.preproc.sar
    :members:
 
-``solaris.nets.optimizers`` Preprocessing of vector labels
+``solaris.preproc.label`` Preprocessing of vector labels
 ----------------------------------------------------------
 
 .. automodule:: solaris.preproc.label

@@ -61,7 +61,8 @@ autodoc_mock_imports = ['shapely', 'fiona', 'pandas', 'geopandas', 'cv2',
                         'numpy', 'gdal', 'tqdm', 'rtree', 'networkx',
                         'rasterio', 'scipy', 'skimage', 'tensorflow', 'torch',
                         'torchvision', 'yaml', 'affine', 'albumentations',
-                        'rio_tiler', 'PIL', 'matplotlib', 'rio_cogeo']
+                        'rio_tiler', 'PIL', 'matplotlib', 'rio_cogeo',
+                        'pyproj']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
