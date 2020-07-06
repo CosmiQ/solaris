@@ -22,6 +22,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ### Changed
 ### Fixed
 - 20200630, dphogan: Remove edge case numeric values from loss function tests (#358)
+- 20200606, dphogan: Added API reference entry for utils.data
 ### Deprecated
 ### Security
 
