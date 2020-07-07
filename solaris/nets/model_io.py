@@ -4,7 +4,7 @@ import torch
 from warnings import warn
 import requests
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from ..nets import weights_dir
 from .zoo import model_dict
 

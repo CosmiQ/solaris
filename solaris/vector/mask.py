@@ -14,7 +14,7 @@ from rasterio import features
 from affine import Affine
 from skimage.morphology import square, erosion, dilation
 import os
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
                   geom_col='geometry', do_transform=None, affine_obj=None,
@@ -891,7 +891,7 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
         The value to use for nodata pixels in the mask. Defaults to 0 (the
         min value for ``uint8`` arrays). Used if reference_im nodata value is a float.
         Ignored if reference_im nodata value is an int or if reference_im is not used.
-        Take care when visualizing these masks, the nodata value may cause labels to not 
+        Take care when visualizing these masks, the nodata value may cause labels to not
         be visualized if nodata values are automatically masked by the software.
 
     Returns
@@ -978,13 +978,13 @@ def instance_mask(df, out_file=None, reference_im=None, geom_col='geometry',
 def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value=0):
     """
     Converts tiled vectors to raster labels and fills nodata values in raster and vector tiles.
-    
-    This function must be run after a raster tiler and vector tiler have already been initialized 
-    and the `.tile()` method for each has been called to generate raster and vector tiles. 
-    Geojson labels are first converted to rasterized masks, then the labels are set to 0 
-    where the reference image, the corresponding image tile, has nodata values. Then, nodata 
-    areas in the image tile are filled  in place with the fill_value. Only works for rasterizing 
-    all geometries as a single category with a burn value of 1. See test_tiler_fill_nodata in 
+
+    This function must be run after a raster tiler and vector tiler have already been initialized
+    and the `.tile()` method for each has been called to generate raster and vector tiles.
+    Geojson labels are first converted to rasterized masks, then the labels are set to 0
+    where the reference image, the corresponding image tile, has nodata values. Then, nodata
+    areas in the image tile are filled  in place with the fill_value. Only works for rasterizing
+    all geometries as a single category with a burn value of 1. See test_tiler_fill_nodata in
     tests/test_tile/test_tile.py for an example.
 
     Args
@@ -1013,7 +1013,7 @@ def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value
         rasterized_label_paths.append(rasterized_label_path)
         gdf = gpd.read_file(geojson_tile)
         # gdf.crs = rtiler.raster_bounds_crs # add this because gdfs can't be saved with wkt crs
-        arr = instance_mask(gdf, out_file=rasterized_label_path, reference_im=img_tile, 
+        arr = instance_mask(gdf, out_file=rasterized_label_path, reference_im=img_tile,
                                         geom_col='geometry', do_transform=None,
                                         out_type='int', burn_value=1, burn_field=None) # this saves the file, unless it is empty in which case we deal with it below.
         if not arr.any(): # in case no instances in a tile we save it with "empty" at the front of the basename
@@ -1030,4 +1030,3 @@ def geojsons_to_masks_and_fill_nodata(rtiler, vtiler, label_tile_dir, fill_value
                 dst.close()
     rtiler.fill_all_nodata(nodata_fill=fill_value)
     return rasterized_label_paths
-
