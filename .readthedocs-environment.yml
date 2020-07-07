@@ -2,8 +2,8 @@ name: solaris
 dependencies:
   - python
   - pip
-  - numpy
   - gdal
   - pip:
+    - numpy
     - sphinx_bootstrap_theme
     - nbsphinx
