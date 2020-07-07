@@ -2,6 +2,7 @@ name: solaris
 dependencies:
   - python
   - pip
+  - numpy
   - gdal
   - pip:
     - sphinx_bootstrap_theme
