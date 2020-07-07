@@ -24,6 +24,7 @@ class Trainer(object):
         self.framework = self.config['nn_framework']
         self.model_name = self.config['model_name']
         self.model_path = self.config.get('model_path', None)
+        self.num_classes = self.config['data_specs']['num_classes']
         self.model = get_model(self.model_name, self.framework,
                                self.model_path, self.pretrained,
                                custom_model_dict)
