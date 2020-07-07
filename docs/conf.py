@@ -188,7 +188,7 @@ intersphinx_mapping = {
     "geopandas": ('http://geopandas.org/', None),
     "rtree": ('http://toblerity.org/rtree/', None),
     "shapely": ('https://shapely.readthedocs.io/en/stable/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
     'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     'PyTorch': ('http://pytorch.org/docs/master/', None)
     }
