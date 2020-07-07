@@ -42,6 +42,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 - 20200401, rbavery: fixed bug where aoi boundary was not intersected with src_img extent prior to tiling
 - 20200401, rbavery/nrweir: adapted `_check_crs` to convert `pyproj.CRS` or pass through `rasterio.crs.CRS` class when rasterio crs object is required (for example, reprojecting in the tilers)
 - 20200414, zaburo-ch: fixed `val_datagen` to point to the correct augmentation pipeline
+- 20200706, roshanr11: tqdm progress bar fixed, follow-up on previous issue (#335)
 ---
 
 ---

@@ -5,7 +5,7 @@ import numpy as np
 from .metrics import metric_dict
 import torch
 
-
+ 
 class TorchEarlyStopping(object):
     """Tracks if model training should stop based on rate of improvement.
 
@@ -176,10 +176,12 @@ class TorchModelCheckpoint(object):
         """
 
         self.epoch += 1
-        if self.monitor == 'periodic':
+        if self.monitor == 'periodic': # update based on period
             if self.last_epoch + self.period <= self.epoch:
+                # self.last_saved_value = loss_value if loss_value else 0
                 self.save(model, self.weights_only)
                 self.last_epoch = self.epoch
+
 
         elif self.monitor in ['loss', 'val_loss']:
             if self.last_saved_value is None:
