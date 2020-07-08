@@ -61,6 +61,10 @@ def make_data_generator(framework, config, df, stage='train'):
     elif stage == 'validate':
         augs = config['validation_augmentation']
         shuffle = False
+    try:
+        num_classes = config['data_specs']['num_classes']
+    except KeyError:
+        num_classes = 1
 
     if framework.lower() == 'keras':
         data_gen = KerasSegmentationSequence(
@@ -73,6 +77,7 @@ def make_data_generator(framework, config, df, stage='train'):
             batch_size=config['batch_size'],
             label_type=config['data_specs']['label_type'],
             is_categorical=config['data_specs']['is_categorical'],
+            num_classes=num_classes,
             shuffle=shuffle)
 
     elif framework in ['torch', 'pytorch']:
@@ -82,6 +87,7 @@ def make_data_generator(framework, config, df, stage='train'):
             batch_size=config['batch_size'],
             label_type=config['data_specs']['label_type'],
             is_categorical=config['data_specs']['is_categorical'],
+            num_classes=num_classes,
             dtype=config['data_specs']['dtype'])
         # set up workers for DataLoader for pytorch
         data_workers = config['data_specs'].get('data_workers')
@@ -126,13 +132,15 @@ class KerasSegmentationSequence(keras.utils.Sequence):
         Type of labels. Currently always ``"mask"``.
     is_categorical : bool
         Indicates whether masks output are boolean or categorical labels.
+    num_classes: int
+        Indicates the number of classes in the dataset
     shuffle : bool
         Indicates whether or not input order is shuffled for each epoch.
     """
 
     def __init__(self, df, height, width, input_channels, output_channels,
                  augs, batch_size, label_type='mask', is_categorical=False,
-                 shuffle=True):
+                 num_classes=1, shuffle=True):
         """Create an instance of KerasSegmentationSequence.
 
         Arguments
@@ -159,6 +167,8 @@ class KerasSegmentationSequence(keras.utils.Sequence):
             supported.
         is_categorical : bool, optional
             Is the data categorical or boolean (default)?
+        num_classes: int
+            Indicates the number of classes in the dataset
         shuffle : bool, optional
             Should image order be shuffled in each epoch?
 
@@ -177,6 +187,7 @@ class KerasSegmentationSequence(keras.utils.Sequence):
         self.n_batches = int(np.floor(len(self.df)/self.batch_size))
         self.label_type = label_type
         self.is_categorical = is_categorical
+        self.num_classes = num_classes
         self.shuffle = shuffle
         self.on_epoch_end()
 
@@ -263,13 +274,15 @@ class TorchDataset(Dataset):
         The numpy dtype that image inputs should be when passed to the model.
     is_categorical : bool
         Indicates whether masks output are boolean or categorical labels.
+    num_classes: int
+        Indicates the number of classes in the dataset
     dtype : class:`numpy.dtype`
         The data type images should be converted to before being passed to
         neural nets.
     """
 
     def __init__(self, df, augs, batch_size, label_type='mask',
-                 is_categorical=False, dtype=None):
+                 is_categorical=False, num_classes=1, dtype=None):
         """
         Create an instance of TorchDataset for use in model training.
 
@@ -289,6 +302,8 @@ class TorchDataset(Dataset):
             supported.
         is_categorical : bool, optional
             Is the data categorical or boolean (default)?
+        num_classes: int
+            Indicates the number of classes in the dataset
         dtype : str, optional
             The dtype that image arrays should be converted to before being
             passed to the neural net. If not provided, defaults to
@@ -303,6 +318,7 @@ class TorchDataset(Dataset):
         self.n_batches = int(np.floor(len(self.df)/self.batch_size))
         self.aug = _check_augs(augs)
         self.is_categorical = is_categorical
+        self.num_classes = num_classes
 
         if dtype is None:
             self.dtype = np.float32  # default
