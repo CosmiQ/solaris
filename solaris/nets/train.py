@@ -15,7 +15,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 import tensorflow as tf
 
 class Trainer(object):
-    """Object for training `solaris` models using PyTorch or Keras."""
+    """Object for training `solaris` models using PyTorch or Keras. """
 
     def __init__(self, config, custom_model_dict=None, custom_losses=None):
         self.config = config

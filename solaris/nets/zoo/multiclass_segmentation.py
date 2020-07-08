@@ -3,7 +3,7 @@ from torch import nn
 from torchvision.models import vgg11, vgg16, resnet34
 
 """ Code heavily adapted from ternaus robot-surgery-segmentation
-https://github.com/ternaus/robot-surgery-segmentation """
+https://github.com/ternaus/robot-surgery-segmentation  """
 
 
 class MultiClass_Resnet34(nn.Module):
