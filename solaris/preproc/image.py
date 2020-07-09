@@ -184,7 +184,7 @@ class ShowImage(PipeSegment):
     Display an image using matplotlib.
     """
     def __init__(self, show_text=False, show_image=True, cmap='gray',
-                 vmin=None, vmax=None, bands=None):
+                 vmin=None, vmax=None, bands=None, caption=None):
         super().__init__()
         self.show_text = show_text
         self.show_image = show_image
@@ -192,7 +192,10 @@ class ShowImage(PipeSegment):
         self.vmin = vmin
         self.vmax = vmax
         self.bands = bands
+        self.caption = caption
     def transform(self, pin):
+        if self.caption is not None:
+            print(self.caption)
         if self.show_text:
             print(pin)
         if self.show_image:
