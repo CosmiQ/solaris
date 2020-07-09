@@ -1,1 +1,1 @@
-from . import pipesegment, label, image, sar
+from . import pipesegment, image, sar, optical, label
