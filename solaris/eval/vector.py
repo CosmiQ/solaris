@@ -336,11 +336,6 @@ def mF1(proposal_polygons_dir, gt_polygons_dir, prediction_cat_attrib="class",
                 The mean recall score of recall_by_class
             object_subset : list
                 All unique objects that exist in the ground truth polygons
-            prop_objs : list
-                All unique objects that exist in the proposal polygons
-            all_objs : list
-                All unique objects that exist in both the proposal and ground
-                truth polygons
         if all_outputs is `False`:
             mF1_score : float
                 The mean F1 score of f1s_by_class (only calculated for ground
@@ -376,6 +371,6 @@ def mF1(proposal_polygons_dir, gt_polygons_dir, prediction_cat_attrib="class",
     mF1_score = np.nanmean(f1s_by_class)
     print("mF1:", mF1_score)
     if all_outputs is True:
-        return mF1_score, f1s_by_class, precision_iou_by_obj, precision_by_class, mPrecision, recall_iou_by_obj, recall_by_class, mRecall, object_subset, prop_objs, all_objs
+        return mF1_score, f1s_by_class, precision_iou_by_obj, precision_by_class, mPrecision, recall_iou_by_obj, recall_by_class, mRecall, object_subset
     else:
         return mF1_score, f1s_by_class
