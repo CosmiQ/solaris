@@ -12,12 +12,12 @@ import argparse
 import time
 import numpy as np
 import pandas as pd
-import geopandas as gpd
+# import geopandas as gpd
 from tqdm import tqdm
-from collections import defaultdict
-from multiprocessing import Pool, Queue, Process
-from functools import partial
-from math import ceil
+# from collections import defaultdict
+# from multiprocessing import Pool, Queue, Process
+# from functools import partial
+# from math import ceil
 
 import rasterio
 from rasterio import features
