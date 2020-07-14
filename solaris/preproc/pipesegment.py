@@ -90,8 +90,8 @@ class PipeSegment:
         all_inputs = list(zip([cls]*len(input_args), input_args, input_kwargs,
                               [saveall]*len(input_args),
                               [verbose]*len(input_args)))
-        with multiprocessing.get_context('spawn').Pool(processes) as pool:
-        #with multiprocessing.Pool(processes) as pool:
+        #with multiprocessing.get_context('spawn').Pool(processes) as pool:
+        with multiprocessing.Pool(processes) as pool:
             return pool.map(_parallel_compute_function, all_inputs)
 
 

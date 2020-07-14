@@ -184,7 +184,8 @@ class ShowImage(PipeSegment):
     Display an image using matplotlib.
     """
     def __init__(self, show_text=False, show_image=True, cmap='gray',
-                 vmin=None, vmax=None, bands=None):
+                 vmin=None, vmax=None, bands=None, caption=None,
+                 width=None, height=None):
         super().__init__()
         self.show_text = show_text
         self.show_image = show_image
@@ -192,10 +193,16 @@ class ShowImage(PipeSegment):
         self.vmin = vmin
         self.vmax = vmax
         self.bands = bands
+        self.caption = caption
+        self.width = width
+        self.height = height
     def transform(self, pin):
+        if self.caption is not None:
+            print(self.caption)
         if self.show_text:
             print(pin)
         if self.show_image:
+            # Select data, and format it for matplotlib
             if self.bands is None:
                 image_formatted = pin.data
             else:
@@ -203,9 +210,20 @@ class ShowImage(PipeSegment):
             pyplot_formatted = np.squeeze(np.moveaxis(image_formatted, 0, -1))
             if np.ndim(pyplot_formatted)==3 and self.vmin is not None and self.vmax is not None:
                 pyplot_formatted = np.clip((pyplot_formatted - self.vmin) / (self.vmax - self.vmin), 0., 1.)
-            plt.imshow(pyplot_formatted, cmap=self.cmap,
-                       vmin=self.vmin, vmax=self.vmax)
-            plt.show()
+            # Select image size
+            if self.height is None and self.width is None:
+                rc = {}
+            elif self.height is None and self.width is not None:
+                rc = {'figure.figsize': [self.width, self.width]}
+            elif self.height is not None and self.width is None:
+                rc = {'figure.figsize': [self.height, self.height]}
+            else:
+                rc = {'figure.figsize': [self.width, self.height]}
+            # Show image
+            with plt.rc_context(rc):
+                plt.imshow(pyplot_formatted, cmap=self.cmap,
+                           vmin=self.vmin, vmax=self.vmax)
+                plt.show()
         return pin
 
 
