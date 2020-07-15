@@ -1,5 +1,5 @@
 # [WIP]
-model_name: zbigniewwojna_spacenet6
+model_name: test_name
 
 model_path:
 train: false
