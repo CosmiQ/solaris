@@ -3,7 +3,7 @@ from copy import deepcopy
 from torch.utils.checkpoint import checkpoint
 
 from .conv2d_layers import *
-from geffnet.activations import *
+from .activations import *
 
 
 # Defaults used for Google/Tensorflow training of mobile networks /w RMSprop as per
