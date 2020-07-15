@@ -127,19 +127,19 @@ class IntersectDataFrames(PipeSegment):
         return result
 
 
-class DataFrameToMask(PipeSegment):
-    """
-    Given a GeoPandas GeoDataFrame and an Image-class image,
-    convert the DataFrame to the corresponding Boolean mask
-    """
-    pass
-
-
-class MaskToDataFrame(PipeSegment):
-    """
-    Given a boolean mask, convert it to a GeoPandas GeoDataFrame of polygons.
-    """
-    pass
+#class DataFrameToMask(PipeSegment):
+#    """
+#    Given a GeoPandas GeoDataFrame and an Image-class image,
+#    convert the DataFrame to the corresponding Boolean mask
+#    """
+#    pass
+#
+#
+#class MaskToDataFrame(PipeSegment):
+#    """
+#    Given a boolean mask, convert it to a GeoPandas GeoDataFrame of polygons.
+#    """
+#    pass
 
 
 class DataFramePixelCoords(PipeSegment):
