@@ -1,6 +1,6 @@
 model_name: zbigniewwojna_spacenet6
 
-model_path:
+model_path: '/tmp/solaris/solaris/nets/weights/snapshot_fold_9_best.pth'
 train: false
 infer: true
 
@@ -23,9 +23,9 @@ data_specs:
   val_holdout_frac: 0.2
   data_workers:
 
-training_data_csv: '/training_df.csv'
+training_data_csv: '/path/to/training_df.csv'
 validation_data_csv:
-inference_data_csv: '/test_df.csv'
+inference_data_csv: '/path/to/test_df.csv'
 
 training_augmentation:
   augmentations:
@@ -112,7 +112,7 @@ training:
     model_checkpoint:
       filepath: 'woj_best.pth'
       monitor: val_loss
-  model_dest_path: '/tmp/solaris/solaris/nets/weights/snapshot_fold_9_best.pth'
+  model_dest_path: 'woj.pth'
   verbose: true
 
 inference:
