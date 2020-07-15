@@ -29,6 +29,7 @@ class Inferer(object):
                     'training']['model_dest_path']
         else:
             self.model_path = self.config.get('model_path', None)
+        print(model_dict, flush=True)# RRAM - REMOVE!!!
         self.model = get_model(self.model_name, self.framework,
                                self.model_path, pretrained=True,
                                custom_model_dict=custom_model_dict)
