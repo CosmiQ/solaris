@@ -38,7 +38,8 @@ model_dict = {
     'zbigniewwojna_spacenet6': {
         'weight_path': os.path.join(weights_dir,
                                     'woj_spacenet6_solaris_weights.pth'),
-        'weight_url': 'empty for now -- NEED TO FILL THIS WITH AWS-HOSTED WEIGHT FILE LATER',
+        # 'weight_url': 'empty for now -- NEED TO FILL THIS WITH AWS-HOSTED WEIGHT FILE LATER',
+        'weight_url': 'https://drive.google.com/file/d/11sspczYR_6GIF9kWvBTYCkp7EU5N-Dk5/view?usp=sharing'
         'arch': Woj_SpaceNet6_UNet
         }
     }
