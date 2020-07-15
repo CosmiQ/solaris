@@ -35,7 +35,7 @@ model_dict = {
         'arch': SelimSef_SpaceNet4_DenseNet161UNet
         },
     # rram below
-    'zbigniewwojna_spacenet6': {
+    'test_name': {
         'weight_path': os.path.join(weights_dir,
                                     'woj_spacenet6_solaris_weights.pth'),
         # 'weight_url': 'empty for now -- NEED TO FILL THIS WITH AWS-HOSTED WEIGHT FILE LATER',
