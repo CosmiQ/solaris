@@ -48,7 +48,8 @@ except ImportError:
 
 from .geffnet.efficientnet_builder import *
 #import selim_sef_sn4
-import .base
+# import base
+from .base import *
 
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
