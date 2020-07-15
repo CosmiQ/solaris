@@ -1,4 +1,4 @@
-from geffnet import config
+from .. import config
 from .activations_autofn import *
 from .activations_jit import *
 from .activations import *
