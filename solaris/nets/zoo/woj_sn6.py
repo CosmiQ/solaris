@@ -46,7 +46,7 @@ try:
 except ImportError:
     from torch.utils.model_zoo import load_url as load_state_dict_from_url
 
-from geffnet.efficientnet_builder import *
+from .geffnet.efficientnet_builder import *
 #import selim_sef_sn4
 import base
 
