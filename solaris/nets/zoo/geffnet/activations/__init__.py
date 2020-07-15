@@ -1,7 +1,7 @@
 from geffnet import config
-from geffnet.activations.activations_autofn import *
-from geffnet.activations.activations_jit import *
-from geffnet.activations.activations import *
+from .activations_autofn import *
+from .activations_jit import *
+from .activations import *
 
 
 _ACT_FN_DEFAULT = dict(
@@ -116,5 +116,3 @@ def get_act_layer(name='relu'):
         if name in _ACT_LAYER_AUTO:
             return _ACT_LAYER_AUTO[name]
     return _ACT_LAYER_DEFAULT[name]
-
-
