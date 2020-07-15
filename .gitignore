@@ -6,6 +6,9 @@ __pycache__/
 # MacOS stuff:
 .DS_Store
 
+# rram stuff - TEMP
+geffnet/
+
 # C extensions
 *.so
 
