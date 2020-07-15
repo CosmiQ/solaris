@@ -7,7 +7,7 @@ __pycache__/
 .DS_Store
 
 # rram stuff - TEMP
-geffnet/
+# geffnet/
 
 # C extensions
 *.so
