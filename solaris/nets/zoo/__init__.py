@@ -39,8 +39,8 @@ model_dict = {
         'weight_path': os.path.join(weights_dir,
                                     'woj_spacenet6_solaris_weights.pth'),
         # 'weight_url': 'empty for now -- NEED TO FILL THIS WITH AWS-HOSTED WEIGHT FILE LATER',
-        'weight_url': 'https://drive.google.com/file/d/11sspczYR_6GIF9kWvBTYCkp7EU5N-Dk5/view?usp=sharing',
-        # 'weight_url': 'https://s3.amazonaws.com/spacenet-dataset/spacenet-model-weights/spacenet-4/selimsef_spacenet4_densenet161unet_solaris_weights.pth',
+        # 'weight_url': 'https://drive.google.com/file/d/11sspczYR_6GIF9kWvBTYCkp7EU5N-Dk5/view?usp=sharing',
+        'weight_url': 'https://s3.amazonaws.com/spacenet-dataset/spacenet-model-weights/spacenet-4/selimsef_spacenet4_densenet161unet_solaris_weights.pth', # temp check
         'arch': Woj_SpaceNet6_UNet
         }
     }
