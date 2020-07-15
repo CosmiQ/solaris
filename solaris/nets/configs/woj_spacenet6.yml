@@ -7,11 +7,11 @@ infer: true
 
 pretrained: true
 nn_framework:  torch
-batch_size: 64 # ??
+batch_size: 32 #64 # ??
 
 data_specs:
-  width: 512
-  height:  512
+  width: 896 # 900 true
+  height: 896 # 900 true
   dtype:
   image_type: zscore
   rescale: false
@@ -20,7 +20,7 @@ data_specs:
   channels: 4
   label_type: mask
   is_categorical: false
-  mask_channels: 1
+  mask_channels: 3 # 1
   val_holdout_frac: 0.2
   data_workers:
 
@@ -30,16 +30,16 @@ inference_data_csv: '/path/to/test_df.csv'
 
 training_augmentation:
   augmentations:
-    DropChannel:
-      idx: 3
-      axis: 2
+    # DropChannel:
+    #   idx: 3
+    #   axis: 2
     HorizontalFlip:
       p: 0.5
     RandomRotate90:
       p: 0.5
     RandomCrop:
-      height: 512
-      width: 512
+      height: 896
+      width: 896
       p: 1.0
     Normalize:
       mean:
@@ -56,12 +56,12 @@ training_augmentation:
   shuffle: true
 validation_augmentation:
   augmentations:
-    DropChannel:
-      idx: 3
-      axis: 2
+    # DropChannel:
+    #   idx: 3
+    #   axis: 2
     CenterCrop:
-      height: 512
-      width: 512
+      height: 896
+      width: 896
       p: 1.0
     Normalize:
       mean:
