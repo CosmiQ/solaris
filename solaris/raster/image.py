@@ -5,6 +5,7 @@ import numpy as np
 import logging
 from ..utils.raster import reorder_axes
 from ..utils.log import _get_logging_level
+import os
 
 
 def get_geo_transform(raster_src):
@@ -115,15 +116,14 @@ def stitch_images(im_arr, idx_refs=None, out_width=None,
             if has_channels:
                 stitching_arr[
                     idx,
-                    idx_refs[idx][0]:idx_refs[idx][0]+im_arr.shape[1],
-                    idx_refs[idx][1]:idx_refs[idx][1]+im_arr.shape[2],
+                    idx_refs[idx][0]:idx_refs[idx][0] + im_arr.shape[1],
+                    idx_refs[idx][1]:idx_refs[idx][1] + im_arr.shape[2],
                     :] = im_arr[idx, :, :, :]
             else:
                 stitching_arr[
                     idx,
-                    idx_refs[idx][0]:idx_refs[idx][0]+im_arr.shape[1],
-                    idx_refs[idx][1]:idx_refs[idx][1]+im_arr.shape[2]
-                    ] = im_arr[idx, :, :]
+                    idx_refs[idx][0]:idx_refs[idx][0] + im_arr.shape[1],
+                    idx_refs[idx][1]:idx_refs[idx][1] + im_arr.shape[2]] = im_arr[idx, :, :]
     else:
         stitching_arr = im_arr  # just stitching across images with no offset
 
@@ -154,8 +154,64 @@ def stitch_images(im_arr, idx_refs=None, out_width=None,
     return output_arr
 
 
+def create_multiband_geotiff(array, out_name, proj, geo, nodata=0,
+                             out_format=gdal.GDT_Byte, verbose=False):
+    """Convert an array to an output georegistered geotiff.
+    Arguments
+    ---------
+    array  : :class:`numpy.ndarray`
+        A numpy array with a the shape: [Channels, X, Y] or [X, Y]
+    out_name : str
+        The output name and path for your image
+    proj : :class:`gdal.projection`
+        A projection, can be extracted from an image opened with gdal with
+        image.GetProjection(). Can be set to None if no georeferencing is
+        required.
+    geo : :class:`gdal.geotransform`
+        A gdal geotransform which indicates the position of the image on the
+        earth in projection units. Can be set to None if no georeferencing is
+        required. Can be extracted from an image opened with gdal with
+        image.GetGeoTransform()
+    nodata : int
+        A value to set transparent for GIS systems.
+        Can be set to None if the nodata value is not required. Defaults to 0.
+    out_format : str, gdalconst
+        https://gdal.org/python/osgeo.gdalconst-module.html
+        Must be one of the variables listed in the docs above. Defaults to
+        gdal.GDT_Byte.
+    verbose : bool
+        A verbose output, printing all inputs and outputs to the function.
+        Useful for debugging. Default to `False`
+    """
+    driver = gdal.GetDriverByName('GTiff')
+    if len(array.shape) == 2:
+        array = array[np.newaxis, ...]
+    os.makedirs(os.path.dirname(os.path.abspath(out_name)), exist_ok=True)
+    dataset = driver.Create(out_name, array.shape[2], array.shape[1], array.shape[0], out_format)
+    if verbose is True:
+        print("Array Shape, should be [Channels, X, Y] or [X,Y]:", array.shape)
+        print("Output Name:", out_name)
+        print("Projection:", proj)
+        print("GeoTransform:", geo)
+        print("NoData Value:", nodata)
+        print("Bit Depth:", out_format)
+    if proj is not None:
+        dataset.SetProjection(proj)
+    if geo is not None:
+        dataset.SetGeoTransform(geo)
+    if nodata is None:
+        for i, image in enumerate(array, 1):
+            dataset.GetRasterBand(i).WriteArray(image)
+        del dataset
+    else:
+        for i, image in enumerate(array, 1):
+            dataset.GetRasterBand(i).WriteArray(image)
+            dataset.GetRasterBand(i).SetNoDataValue(nodata)
+        del dataset
+
+
 def get_intensity_quantiles(dataset_dir, percentiles=[0, 100], ext="tif",
-                              recursive=False, channels=None, verbose=0):
+                            recursive=False, channels=None, verbose=0):
     """Get approximate dataset pixel intensity percentiles for normalization.
 
     This function reads every image in a dataset directory and gets a rough
@@ -187,10 +243,10 @@ class K1ScaleFunction(ScaleFunction):
         self.super().__init__(self, compression_delta)
 
     def forward(self, quantile):
-        return (self.compression_delta/2*np.pi)*np.arcsin(2*quantile-1)
+        return (self.compression_delta / 2 * np.pi) * np.arcsin(2 * quantile - 1)
 
     def inverse(self, k):
-        return np.sin((2*np.pi*k)/self.compression_delta)+1
+        return np.sin((2 * np.pi * k) / self.compression_delta) + 1
 
 
 def get_tdigest(data_buffer, tdigest=None, scale_function=K1ScaleFunction,
@@ -226,16 +282,16 @@ def get_tdigest(data_buffer, tdigest=None, scale_function=K1ScaleFunction,
     sigma_centroid = buffer_centroids[0]
     sigma_weight = buffer_weights[0]
     for idx in range(1, len(buffer_centroids)):
-        q = q0 + (sigma_weight + buffer_weights[idx])/S
+        q = q0 + (sigma_weight + buffer_weights[idx]) / S
         if q <= q_limit:
-            sigma_centroid = ((sigma_centroid*sigma_weight
-                               + buffer_centroids[idx]*buffer_weights[idx]) /
-                              (sigma_weight+buffer_weights[idx]))
+            sigma_centroid = ((sigma_centroid * sigma_weight
+                               + buffer_centroids[idx] * buffer_weights[idx]) /
+                              (sigma_weight + buffer_weights[idx]))
             sigma_weight = sigma_weight + buffer_weights[idx]
         else:
             np.append(out_centroids, sigma_centroid)
             np.append(out_weights, sigma_weight)
-            q0 += sigma_weight/S
+            q0 += sigma_weight / S
             q_limit = _get_q_limit(scale_function, q0, compression_delta)
             sigma_weight = buffer_weights[idx]
             sigma_centroid = buffer_centroids[idx]
@@ -246,5 +302,5 @@ def get_tdigest(data_buffer, tdigest=None, scale_function=K1ScaleFunction,
 
 
 def _get_q_limit(scale_function, q0, compression_delta):
-    return 1./(scale_function(scale_function(q0, compression_delta) + 1,
-                              compression_delta))
+    return 1. / (scale_function(scale_function(q0, compression_delta) + 1,
+                                compression_delta))

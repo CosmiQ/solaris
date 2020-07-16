@@ -10,7 +10,7 @@ from ..utils.core import _check_crs, _check_rasterio_im_load
 from ..utils.geo import reproject, split_geom, raster_get_projection_unit
 import numpy as np
 from shapely.geometry import box
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 class RasterTiler(object):
     """An object to tile geospatial image strips into smaller pieces.
@@ -172,7 +172,7 @@ class RasterTiler(object):
             mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
             index_lst = list(np.arange(1,src.meta['count']+1))
             # no need to use transform t since we don't crop. cropping messes up transform of tiled outputs
-            arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'], 
+            arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'],
                          filled=True, crop=False, pad=False, pad_width=0.5, indexes=list(index_lst))
             with rasterio.open(restricted_im_path, 'w', **src.profile) as dest:
                 dest.write(arr)
@@ -310,7 +310,7 @@ class RasterTiler(object):
                     print('Done reprojecting.')
         if nodata is None and self.nodata is None:
             self.nodata = self.src.nodata
-        else:
+        elif nodata is not None:
             self.nodata = nodata
         # get index of alpha channel
         if alpha is None and self.alpha is None:
@@ -333,15 +333,19 @@ class RasterTiler(object):
                     *tb, transform=self.src.transform,
                     width=self.src_tile_size[1],
                     height=self.src_tile_size[0])
-
+                print('reading data from window')
+                print(self.nodata)
                 if self.src.count != 1:
                     src_data = self.src.read(
                         window=window,
-                        indexes=channel_idxs, boundless=True)
+                        indexes=channel_idxs,
+                        boundless=True,
+                        fill_value=self.nodata)
                 else:
                     src_data = self.src.read(
                         window=window,
-                        boundless=True)
+                        boundless=True,
+                        fill_value=self.nodata)
 
                 dst_transform, width, height = calculate_default_transform(
                     self.src.crs, self.dest_crs,
@@ -350,8 +354,7 @@ class RasterTiler(object):
                     dst_width=self.dest_tile_size[1])
 
                 if self.dest_crs != self.src_crs and self.resampling_method is not None:
-                    tile_data = np.zeros(shape=(src_data.shape[0], height, width),
-                                         dtype=src_data.dtype)
+                    tile_data = np.zeros(shape=(src_data.shape[0], height, width), dtype=src_data.dtype)
                     rasterio.warp.reproject(
                         source=src_data,
                         destination=tile_data,
@@ -359,6 +362,7 @@ class RasterTiler(object):
                         src_crs=self.src.crs,
                         dst_transform=dst_transform,
                         dst_crs=self.dest_crs,
+                        dst_nodata=self.nodata,
                         resampling=getattr(Resampling, self.resampling))
 
                 elif self.dest_crs != self.src_crs and self.resampling_method is None:
@@ -367,6 +371,7 @@ class RasterTiler(object):
                           "projection. Using bilinear resampling by default.")
                     tile_data = np.zeros(shape=(src_data.shape[0], height, width),
                                          dtype=src_data.dtype)
+                    tile_data = np.zeros(shape=(src_data.shape[0], height, width), dtype=src_data.dtype)
                     rasterio.warp.reproject(
                         source=src_data,
                         destination=tile_data,
@@ -374,6 +379,7 @@ class RasterTiler(object):
                         src_crs=self.src.crs,
                         dst_transform=dst_transform,
                         dst_crs=self.dest_crs,
+                        dst_nodata=self.nodata,
                         resampling=getattr(Resampling, "bilinear"))
 
                 else:  # for the case where there is no resampling and no dest_crs specified, no need to reproject or resample
@@ -466,6 +472,49 @@ class RasterTiler(object):
             the aoi_boundary with the nodata value will be filled. "mean" will fill pixels with the channel-wise mean. 
             Providing an int or float will fill pixels in all channels with the provided value.
             
+        Returns: list
+            The fill values, in case the mean of the src image should be used for normalization later.
+        """
+        src = _check_rasterio_im_load(self.src_name)
+        if nodata_fill == "mean":
+            arr = src.read()
+            arr_nan = np.where(arr!=src.nodata, arr, np.nan)
+            fill_values = np.nanmean(arr_nan, axis=tuple(range(1, arr_nan.ndim)))
+            print('Fill values set to {}'.format(fill_values))
+        elif isinstance(nodata_fill, (float, int)):
+            fill_values = src.meta['count'] * [nodata_fill]
+            print('Fill values set to {}'.format(fill_values))
+        else:
+            raise TypeError('nodata_fill must be "mean", int, or float. {} was supplied.'.format(nodata_fill))
+        src.close()
+        for tile_path in self.tile_paths:
+            tile_src = rasterio.open(tile_path, "r+")
+            tile_data = tile_src.read()
+            for i in np.arange(tile_data.shape[0]):
+                tile_data[i,...][tile_data[i,...] == tile_src.nodata] = fill_values[i] # set fill value for each band
+            if tile_src.meta['count'] == 1:
+                tile_src.write(tile_data[0, :, :], 1)
+            else:
+                for band in range(1, tile_src.meta['count'] + 1):
+                    # base-1 vs. base-0 indexing...bleh
+                    tile_src.write(tile_data[band-1, :, :], band)
+            tile_src.close()
+        return fill_values
+
+    def fill_all_nodata(self, nodata_fill):
+        """
+        Fills all tile nodata values with a fill value.
+
+        The standard workflow is to run this function only after generating label masks and using the original output
+        from the raster tiler to filter out label pixels that overlap nodata pixels in a tile. For example,
+        solaris.vector.mask.instance_mask will filter out nodata pixels from a label mask if a reference_im is provided,
+        and after this step nodata pixels may be filled by calling this method.
+
+        nodata_fill : int, float, or str, optional
+            Default is to not fill any nodata values. Otherwise, pixels outside of the aoi_boundary and pixels inside
+            the aoi_boundary with the nodata value will be filled. "mean" will fill pixels with the channel-wise mean.
+            Providing an int or float will fill pixels in all channels with the provided value.
+
         Returns: list
             The fill values, in case the mean of the src image should be used for normalization later.
         """

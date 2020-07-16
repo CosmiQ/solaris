@@ -1,6 +1,6 @@
 import argparse
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from multiprocessing import Pool
 from ..vector.mask import df_to_px_mask
 from ..utils.cli import _func_wrapper

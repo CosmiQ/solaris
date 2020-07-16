@@ -4,13 +4,13 @@ import torch
 from warnings import warn
 import requests
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from ..nets import weights_dir
 from .zoo import model_dict
 
 
 def get_model(model_name, framework, model_path=None, pretrained=False,
-              custom_model_dict=None):
+              custom_model_dict=None, num_classes=1):
     """Load a model from a file based on its name."""
     if custom_model_dict is not None:
         md = custom_model_dict
@@ -20,10 +20,14 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
             raise ValueError(f"{model_name} can't be found in solaris and no "
                              "custom_model_dict was provided. Check your "
                              "model_name in the config file and/or provide a "
-                             "custom_model_dict argument to Trainer().")
+                             "custom_model_dict argument to Trainer(). ")
     if model_path is None or custom_model_dict is not None:
         model_path = md.get('weight_path')
-    model = md.get('arch')()
+    if num_classes == 1:
+        model = md.get('arch')(pretrained=pretrained)
+    else:
+        model = md.get('arch')(num_classes=num_classes, pretrained=pretrained)
+
     if model is not None and pretrained:
         try:
             model = _load_model_weights(model, model_path, framework)
