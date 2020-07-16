@@ -75,6 +75,8 @@ def _load_model_weights(model, path, framework):
         else:
             # model.load_state_dict(loaded) # ADD BACK WHEN DONE [rram]
             model.load_state_dict(loaded['state_dict']) # NEW - DELETE WHEN DONE [rram]
+            # NOTE: MY FIX WORKS - need to evaluate if it's case-specific or
+            # an actual bug fix
 
         return model
 
