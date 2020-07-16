@@ -310,7 +310,7 @@ class RasterTiler(object):
                     print('Done reprojecting.')
         if nodata is None and self.nodata is None:
             self.nodata = self.src.nodata
-        else:
+        elif nodata is not None:
             self.nodata = nodata
         # get index of alpha channel
         if alpha is None and self.alpha is None:
@@ -333,15 +333,19 @@ class RasterTiler(object):
                     *tb, transform=self.src.transform,
                     width=self.src_tile_size[1],
                     height=self.src_tile_size[0])
-
+                print('reading data from window')
+                print(self.nodata)
                 if self.src.count != 1:
                     src_data = self.src.read(
                         window=window,
-                        indexes=channel_idxs, boundless=True)
+                        indexes=channel_idxs,
+                        boundless=True,
+                        fill_value=self.nodata)
                 else:
                     src_data = self.src.read(
                         window=window,
-                        boundless=True)
+                        boundless=True,
+                        fill_value=self.nodata)
 
                 dst_transform, width, height = calculate_default_transform(
                     self.src.crs, self.dest_crs,
@@ -350,8 +354,7 @@ class RasterTiler(object):
                     dst_width=self.dest_tile_size[1])
 
                 if self.dest_crs != self.src_crs and self.resampling_method is not None:
-                    tile_data = np.zeros(shape=(src_data.shape[0], height, width),
-                                         dtype=src_data.dtype)
+                    tile_data = np.zeros(shape=(src_data.shape[0], height, width), dtype=src_data.dtype)
                     rasterio.warp.reproject(
                         source=src_data,
                         destination=tile_data,
@@ -359,6 +362,7 @@ class RasterTiler(object):
                         src_crs=self.src.crs,
                         dst_transform=dst_transform,
                         dst_crs=self.dest_crs,
+                        dst_nodata=self.nodata,
                         resampling=getattr(Resampling, self.resampling))
 
                 elif self.dest_crs != self.src_crs and self.resampling_method is None:
@@ -367,6 +371,7 @@ class RasterTiler(object):
                           "projection. Using bilinear resampling by default.")
                     tile_data = np.zeros(shape=(src_data.shape[0], height, width),
                                          dtype=src_data.dtype)
+                    tile_data = np.zeros(shape=(src_data.shape[0], height, width), dtype=src_data.dtype)
                     rasterio.warp.reproject(
                         source=src_data,
                         destination=tile_data,
@@ -374,6 +379,7 @@ class RasterTiler(object):
                         src_crs=self.src.crs,
                         dst_transform=dst_transform,
                         dst_crs=self.dest_crs,
+                        dst_nodata=self.nodata,
                         resampling=getattr(Resampling, "bilinear"))
 
                 else:  # for the case where there is no resampling and no dest_crs specified, no need to reproject or resample

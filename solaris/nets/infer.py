@@ -1,11 +1,12 @@
 import os
-import skimage
 import torch
+import gdal
+import numpy as np
 from warnings import warn
 from .model_io import get_model
 from .transform import process_aug_dict
 from .datagen import InferenceTiler
-from ..raster.image import stitch_images
+from ..raster.image import stitch_images, create_multiband_geotiff
 from ..utils.core import get_data_paths
 
 
@@ -48,7 +49,6 @@ class Inferer(object):
 
     def __call__(self, infer_df=None):
         """Run inference.
-
         Arguments
         ---------
         infer_df : :class:`pandas.DataFrame` or `str`
@@ -57,7 +57,6 @@ class Inferer(object):
             path to a CSV file containing the same information.  Defaults to
             ``None``, in which case the file path specified in the Inferer's
             configuration dict is used.
-
         """
 
         if infer_df is None:
@@ -70,9 +69,11 @@ class Inferer(object):
             x_step=self.window_step_x,
             y_step=self.window_step_y,
             augmentations=process_aug_dict(
-                self.config['inference_augmentation'])
-            )
+                self.config['inference_augmentation']))
         for idx, im_path in enumerate(infer_df['image']):
+            temp_im = gdal.Open(im_path)
+            proj = temp_im.GetProjection()
+            gt = temp_im.GetGeoTransform()
             inf_input, idx_refs, (
                 src_im_height, src_im_width) = inf_tiler(im_path)
 
@@ -104,24 +105,25 @@ class Inferer(object):
                                             out_width=src_im_width,
                                             out_height=src_im_height,
                                             method=self.stitching_method)
-            skimage.io.imsave(os.path.join(self.output_dir,
-                                           os.path.split(im_path)[1]),
-                              stitched_result)
+            stitched_result = np.swapaxes(stitched_result, 1, 0)
+            stitched_result = np.swapaxes(stitched_result, 2, 0)
+            create_multiband_geotiff(stitched_result,
+                                     os.path.join(self.output_dir,
+                                                  os.path.split(im_path)[1]),
+                                     proj=proj, geo=gt, nodata=np.nan,
+                                     out_format=gdal.GDT_Float32)
 
 
 def get_infer_df(config):
     """Get the inference df based on the contents of ``config`` .
-
     This function uses the logic described in the documentation for the config
     file to determine where to find images to be used for inference.
     See the docs and the comments in solaris/data/config_skeleton.yml for
     details.
-
     Arguments
     ---------
     config : dict
         The loaded configuration dict for model training and/or inference.
-
     Returns
     -------
     infer_df : :class:`dict`

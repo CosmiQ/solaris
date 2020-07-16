@@ -14,6 +14,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 import sphinx_bootstrap_theme
+import numpy as np
 # -- Project information -----------------------------------------------------
 
 project = 'solaris'
@@ -24,8 +25,8 @@ import time
 copyright = u'2018-{}, CosmiQ Works: an IQT Lab'.format(time.strftime("%Y"))
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.2'
-version = '0.2.2'
+release = '0.3.0'
+version = '0.3.0'
 
 # -- General configuration ---------------------------------------------------
 
@@ -61,7 +62,8 @@ autodoc_mock_imports = ['shapely', 'fiona', 'pandas', 'geopandas', 'cv2',
                         'numpy', 'gdal', 'tqdm', 'rtree', 'networkx',
                         'rasterio', 'scipy', 'skimage', 'tensorflow', 'torch',
                         'torchvision', 'yaml', 'affine', 'albumentations',
-                        'rio_tiler', 'PIL', 'matplotlib', 'rio_cogeo']
+                        'rio_tiler', 'PIL', 'matplotlib', 'rio_cogeo',
+                        'pyproj']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -187,7 +189,7 @@ intersphinx_mapping = {
     "geopandas": ('http://geopandas.org/', None),
     "rtree": ('http://toblerity.org/rtree/', None),
     "shapely": ('https://shapely.readthedocs.io/en/stable/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
     'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     'PyTorch': ('http://pytorch.org/docs/master/', None)
     }

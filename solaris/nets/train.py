@@ -15,7 +15,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 import tensorflow as tf
 
 class Trainer(object):
-    """Object for training `solaris` models using PyTorch or Keras."""
+    """Object for training `solaris` models using PyTorch or Keras. """
 
     def __init__(self, config, custom_model_dict=None, custom_losses=None):
         self.config = config
@@ -24,9 +24,14 @@ class Trainer(object):
         self.framework = self.config['nn_framework']
         self.model_name = self.config['model_name']
         self.model_path = self.config.get('model_path', None)
+        try:
+            self.num_classes = self.config['data_specs']['num_classes']
+        except KeyError:
+            self.num_classes = 1
         self.model = get_model(self.model_name, self.framework,
                                self.model_path, self.pretrained,
-                               custom_model_dict)
+                               custom_model_dict, self.num_classes)
+
         self.train_df, self.val_df = get_train_val_dfs(self.config)
         self.train_datagen = make_data_generator(self.framework, self.config,
                                                  self.train_df, stage='train')

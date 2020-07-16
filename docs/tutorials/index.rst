@@ -71,6 +71,9 @@ the tutorials below.
 * `Converting pixel masks to vector labels <notebooks/api_mask_to_vector.ipynb>`_
 * `Scoring your model's performance with the solaris Python API <notebooks/api_evaluation_tutorial.ipynb>`_
 * `Creating COCO-formatted datasets <notebooks/api_coco_tutorial.ipynb>`_
+* `Preprocessing Part 1: Pipelines <notebooks/preprocessing_pipelines.ipynb>`_
+* `Preprocessing Part 2: Branching <notebooks/preprocessing_branching.ipynb>`_
+* `Preprocessing Part 3: SAR <notebooks/preprocessing_sar.ipynb>`_
 
 Reference
 =========
