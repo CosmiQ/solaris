@@ -20,7 +20,7 @@ def get_model(model_name, framework, model_path=None, pretrained=False,
             raise ValueError(f"{model_name} can't be found in solaris and no "
                              "custom_model_dict was provided. Check your "
                              "model_name in the config file and/or provide a "
-                             f"custom_model_dict argument to Trainer().") 
+                             f"custom_model_dict argument to Trainer().")
     if model_path is None or custom_model_dict is not None:
         model_path = md.get('weight_path')
     model = md.get('arch')()
@@ -73,7 +73,8 @@ def _load_model_weights(model, path, framework):
         if isinstance(loaded, torch.nn.Module):  # if it's a full model already
             model.load_state_dict(loaded.state_dict())
         else:
-            model.load_state_dict(loaded)
+            # model.load_state_dict(loaded) # ADD BACK WHEN DONE [rram]
+            model.load_state_dict(loaded['state_dict']) # NEW - DELETE WHEN DONE [rram]
 
         return model
 
