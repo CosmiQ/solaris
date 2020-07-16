@@ -1,6 +1,7 @@
 model_name: zbigniewwojna_spacenet6
 
-model_path: '/tmp/solaris/solaris/nets/weights/snapshot_fold_9_best.pth'
+# model_path: '/tmp/solaris/solaris/nets/weights/snapshot_fold_9_best.pth'
+model_path:
 train: false
 infer: true
 
