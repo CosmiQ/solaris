@@ -299,7 +299,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
             gdf['origlen'] = 0
     # TODO must implement different case for lines and for spatialIndex
     # (Assume RTree is already performed)
-
+    
     cut_gdf = gdf.copy()
     cut_gdf.geometry = gdf.intersection(tb)
 
