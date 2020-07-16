@@ -18,6 +18,7 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 
 ### Added
 - 20200701, dphogan: Added multimodal preprocessing subpackage (#360)
+- 20200716, dphogan: Added three-part tutorial for preprocessing subpackage
 ### Removed
 ### Changed
 ### Fixed
