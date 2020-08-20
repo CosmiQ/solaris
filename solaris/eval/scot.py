@@ -70,18 +70,12 @@ def match_footprints(grnd_df, prop_df,
     return grnd_match_ids, prop_match_ids, num_grnd, num_prop, tp, fp, fn, f1, grnd_id_set, prop_id_set
 
 
-def scot_one_aoi(grnd_df, prop_df, min_grnd_area=4,
-                threshold=0.25, base_reward=100., beta=2.,
+def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
                 stats=False, verbose=False):
     """
     SpaceNet Change and Object Tracking (SCOT) metric, for one AOI.
-
     Input dataframes should have "timestep", "id", & "geometry" columns.
     """
-
-    # filter out small areas in ground truth
-    grnd_df['grnd_area'] = grnd_df.area
-    grnd_df = grnd_df[grnd_df['grnd_area'] >= min_grnd_area]
 
     # Get list of timesteps from ground truth and proposal dataframes
     grnd_timestep_set = set(grnd_df.timestep.drop_duplicates())
@@ -123,11 +117,11 @@ def scot_one_aoi(grnd_df, prop_df, min_grnd_area=4,
         all_grnd_ids = grnd_ids + all_grnd_ids # newest first
         all_prop_ids = prop_ids + all_prop_ids # newest first
         if verbose:
-            print('  %2i: f1 = %.4f' % (i, f1))
+            print('  %2i: F1 = %.4f' % (i, f1))
 
         # Collect aggregate statistics for change detection
         if i > 0:
-            # Find change detection tps, fps, and fns among matched footprints
+            # Find change detection TPs, FPs, and FNs among matched footprints
             new_grnd = [grnd_id not in change_grnd_ids for grnd_id in grnd_ids]
             new_prop = [prop_id not in change_prop_ids for prop_id in prop_ids]
             change_tp_list = [g and p for g, p in zip(new_grnd, new_prop)]
@@ -136,12 +130,11 @@ def scot_one_aoi(grnd_df, prop_df, min_grnd_area=4,
             change_tp_net += sum(change_tp_list)
             change_fp_net += sum(change_fp_list)
             change_fn_net += sum(change_fn_list)
-            # Find change detection fp's and fn's among unmatched footprints
+            # Find change detection FPs and FNs among unmatched footprints
             unmatched_fp = prop_id_set.difference(prop_ids).difference(change_prop_ids)
             unmatched_fn = grnd_id_set.difference(grnd_ids).difference(change_grnd_ids)
             change_fp_net += len(unmatched_fp)
             change_fn_net += len(unmatched_fn)
-
         change_grnd_ids = change_grnd_ids.union(grnd_id_set)
         change_prop_ids = change_prop_ids.union(prop_id_set)
 
@@ -162,12 +155,17 @@ def scot_one_aoi(grnd_df, prop_df, min_grnd_area=4,
             mm_net += 1
 
     # Compute and return score according to the metric
-    if tp_net + (fp_net + fn_net)/2. > 0:
-        track_score = (tp_net-mm_net) / (tp_net + (fp_net + fn_net)/2.)
+    track_tp_net = tp_net - mm_net
+    track_fp_net = fp_net + mm_net
+    track_fn_net = fn_net + mm_net
+    if track_tp_net + (track_fp_net + track_fn_net)/2. > 0:
+        track_score = (track_tp_net) / (track_tp_net
+                                        + (track_fp_net + track_fn_net)/2.)
     else:
         track_score = 0
     if change_tp_net + (change_fp_net + change_fn_net)/2. > 0:
-        change_score = (change_tp_net) / (change_tp_net + (change_fp_net + change_fn_net)/2.)
+        change_score = (change_tp_net) / (change_tp_net
+                                          + (change_fp_net + change_fn_net)/2.)
     else:
         change_score = 0
     if beta * beta * change_score + track_score > 0:
@@ -175,32 +173,33 @@ def scot_one_aoi(grnd_df, prop_df, min_grnd_area=4,
     else:
         combo_score = 0
     if verbose:
-        print('     True Pos: %i' % tp_net)
-        print('    False Pos: %i' % fp_net)
-        print('    False Neg: %i' % fn_net)
-        print('   Mismatches: %i' % mm_net)
-        print('  Track Score: %.4f' % track_score)
+        print('Tracking:')
+        print('    Mismatches: %i' % mm_net)
+        print('      True Pos: %i' % track_tp_net)
+        print('     False Pos: %i' % track_fp_net)
+        print('     False Neg: %i' % track_fn_net)
+        print('   Track Score: %.4f' % track_score)
         print()
-        print(' New True Pos: %i' % change_tp_net)
-        print('New False Pos: %i' % change_fp_net)
-        print('New False Neg: %i' % change_fn_net)
-        print(' Change Score: %.4f' % change_score)
+        print('Change Detection:')
+        print('      True Pos: %i' % change_tp_net)
+        print('     False Pos: %i' % change_fp_net)
+        print('     False Neg: %i' % change_fn_net)
+        print('  Change Score: %.4f' % change_score)
         print()
-        print('  Combo Score: %.4f' % combo_score)
+        print('Combined Score: %.4f' % combo_score)
     if stats:
-        return combo_score, [tp_net, fp_net, fn_net, mm_net, track_score,
-                             new_tp_net, new_fp_net, new_fn_net, change_score]
+        return combo_score, [mm_net, track_tp_net, track_fp_net, track_fn_net,
+                             track_score, change_tp_net, change_fp_net,
+                             change_fn_net, change_score]
     else:
         return combo_score
 
 
-def scot_multi_aoi(grnd_df, prop_df, min_grnd_area=4,
-                 threshold=0.25, base_reward=100., beta=2.,
-                 stats=False, verbose=False):
+def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
+                   verbose=False):
     """
     SpaceNet Change and Object Tracking (SCOT) metric,
     for a SpaceNet 7 submission with multiple AOIs.
-
     Input dataframes should have "aoi", "timestep", "id", & "geometry" columns.
     """
 
@@ -212,12 +211,13 @@ def scot_multi_aoi(grnd_df, prop_df, min_grnd_area=4,
     for i, aoi in enumerate(aois):
         if verbose:
             print()
-            print('%i / %i: AOI %s' % (i, len(aois), aoi))
+            print('%i / %i: AOI %s' % (i + 1, len(aois), aoi))
         grnd_df_one_aoi = grnd_df.loc[grnd_df.aoi == aoi].copy()
         prop_df_one_aoi = prop_df.loc[prop_df.aoi == aoi].copy()
         score_one_aoi = scot_one_aoi(grnd_df_one_aoi, prop_df_one_aoi,
-                                     min_grnd_area, threshold, base_reward,
-                                     beta, stats, verbose)
+                                     threshold=threshold,
+                                     base_reward=base_reward,
+                                     beta=beta, stats=False, verbose=verbose)
         cumulative_score += score_one_aoi
 
     # Return combined SCOT metric score
