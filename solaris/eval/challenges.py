@@ -240,15 +240,15 @@ def multi_temporal_buildings(prop_csv, truth_csv, miniou=0.25, min_area=4.,
         print("Number of AOIS:", len(aois))
 
     # Compute the score for this proposal
-    score, stats = scot_multi_aoi(grnd_df, prop_df,
-                                  threshold=miniou, base_reward=100.,
-                                  beta=beta,
-                                  stats=True, verbose=verbose)
+    score, all_stats = scot_multi_aoi(grnd_df, prop_df,
+                                      threshold=miniou, base_reward=100.,
+                                      beta=beta,
+                                      stats=True, verbose=verbose)
     if verbose:
         print('The submission "%s" receives a score of %f'
               % (prop_csv, score))
     if stats:
-        return (score, stats)
+        return (score, all_stats)
     else:
         return score
 

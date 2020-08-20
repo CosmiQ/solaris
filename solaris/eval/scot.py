@@ -189,7 +189,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     if stats:
         return combo_score, [mm_net, track_tp_net, track_fp_net, track_fn_net,
                              track_score, change_tp_net, change_fp_net,
-                             change_fn_net, change_score]
+                             change_fn_net, change_score, combo_score]
     else:
         return combo_score
 
@@ -227,6 +227,6 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     if verbose:
         print('Overall score: %f' % score)
     if stats:
-        return score, stats
+        return score, all_stats
     else:
         return score
