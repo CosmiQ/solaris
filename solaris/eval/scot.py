@@ -7,7 +7,6 @@ def match_footprints(grnd_df, prop_df,
     """
     Optimal matching of ground truth footprints with proposal footprints
     (for a single timestep).
-
     Input dataframes should have "id" & "geometry" columns.
     """
 
@@ -179,13 +178,11 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         print('     False Pos: %i' % track_fp_net)
         print('     False Neg: %i' % track_fn_net)
         print('   Track Score: %.4f' % track_score)
-        print()
         print('Change Detection:')
         print('      True Pos: %i' % change_tp_net)
         print('     False Pos: %i' % change_fp_net)
         print('     False Neg: %i' % change_fn_net)
         print('  Change Score: %.4f' % change_score)
-        print()
         print('Combined Score: %.4f' % combo_score)
     if stats:
         return combo_score, [mm_net, track_tp_net, track_fp_net, track_fn_net,

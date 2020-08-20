@@ -212,7 +212,6 @@ def multi_temporal_buildings(prop_csv, truth_csv, miniou=0.25, min_area=4.,
                              beta=2., verbose=False):
     """
     Evaluate submissions to SpaceNet 7: Multi-Temporal Urban Development
-
     Input CSV files should have "filename", "id", and "geometry" columns.
     """
 
@@ -246,7 +245,7 @@ def multi_temporal_buildings(prop_csv, truth_csv, miniou=0.25, min_area=4.,
                            verbose=verbose)
     if verbose:
         print('The submission "%s" receives a score of %f'
-              % (prop_file, score))
+              % (prop_csv, score))
     return score
 
 
