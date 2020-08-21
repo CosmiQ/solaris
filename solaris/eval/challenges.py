@@ -1,5 +1,7 @@
 import pandas as pd
+import geopandas as gpd
 from .base import Evaluator
+from .scot import scot_multi_aoi
 import re
 
 
@@ -112,7 +114,7 @@ def off_nadir_buildings(prop_csv, truth_csv, image_columns={}, miniou=0.5,
         Minimum area of ground truth regions to include in scoring calculation.
         Defaults to ``20``.
 
-    Returnss
+    Returns
     -------
 
     results_DF, results_DF_Full
@@ -204,6 +206,51 @@ def off_nadir_buildings(prop_csv, truth_csv, image_columns={}, miniou=0.5,
         results_DF.loc[results_DF.index == indexVal, 'F1Score'] = F1Score
 
     return results_DF, results_DF_Full
+
+
+def multi_temporal_buildings(prop_csv, truth_csv, miniou=0.25, min_area=4.,
+                             beta=2., stats=False, verbose=False):
+    """
+    Evaluate submissions to SpaceNet 7: Multi-Temporal Urban Development
+    Input CSV files should have "filename", "id", and "geometry" columns.
+    """
+
+    # Load dataframes
+    grnd_df = gpd.read_file(truth_csv, GEOM_POSSIBLE_NAMES="geometry", KEEP_GEOM_COLUMNS="NO")
+    prop_df = gpd.read_file(prop_csv, GEOM_POSSIBLE_NAMES="geometry", KEEP_GEOM_COLUMNS="NO")
+    if verbose:
+        print("init len grnd_df:", len(grnd_df))
+        print("init len prop_df:", len(prop_df))
+
+    # Filter out small buildings from ground truth
+    if min_area is not None:
+        grnd_df['area'] = grnd_df.area
+        grnd_df = grnd_df[grnd_df['area'] >= min_area]
+        grnd_df = grnd_df.drop(columns=['area'])
+        if verbose:
+            print("filtered len grnd_df:", len(grnd_df))
+
+    # Extract place (aoi) and time (timestep) from the "filename" column
+    grnd_df['aoi'] = grnd_df['filename'].str.slice(30, 58)
+    prop_df['aoi'] = prop_df['filename'].str.slice(30, 58)
+    grnd_df['timestep'] = grnd_df['filename'].str.slice(15, 22)
+    prop_df['timestep'] = prop_df['filename'].str.slice(15, 22)
+    aois = sorted(list(grnd_df.aoi.drop_duplicates()))
+    if verbose:
+        print("Number of AOIS:", len(aois))
+
+    # Compute the score for this proposal
+    score, all_stats = scot_multi_aoi(grnd_df, prop_df,
+                                      threshold=miniou, base_reward=100.,
+                                      beta=beta,
+                                      stats=True, verbose=verbose)
+    if verbose:
+        print('The submission "%s" receives a score of %f'
+              % (prop_csv, score))
+    if stats:
+        return (score, all_stats)
+    else:
+        return score
 
 
 def get_chip_id(chip_name, challenge="spacenet_2"):
