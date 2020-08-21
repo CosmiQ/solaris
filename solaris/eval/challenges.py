@@ -209,7 +209,7 @@ def off_nadir_buildings(prop_csv, truth_csv, image_columns={}, miniou=0.5,
 
 
 def multi_temporal_buildings(prop_csv, truth_csv, miniou=0.25, min_area=4.,
-                             beta=2., verbose=False):
+                             beta=2., stats=False, verbose=False):
     """
     Evaluate submissions to SpaceNet 7: Multi-Temporal Urban Development
     Input CSV files should have "filename", "id", and "geometry" columns.
@@ -240,13 +240,17 @@ def multi_temporal_buildings(prop_csv, truth_csv, miniou=0.25, min_area=4.,
         print("Number of AOIS:", len(aois))
 
     # Compute the score for this proposal
-    score = scot_multi_aoi(grnd_df, prop_df,
-                           threshold=miniou, base_reward=100., beta=beta,
-                           verbose=verbose)
+    score, all_stats = scot_multi_aoi(grnd_df, prop_df,
+                                      threshold=miniou, base_reward=100.,
+                                      beta=beta,
+                                      stats=True, verbose=verbose)
     if verbose:
         print('The submission "%s" receives a score of %f'
               % (prop_csv, score))
-    return score
+    if stats:
+        return (score, all_stats)
+    else:
+        return score
 
 
 def get_chip_id(chip_name, challenge="spacenet_2"):

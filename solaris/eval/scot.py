@@ -14,8 +14,10 @@ def match_footprints(grnd_df, prop_df,
     # to one less than the number of unique IDs)
     grnd_id_set = set(grnd_df['id'])
     prop_id_set = set(prop_df['id'])
-    grnd_id_to_index = {id: index for index, id in enumerate(grnd_id_set)}
-    prop_id_to_index = {id: index for index, id in enumerate(prop_id_set)}
+    grnd_id_to_index = {id: index for index, id in
+                        enumerate(sorted(list(grnd_id_set)))}
+    prop_id_to_index = {id: index for index, id in
+                        enumerate(sorted(list(prop_id_set)))}
     grnd_index_to_id = {index: id for id, index in grnd_id_to_index.items()}
     prop_index_to_id = {index: id for id, index in prop_id_to_index.items()}
     grnd_df['index'] = grnd_df.id.apply(lambda id: grnd_id_to_index[id])
@@ -116,7 +118,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         all_grnd_ids = grnd_ids + all_grnd_ids # newest first
         all_prop_ids = prop_ids + all_prop_ids # newest first
         if verbose:
-            print('  %2i: F1 = %.4f' % (i, f1))
+            print('  %2i: F1 = %.4f' % (i + 1, f1))
 
         # Collect aggregate statistics for change detection
         if i > 0:
@@ -187,13 +189,13 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     if stats:
         return combo_score, [mm_net, track_tp_net, track_fp_net, track_fn_net,
                              track_score, change_tp_net, change_fp_net,
-                             change_fn_net, change_score]
+                             change_fn_net, change_score, combo_score]
     else:
         return combo_score
 
 
 def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
-                   verbose=False):
+                   stats=True, verbose=False):
     """
     SpaceNet Change and Object Tracking (SCOT) metric,
     for a SpaceNet 7 submission with multiple AOIs.
@@ -205,20 +207,26 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
 
     # Evaluate SCOT metric for each AOI
     cumulative_score = 0.
+    all_stats = {}
     for i, aoi in enumerate(aois):
         if verbose:
             print()
             print('%i / %i: AOI %s' % (i + 1, len(aois), aoi))
         grnd_df_one_aoi = grnd_df.loc[grnd_df.aoi == aoi].copy()
         prop_df_one_aoi = prop_df.loc[prop_df.aoi == aoi].copy()
-        score_one_aoi = scot_one_aoi(grnd_df_one_aoi, prop_df_one_aoi,
-                                     threshold=threshold,
-                                     base_reward=base_reward,
-                                     beta=beta, stats=False, verbose=verbose)
+        score_one_aoi, stats_one_aoi = scot_one_aoi(
+            grnd_df_one_aoi, prop_df_one_aoi,
+            threshold=threshold,
+            base_reward=base_reward,
+            beta=beta, stats=True, verbose=verbose)
         cumulative_score += score_one_aoi
+        all_stats[aoi] = stats_one_aoi
 
     # Return combined SCOT metric score
     score = cumulative_score / len(aois)
     if verbose:
         print('Overall score: %f' % score)
-    return score
+    if stats:
+        return score, all_stats
+    else:
+        return score
