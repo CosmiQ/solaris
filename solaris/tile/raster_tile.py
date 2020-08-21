@@ -179,12 +179,12 @@ class RasterTiler(object):
                 dest.close()
                 src.close()
             src = _check_rasterio_im_load(restricted_im_path) #if restrict_to_aoi, we overwrite the src to be the masked raster
-            
+
         tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
                                        alpha, self.aoi_boundary, restrict_to_aoi)
 
         if self.verbose:
-            print('Beginning tiling...')   
+            print('Beginning tiling...')
         self.tile_paths = []
         if nodata_threshold is not None:
             if nodata_threshold > 1:
