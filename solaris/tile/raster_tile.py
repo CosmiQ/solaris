@@ -457,7 +457,7 @@ class RasterTiler(object):
         #     self._create_cog(os.path.join(self.dest_dir, 'tmp.tif'),
         #                      os.path.join(self.dest_dir, dest_fname))
         #     os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
-        
+
     def fill_all_nodata(self, nodata_fill):
         """
         Fills all tile nodata values with a fill value.
