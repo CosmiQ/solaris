@@ -17,6 +17,17 @@ When a new version of `solaris` is released, all of the changes in the Unrelease
 ## Unreleased
 
 ### Added
+### Removed
+### Changed
+### Fixed
+### Deprecated
+### Security
+
+---
+
+## Version 0.4.0
+
+### Added
 - 20200803, jshermeyer: Added mAP metric
 - 20200701, dphogan: Added SpaceNet Change and Object Tracking (SCOT) metric
 ### Removed
