@@ -228,18 +228,18 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
             base_reward=base_reward,
             beta=beta, stats=stats, verbose=verbose)
         cumulative_score += score_one_aoi
-        all_stats[aoi] = stats_one_aoi
+        all_stats[aoi] = stats_one_aoi + [threshold, beta]
 
     # Return combined SCOT metric score
     score = cumulative_score / len(aois)
     if verbose:
         print('Overall score: %f' % score)
     if stats:
-        col_names = [
+        col_names = [ 
             'tp', 'fp', 'fn', 'f1', 
             'mm_net', 'track_tp_net', 'track_fp_net', 'track_fn_net', 'track_score', 
             'change_tp_net', 'change_fp_net', 'change_fn_net', 'change_score', 
-            'combo_score']
+            'combo_score', 'iou_threshold', 'beta']
             # create dataframe
             # data = {'row_1': [3, 2, 1, 0], 'row_2': ['a', 'b', 'c', 'd']}
             # pd.DataFrame.from_dict(data, orient='index')
