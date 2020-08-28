@@ -240,15 +240,15 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
             'mm_net', 'track_tp_net', 'track_fp_net', 'track_fn_net', 'track_score', 
             'change_tp_net', 'change_fp_net', 'change_fn_net', 'change_score', 
             'combo_score', 'iou_threshold', 'beta']
-            # create dataframe
-            # data = {'row_1': [3, 2, 1, 0], 'row_2': ['a', 'b', 'c', 'd']}
-            # pd.DataFrame.from_dict(data, orient='index')
-            #        0  1  2  3
-            # row_1  3  2  1  0
-            # row_2  a  b  c  d
-            df = pd.DataFrame.from_dict(all_stats, orient='index', columns=col_names)
-            # compute means
-            df.loc['mean'] = df.mean()    
+        # create dataframe
+        # data = {'row_1': [3, 2, 1, 0], 'row_2': ['a', 'b', 'c', 'd']}
+        # pd.DataFrame.from_dict(data, orient='index')
+        #        0  1  2  3
+        # row_1  3  2  1  0
+        # row_2  a  b  c  d
+        df = pd.DataFrame.from_dict(all_stats, orient='index', columns=col_names)
+        # compute means
+        df.loc['mean'] = df.mean()    
         return score, df
         # return score, all_stats
     else:
