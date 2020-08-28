@@ -199,7 +199,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
             change_tp_net, change_fp_net, change_fn_net, change_score, 
             combo_score]
     else:
-        return combo_score
+        return combo_score, None
 
 
 def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
@@ -218,7 +218,7 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     all_stats = {}
     for i, aoi in enumerate(aois):
 
-        if i > 2:
+        if i > 1:
             break
             
         if verbose:
@@ -232,6 +232,8 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
             base_reward=base_reward,
             beta=beta, stats=stats, verbose=verbose)
         cumulative_score += score_one_aoi
+        print("stats_one_aoi:", stats_one_aoi)
+        print("stats_one_aoi + [threshold, beta]:", stats_one_aoi + [threshold, beta])
         all_stats[aoi] = stats_one_aoi + [threshold, beta]
 
     # Return combined SCOT metric score
