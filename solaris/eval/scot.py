@@ -217,6 +217,10 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     cumulative_score = 0.
     all_stats = {}
     for i, aoi in enumerate(aois):
+
+        if i > 2:
+            break
+            
         if verbose:
             print()
             print('%i / %i: AOI %s' % (i + 1, len(aois), aoi))
