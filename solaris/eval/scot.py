@@ -253,6 +253,7 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         # row_1  3  2  1  0
         # row_2  a  b  c  d
         df = pd.DataFrame.from_dict(all_stats, orient='index', columns=col_names)
+        print("df:", df)
         # compute means
         df.loc['mean'] = df.mean()    
         return score, df
