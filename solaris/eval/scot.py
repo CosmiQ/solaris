@@ -217,10 +217,6 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     cumulative_score = 0.
     all_stats = {}
     for i, aoi in enumerate(aois):
-
-        if i > 1:
-            break
-            
         if verbose:
             print()
             print('%i / %i: AOI %s' % (i + 1, len(aois), aoi))
@@ -232,8 +228,6 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
             base_reward=base_reward,
             beta=beta, stats=stats, verbose=verbose)
         cumulative_score += score_one_aoi
-        print("stats_one_aoi:", stats_one_aoi)
-        print("stats_one_aoi + [threshold, beta]:", stats_one_aoi + [threshold, beta])
         all_stats[aoi] = stats_one_aoi + [threshold, beta]
 
     # Return combined SCOT metric score
@@ -247,16 +241,9 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
             'change_tp_net', 'change_fp_net', 'change_fn_net', 'change_score', 
             'combo_score', 'iou_threshold', 'beta']
         # create dataframe
-        # data = {'row_1': [3, 2, 1, 0], 'row_2': ['a', 'b', 'c', 'd']}
-        # pd.DataFrame.from_dict(data, orient='index')
-        #        0  1  2  3
-        # row_1  3  2  1  0
-        # row_2  a  b  c  d
         df = pd.DataFrame.from_dict(all_stats, orient='index', columns=col_names)
-        print("df:", df)
         # compute means
         df.loc['mean'] = df.mean()    
         return score, df
-        # return score, all_stats
     else:
         return score
