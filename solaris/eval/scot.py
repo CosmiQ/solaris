@@ -215,7 +215,7 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
 
     # Evaluate SCOT metric for each AOI
     cumulative_score = 0.
-    # all_stats = {}
+    all_stats = {}
     for i, aoi in enumerate(aois):
         if verbose:
             print()
