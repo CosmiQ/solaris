@@ -6,7 +6,7 @@ from ..utils.core import _check_gdf_load, _check_crs
 from ..utils.tile import save_empty_geojson
 from ..utils.geo import get_projection_unit, split_multi_geometries
 from ..utils.geo import reproject_geometry
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 class VectorTiler(object):
@@ -299,7 +299,7 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
             gdf['origlen'] = 0
     # TODO must implement different case for lines and for spatialIndex
     # (Assume RTree is already performed)
-    
+
     cut_gdf = gdf.copy()
     cut_gdf.geometry = gdf.intersection(tb)
 
