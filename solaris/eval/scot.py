@@ -1,6 +1,7 @@
 import geopandas as gpd
 import scipy.optimize
 import scipy.sparse
+import pandas as pd
 
 def match_footprints(grnd_df, prop_df,
                      threshold=0.25, base_reward=100.):
@@ -174,6 +175,11 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     else:
         combo_score = 0
     if verbose:
+        print('Legacy:')
+        print('      True Pos: %i' % tp_net)
+        print('     False Pos: %i' % fp_net)
+        print('     False Neg: %i' % fn_net)
+        print('      F1 Score: %.4f' % f1)
         print('Tracking:')
         print('    Mismatches: %i' % mm_net)
         print('      True Pos: %i' % track_tp_net)
@@ -187,11 +193,13 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         print('  Change Score: %.4f' % change_score)
         print('Combined Score: %.4f' % combo_score)
     if stats:
-        return combo_score, [mm_net, track_tp_net, track_fp_net, track_fn_net,
-                             track_score, change_tp_net, change_fp_net,
-                             change_fn_net, change_score, combo_score]
+        return combo_score, \
+            [tp_net, fp_net, fn_net, f1, 
+            mm_net, track_tp_net, track_fp_net, track_fn_net, track_score, 
+            change_tp_net, change_fp_net, change_fn_net, change_score, 
+            combo_score]
     else:
-        return combo_score
+        return combo_score, None
 
 
 def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
@@ -218,15 +226,24 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
             grnd_df_one_aoi, prop_df_one_aoi,
             threshold=threshold,
             base_reward=base_reward,
-            beta=beta, stats=True, verbose=verbose)
+            beta=beta, stats=stats, verbose=verbose)
         cumulative_score += score_one_aoi
-        all_stats[aoi] = stats_one_aoi
+        all_stats[aoi] = stats_one_aoi + [threshold, beta]
 
     # Return combined SCOT metric score
     score = cumulative_score / len(aois)
     if verbose:
         print('Overall score: %f' % score)
     if stats:
-        return score, all_stats
+        col_names = [ 
+            'tp', 'fp', 'fn', 'f1', 
+            'mm_net', 'track_tp_net', 'track_fp_net', 'track_fn_net', 'track_score', 
+            'change_tp_net', 'change_fp_net', 'change_fn_net', 'change_score', 
+            'combo_score', 'iou_threshold', 'beta']
+        # create dataframe
+        df = pd.DataFrame.from_dict(all_stats, orient='index', columns=col_names)
+        # compute means
+        df.loc['mean'] = df.mean()    
+        return score, df
     else:
         return score
