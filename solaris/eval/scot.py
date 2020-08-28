@@ -176,9 +176,9 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         combo_score = 0
     if verbose:
         print('Legacy:')
-        print('      True Pos: %i' % tp)
-        print('     False Pos: %i' % fp)
-        print('     False Neg: %i' % fn)
+        print('      True Pos: %i' % tp_net)
+        print('     False Pos: %i' % fp_net)
+        print('     False Neg: %i' % fn_net)
         print('      F1 Score: %.4f' % f1)
         print('Tracking:')
         print('    Mismatches: %i' % mm_net)
@@ -194,7 +194,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         print('Combined Score: %.4f' % combo_score)
     if stats:
         return combo_score, \
-            [tp, fp, fn, f1, 
+            [tp_net, fp_net, fn_net, f1, 
             mm_net, track_tp_net, track_fp_net, track_fn_net, track_score, 
             change_tp_net, change_fp_net, change_fn_net, change_score, 
             combo_score]
