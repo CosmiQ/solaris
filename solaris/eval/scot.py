@@ -243,10 +243,14 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         # create dataframe
         df = pd.DataFrame.from_dict(all_stats, orient='index', columns=col_names)
         # compute sums, medians, means, stds
-        df.loc['sum'] = df.sum() 
-        df.loc['median'] = df.median() 
-        df.loc['mean'] = df.mean() 
-        df.loc['std'] = df.std() 
+        df_sum = df.sum() 
+        df_median = df.median() 
+        df_mean = df.mean() 
+        df_std = df.std() 
+        df.loc['sum'] = df_sum
+        df.loc['median'] = df_median
+        df.loc['mean'] = df_mean
+        df.loc['std'] = df_std
         return score, df
     else:
         return score
