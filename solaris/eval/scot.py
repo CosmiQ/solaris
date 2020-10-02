@@ -176,7 +176,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         combo_score = (1 + beta * beta) * (change_score * track_score) / (beta * beta * change_score + track_score)
     else:
         combo_score = 0
-    dt = time.time - t0
+    dt = time.time() - t0
     if verbose:
         print('Legacy:')
         print('      True Pos: %i' % tp_net)
