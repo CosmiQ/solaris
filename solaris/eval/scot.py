@@ -2,6 +2,7 @@ import geopandas as gpd
 import scipy.optimize
 import scipy.sparse
 import pandas as pd
+import time
 
 def match_footprints(grnd_df, prop_df,
                      threshold=0.25, base_reward=100.):
@@ -78,7 +79,8 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     SpaceNet Change and Object Tracking (SCOT) metric, for one AOI.
     Input dataframes should have "timestep", "id", & "geometry" columns.
     """
-
+                
+    t0 = time.time()
     # Get list of timesteps from ground truth and proposal dataframes
     grnd_timestep_set = set(grnd_df.timestep.drop_duplicates())
     prop_timestep_set = set(grnd_df.timestep.drop_duplicates())
@@ -174,6 +176,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         combo_score = (1 + beta * beta) * (change_score * track_score) / (beta * beta * change_score + track_score)
     else:
         combo_score = 0
+    dt = time.time - t0
     if verbose:
         print('Legacy:')
         print('      True Pos: %i' % tp_net)
@@ -192,6 +195,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         print('     False Neg: %i' % change_fn_net)
         print('  Change Score: %.4f' % change_score)
         print('Combined Score: %.4f' % combo_score)
+        print('Computation Time (s): %.1f' % dt)
     if stats:
         return combo_score, \
             [tp_net, fp_net, fn_net, f1, 
@@ -210,6 +214,7 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
     Input dataframes should have "aoi", "timestep", "id", & "geometry" columns.
     """
 
+    t0 = time.time()
     # Get list of AOIs from ground truth dataframe
     aois = sorted(list(grnd_df.aoi.drop_duplicates()))
 
@@ -232,8 +237,10 @@ def scot_multi_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
 
     # Return combined SCOT metric score
     score = cumulative_score / len(aois)
+    dt = time.time() - t0
     if verbose:
         print('Overall score: %f' % score)
+        print('Computation Time (s): %.1f' % dt)
     if stats:
         col_names = [ 
             'tp', 'fp', 'fn', 'f1', 
