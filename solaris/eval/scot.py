@@ -159,6 +159,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
             mm_net += 1
 
     # Compute and return score according to the metric
+    f1_net = (2*tp_net) / (2*tp_net + fp_net + fn_net)
     track_tp_net = tp_net - mm_net
     track_fp_net = fp_net + mm_net
     track_fn_net = fn_net + mm_net
@@ -182,7 +183,7 @@ def scot_one_aoi(grnd_df, prop_df, threshold=0.25, base_reward=100., beta=2.,
         print('      True Pos: %i' % tp_net)
         print('     False Pos: %i' % fp_net)
         print('     False Neg: %i' % fn_net)
-        print('      F1 Score: %.4f' % f1)
+        print('      F1 Score: %.4f' % f1_net)
         print('Tracking:')
         print('    Mismatches: %i' % mm_net)
         print('      True Pos: %i' % track_tp_net)
