@@ -83,22 +83,21 @@ class Inferer(object):
 
             elif self.framework in ['torch', 'pytorch']:
                 with torch.no_grad():
-                    self.model.eval()
-                if torch.cuda.is_available():
-                    device = torch.device('cuda')
-                    self.model = self.model.cuda()
-                else:
-                    device = torch.device('cpu')
-                inf_input = torch.from_numpy(inf_input).float().to(device)
-                # add additional input data, if applicable
-                if self.config['data_specs'].get('additional_inputs',
-                                                 None) is not None:
-                    inf_input = [inf_input]
-                    for i in self.config['data_specs']['additional_inputs']:
-                        inf_input.append(
-                            infer_df[i].iloc[idx].to(device))
+                    if torch.cuda.is_available():
+                        device = torch.device('cuda')
+                        self.model = self.model.cuda()
+                    else:
+                        device = torch.device('cpu')
+                    inf_input = torch.from_numpy(inf_input).float().to(device)
+                    # add additional input data, if applicable
+                    if self.config['data_specs'].get('additional_inputs',
+                                                    None) is not None:
+                        inf_input = [inf_input]
+                        for i in self.config['data_specs']['additional_inputs']:
+                            inf_input.append(
+                                infer_df[i].iloc[idx].to(device))
 
-                subarr_preds = self.model(inf_input)
+                    subarr_preds = self.model(inf_input)
                 subarr_preds = subarr_preds.cpu().data.numpy()
             stitched_result = stitch_images(subarr_preds,
                                             idx_refs=idx_refs,
