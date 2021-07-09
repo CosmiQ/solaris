@@ -124,6 +124,7 @@ def df_to_px_mask(df, channels=['footprint'], out_file=None, reference_im=None,
         meta = reference_im.meta.copy()
         meta.update(count=output_arr.shape[-1])
         meta.update(dtype='uint8')
+        meta.update(compress='lzw')
         with rasterio.open(out_file, 'w', **meta) as dst:
             # I hate band indexing.
             for c in range(1, 1 + output_arr.shape[-1]):

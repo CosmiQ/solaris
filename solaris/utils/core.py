@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import numpy as np
 from shapely.wkt import loads
 from shapely.geometry import Point
@@ -16,7 +17,7 @@ from warnings import warn
 
 def _check_rasterio_im_load(im):
     """Check if `im` is already loaded in; if not, load it in."""
-    if isinstance(im, str):
+    if isinstance(im, (str, Path)):
         return rasterio.open(im)
     elif isinstance(im, rasterio.DatasetReader):
         return im
@@ -51,6 +52,8 @@ def _check_df_load(df):
 
 def _check_gdf_load(gdf):
     """Check if `gdf` is already loaded in, if not, load from geojson."""
+    if isinstance(gdf, Path):
+        gdf = str(gdf)
     if isinstance(gdf, str):
         # as of geopandas 0.6.2, using the OGR CSV driver requires some add'nal
         # kwargs to create a valid geodataframe with a geometry column. see
