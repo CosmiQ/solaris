@@ -1,5 +1,6 @@
 import os
 import rasterio
+from pathlib import Path
 from rasterio.warp import Resampling, calculate_default_transform
 from rasterio.vrt import WarpedVRT
 from rasterio.mask import mask as rasterio_mask
@@ -67,7 +68,7 @@ class RasterTiler(object):
     src_path : `str`
         The path or URL to the source dataset. Used for calling
         ``rio_cogeo.cogeo.cog_validate()``.
-    dest_dir : `str`
+    dest_dir : `str` or :class:`pathlib.Path`
         The directory to save the output tiles to. If not
     dest_crs : int
         The EPSG code for the output images. If not provided, outputs will
@@ -112,9 +113,8 @@ class RasterTiler(object):
         # set up attributes
         if verbose:
             print("Initializing Tiler...")
-        self.dest_dir = dest_dir
-        if not os.path.exists(self.dest_dir):
-            os.makedirs(self.dest_dir)
+        self.dest_dir = Path(dest_dir)
+        self.dest_dir.mkdir(exist_ok=True)
         if dest_crs is not None:
             self.dest_crs = _check_crs(dest_crs)
         else:
@@ -156,7 +156,7 @@ class RasterTiler(object):
 
         Arguments
         ---------
-        src : :class:`rasterio.io.DatasetReader` or str
+        src : :class:`rasterio.io.DatasetReader`, str or :class:`pathlib.Path`
             The source dataset to tile.
         nodata_threshold : float, optional
             Nodata percentages greater than this threshold will not be saved as tiles.
@@ -229,13 +229,13 @@ class RasterTiler(object):
 
         Arguments
         ---------
-        src : `str` or :class:`Rasterio.DatasetReader`
+        src : str, :class:`pathlib.Path` or :class:`Rasterio.DatasetReader`
             The source data to tile from. If this is a "classic"
             (non-cloud-optimized) GeoTIFF, the whole image will be loaded in;
             if it's cloud-optimized, only the required portions will be loaded
             during tiling unless ``force_load_cog=True`` was specified upon
             initialization.
-        dest_dir : str, optional
+        dest_dir : str or :class:`pathlib.Path`, optional
             The path to the destination directory to output images to. If the
             path doesn't exist, it will be created. This argument is required
             if it wasn't provided during initialization.

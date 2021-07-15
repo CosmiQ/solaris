@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from pathlib import Path
 from shapely.geometry import box, Polygon
 import geopandas as gpd
 from ..utils.core import _check_gdf_load, _check_crs
@@ -24,9 +25,8 @@ class VectorTiler(object):
                  verbose=False, super_verbose=False):
         if verbose or super_verbose:
             print('Preparing the tiler...')
-        self.dest_dir = dest_dir
-        if not os.path.isdir(self.dest_dir):
-            os.makedirs(self.dest_dir)
+        self.dest_dir = Path(dest_dir)
+        self.dest_dir.mkdir(exist_ok=True)
         if dest_crs is not None:
             self.dest_crs = _check_crs(dest_crs)
         self.output_format = output_format
@@ -44,7 +44,7 @@ class VectorTiler(object):
 
         Arguments
         ---------
-        src : `str` or :class:`geopandas.GeoDataFrame`
+        src : `str`, :class:`pathlib.Path` or :class:`geopandas.GeoDataFrame`
             The source vector data to tile. Must either be a path to a GeoJSON
             or a :class:`geopandas.GeoDataFrame`.
         tile_bounds : list
@@ -118,7 +118,7 @@ class VectorTiler(object):
 
         Arguments
         ---------
-        src : `str` or :class:`geopandas.GeoDataFrame`
+        src : `str` :class:`pathlib.Path` or :class:`geopandas.GeoDataFrame`
             The source vector data to tile. Must either be a path to a GeoJSON
             or a :class:`geopandas.GeoDataFrame`.
         tile_bounds : list
