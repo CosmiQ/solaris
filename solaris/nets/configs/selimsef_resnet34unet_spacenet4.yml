@@ -1,0 +1,140 @@
+model_name: selimsef_spacenet4_resnet34unet
+
+model_path:
+train: false
+infer: true
+
+pretrained: true
+nn_framework:  torch
+batch_size: 42
+
+data_specs:
+  width: 384
+  height:  384
+  dtype:
+  image_type: zscore
+  rescale: false
+  rescale_minima: auto
+  rescale_maxima: auto
+  additional_inputs:
+  channels: 4
+  label_type: mask
+  is_categorical: false
+  mask_channels: 3
+  val_holdout_frac: 0.2
+  data_workers:  12
+
+training_data_csv: '/path/to/training_df.csv'
+validation_data_csv:
+inference_data_csv: '/path/to/test_df.csv'
+
+training_augmentation:
+  augmentations:
+    RandomScale:
+      scale_limit:
+        - 0.5
+        - 1.5
+      interpolation: nearest
+    Rotate:
+      limit:
+        - 5
+        - 6
+      border_mode: constant
+      p: 0.3
+    RandomCrop:
+      height: 416
+      width: 416
+      always_apply: true
+      p: 1.0
+    Normalize:
+      mean:
+        - 0.006479
+        - 0.009328
+        - 0.01123
+        - 0.02082
+      std:
+        - 0.004986
+        - 0.004964
+        - 0.004950
+        - 0.004878
+      max_pixel_value: 65535.0
+      p: 1.0
+  p: 1.0
+  shuffle: true
+
+validation_augmentation:
+  augmentations:
+    CenterCrop:
+      height: 384
+      width: 384
+      p: 1.0
+    Normalize:
+      mean:
+        - 0.006479
+        - 0.009328
+        - 0.01123
+        - 0.02082
+      std:
+        - 0.004986
+        - 0.004964
+        - 0.004950
+        - 0.004878
+      max_pixel_value: 65535.0
+      p: 1.0
+  p: 1.0
+
+inference_augmentation:
+  augmentations:
+    Normalize:
+      mean:
+        - 0.006479
+        - 0.009328
+        - 0.01123
+        - 0.02082
+      std:
+        - 0.004986
+        - 0.004964
+        - 0.004950
+        - 0.004878
+      max_pixel_value: 65535.0
+      p: 1.0
+  p: 1.0
+training:
+  epochs:  70
+  steps_per_epoch:
+  optimizer: AdamW
+  lr: 2e-4
+  opt_args:
+    weight_decay: 0.0001
+  loss:
+    focal:
+    dice:
+  loss_weights:
+    focal: 1
+    dice: 1
+  metrics:
+    training:
+    validation:
+  checkpoint_frequency: 10
+  callbacks:
+    lr_schedule:
+      schedule_type: 'arbitrary'
+      schedule_dict:
+        milestones:
+          - 1
+          - 5
+          - 15
+          - 30
+          - 50
+          - 60
+        gamma: 0.5
+    model_checkpoint:
+      filepath: 'selimsef_resnet34_best.pth'
+      monitor: val_loss
+  model_dest_path: 'selimsef_resnet34.pth'
+  verbose: true
+
+inference:
+  window_step_size_x:
+  window_step_size_y:
+  output_dir: 'inference_out/'
