@@ -1,0 +1,4 @@
+image,label
+sample_1.tif,sample_mask_1.tif
+sample_2.tif,sample_mask_2.tif
+sample_3.tif,sample_mask_3.tif

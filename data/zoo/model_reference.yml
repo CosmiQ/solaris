@@ -1,0 +1,10 @@
+# AN ITEM MUST BE ADDED TO BOTH model_paths AND model_urls FOR EACH MODEL
+# THAT SOLARIS CAN USE BY DEFAULT
+
+model_paths:
+  placeholder1: path1
+  placeholder2: path2
+
+model_urls:
+  placeholder1: https://path/to/model1.pt
+  placeholder2: https://path/to/model2.h5
