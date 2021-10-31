@@ -199,7 +199,7 @@ def precision_calc(proposal_polygons_dir, gt_polygons_dir,
                         confidences[i].append(conf)
                 i += 1
                 ious = []
-    precision_by_class = average_score_by_class(iou_holder, threshold=0.5)
+    precision_by_class = average_score_by_class(iou_holder, threshold=threshold)
     precision_by_class = list(np.nan_to_num(precision_by_class))
     mPrecision = np.nanmean(precision_by_class)
     print("mPrecision:", mPrecision)
@@ -295,7 +295,7 @@ def recall_calc(proposal_polygons_dir, gt_polygons_dir,
                 i += 1
                 ious = []
 
-    recall_by_class = average_score_by_class(iou_holder, threshold=0.5)
+    recall_by_class = average_score_by_class(iou_holder, threshold=threshold)
     recall_by_class = list(np.nan_to_num(recall_by_class))
     mRecall = np.nanmean(recall_by_class)
     print("mRecall:", mRecall)
