@@ -63,7 +63,7 @@ else:
                  'affine>=2.3.0',
                  'albumentations==0.4.3',
                  'fiona>=1.7.13',
-                 'gdal>=3.0.2'
+                 'gdal>=3.0.2',
                  'geopandas>=0.7.0',
                  'matplotlib>=3.1.2',
                  'networkx>=2.4',
