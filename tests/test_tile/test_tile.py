@@ -3,11 +3,11 @@ import skimage.io
 import numpy as np
 from solaris.tile.raster_tile import RasterTiler
 from solaris.tile.vector_tile import VectorTiler
-from solaris.data import data_dir
 from solaris.vector.mask import geojsons_to_masks_and_fill_nodata
 import geopandas as gpd
 from shapely.ops import cascaded_union
 
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 class TestTilers(object):
     def test_tiler(self):

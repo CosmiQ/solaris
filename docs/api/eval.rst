@@ -24,9 +24,3 @@
 
 .. automodule:: solaris.eval.iou
    :members:
-
-``solaris.eval.challenges`` SpaceNet Challenge scoring functionality
---------------------------------------------------------------------
-
-.. automodule:: solaris.eval.challenges
-   :members:

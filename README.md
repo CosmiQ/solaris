@@ -1,31 +1,34 @@
 <p align="center">
-<img src="https://github.com/CosmiQ/solaris/raw/master/static/sol_logo.png" width="350" alt="Solaris">
+<img src="https://github.com/rbavery/solaris/raw/main/static/sol_logo.png" width="350" alt="solaris">
 </p>
-<h2 align="center">An open source ML pipeline for overhead imagery by <a href=http://www.cosmiqworks.org>CosmiQ Works</a></h2>
+<h2 align="center">An open source ML toolkit for overhead imagery.</h2>
 <p align="center">
 <img align="center" src="https://img.shields.io/pypi/pyversions/solaris.svg" alt="PyPI python version" href="https://pypi.org/project/solaris/">
 <img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI" href="https://pypi.org/project/solaris/">
 <!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge"> -->
-<img align="center" src="https://travis-ci.com/CosmiQ/solaris.svg?branch=master" alt="build">
+<img align="center" src="https://travis-ci.com/rbavery/solaris.svg?branch=main" alt="build">
 <img align="center" src="https://readthedocs.org/projects/solaris/badge/" alt="docs">
-<img align="center" src="https://img.shields.io/github/license/cosmiq/solaris.svg" alt="license">
-<!-- <img align="center" src="https://img.shields.io/docker/build/cosmiqworks/cw-eval.svg" alt="docker"> -->
-<a href="https://codecov.io/gh/CosmiQ/solaris"><img align="center" src="https://codecov.io/gh/CosmiQ/solaris/branch/master/graph/badge.svg" /></a>
+<img align="center" src="https://img.shields.io/github/license/rbavery/solaris.svg" alt="license">
+<a href="https://codecov.io/gh/rbavery/solaris"><img align="center" src="https://codecov.io/gh/rbavery/solaris/branch/main/graph/badge.svg" /></a>
 </p>
 
-## This is a beta version of Solaris which may continue to develop. Please report any bugs through issues!
+## This is a beta version of solaris which may continue to develop. Please report any bugs through issues!
 
+- [This is a beta version of solaris which may continue to develop. Please report any bugs through issues!](#this-is-a-beta-version-of-solaris-which-may-continue-to-develop-please-report-any-bugs-through-issues)
+- [- License](#--license)
 - [Documentation](#documentation)
 - [Installation Instructions](#installation-instructions)
+    - [pip](#pip)
 - [Dependencies](#dependencies)
 - [License](#license)
 ---
 
-This repository provides the source code for the CosmiQ Works `solaris` project, which provides software tools for:
+This library is a minimal fork of the <a href=https://solaris.readthedocs.io/en/latest/>solaris</a> project by <a href=http://www.cosmiqworks.org>CosmiQ Works</a>. Currently, the focus of this library is to extract the dataset preprocessing and evaluation methods that do not depend on tensorflow or pytorch, in order to produce a relatively light, framework agnostic package for preparing geospatial ML datasets and evaluating geospatial ML results.
+
+This repository provides the source code for the `solaris` project, which provides software tools for:
 - Tiling large-format overhead images and vector labels
 - Converting between geospatial raster and vector formats and machine learning-compatible formats
-- Performing semantic and instance segmentation, object detection, and related tasks using deep learning models designed specifically for overhead image analysis
-- Evaluating performance of deep learning model predictions
+- Evaluating performance of deep learning model predictions, including semantic and instance segmentation, object detection, and related tasks
 
 ## Documentation
 The full documentation for `solaris` can be found at https://solaris.readthedocs.io, and includes:
@@ -74,9 +77,9 @@ If you don't want to use `conda`, you can [install libspatialindex](https://libs
 
 <!-- #### Docker
 
-You may also use our Docker container:
+You may also use this Docker container:
 ```
-docker pull cosmiqworks/solaris
+docker pull rbavery/solaris
 ``` -->
 
 <!-- ## API Documentation
@@ -90,6 +93,6 @@ All dependencies can be found in the requirements file [./requirements.txt](requ
 See [LICENSE](./LICENSE.txt).
 <!--
 ## Traffic
-![GitHub](https://img.shields.io/github/downloads/cosmiq/cw-eval/total.svg)
+![GitHub](https://img.shields.io/github/downloads/rbavery/cw-eval/total.svg)
 ![PyPI](https://img.shields.io/pypi/dm/cw-eval.svg)
 ![Conda](https://img.shields.io/conda/dn/conda-forge/cw-eval.svg) -->

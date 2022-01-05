@@ -1,11 +1,10 @@
 import os
 import pandas as pd
-from solaris.data import data_dir
 from solaris.utils.data import make_dataset_csv
 
-
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 class TestMakeDatasetCSV(object):
-    """Test sol.utils.data.make_dataset_csv()."""
+    """Test lunuutils.data.make_dataset_csv()."""
 
     def test_with_regex(self):
         output_df = make_dataset_csv(

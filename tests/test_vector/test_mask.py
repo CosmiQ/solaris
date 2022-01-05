@@ -2,11 +2,11 @@ import os
 import numpy as np
 import geopandas as gpd
 import skimage
-from solaris.data import data_dir
 from solaris.vector.mask import footprint_mask, boundary_mask, \
     contact_mask, df_to_px_mask, mask_to_poly_geojson, road_mask, \
     preds_to_binary, instance_mask
 
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 class TestFootprintMask(object):
     """Tests for solaris.vector.mask.footprint_mask."""

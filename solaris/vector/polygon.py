@@ -3,11 +3,10 @@ import shapely
 from affine import Affine
 import rasterio
 from rasterio.warp import transform_bounds
-from rasterio.crs import CRS
 from ..utils.geo import list_to_affine, _reduce_geom_precision
 from ..utils.core import _check_gdf_load, _check_crs, _check_rasterio_im_load
 from ..raster.image import get_geo_transform
-from shapely.geometry import box, Polygon
+from shapely.geometry import Polygon
 import pandas as pd
 import geopandas as gpd
 from rtree.core import RTreeError

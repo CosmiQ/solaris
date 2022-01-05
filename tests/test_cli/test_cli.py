@@ -3,9 +3,9 @@ import numpy as np
 import pickle
 import subprocess
 import skimage.io
-from solaris.data import data_dir
 import networkx as nx
 
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 class TestCLI(object):
     """CLI tests using subprocess."""

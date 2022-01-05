@@ -5,7 +5,7 @@ from solaris.eval.pixel import iou, f1, relaxed_f1
 
 
 class TestIoU(object):
-    """Test ``sol.eval.pixel.iou()``."""
+    """Test ``lunu.eval.pixel.iou()``."""
 
     def test_iou_basic(self):
         truth = np.array([[0, 0, 1],
@@ -27,7 +27,7 @@ class TestIoU(object):
 
 
 class TestF1(object):
-    """Test ``sol.eval.pixel.f1()``."""
+    """Test ``lunu.eval.pixel.f1()``."""
 
     def test_f1_basic(self):
         eps = 1e-7
@@ -71,7 +71,7 @@ class TestF1(object):
 
 
 class TestRelaxedF1(object):
-    """Test ``sol.eval.pixel.relaxed_f1()``."""
+    """Test ``lunu.eval.pixel.relaxed_f1()``."""
 
     def test_relaxed_f1_basic(self):
         eps = 1e-7

@@ -7,16 +7,16 @@
     :alt: solaris_logo
 
 ############################################################################################################
-`solaris <https://github.com/cosmiq/solaris>`__ |release| by `CosmiQ Works <https://www.cosmiqworks.org>`__
+`solaris <https://github.com/rbavery/solaris>`__ |release| by `Ryan Avery <https://github.com/rbavery>`__
 ############################################################################################################
 
-***************************************************************
-An open source machine learning pipeline for geospatial imagery
-***************************************************************
+***********************************************************************************
+An open source machine learning toolkit for geospatial imagery, forked from solaris
+***********************************************************************************
 
 
 .. toctree::
-  :name: mastertoc
+  :name: maintoc
   :maxdepth: 3
   :glob:
   :hidden:
@@ -49,7 +49,4 @@ Index
 
 **License:** `Apache 2.0`__.
 
-.. __: https://github.com/CosmiQ/solaris/blob/master/LICENSE.txt
-
-Follow us at our blog `The DownlinQ <https://medium.com/the-downlinq>`_ or
-`on Twitter <https://twitter.com/cosmiqworks>`_ for updates!
+.. __: https://github.com/rbavery/solaris/blob/main/LICENSE.txt

@@ -257,7 +257,7 @@ class Evaluator():
 
         for class_id in class_list:
             iou_field = "{}_{}".format(iou_field_prefix, class_id)
-            if class_id is not 'all':  # this is probably unnecessary now
+            if class_id != 'all':  # this is probably unnecessary now
                 self.ground_truth_GDF_Edit = self.ground_truth_GDF[
                     self.ground_truth_GDF[
                         ground_truth_class_field] == class_id].copy(deep=True)
@@ -380,7 +380,7 @@ class Evaluator():
 
         for class_id in class_list:
             iou_field = "{}_{}".format(iou_field_prefix, class_id)
-            if class_id is not 'all':  # this is probably unnecessary now
+            if class_id != 'all':  # this is probably unnecessary now
                 self.ground_truth_GDF_Edit = self.ground_truth_GDF[
                     self.ground_truth_GDF[
                         ground_truth_class_field] == class_id].copy(deep=True)

@@ -1,1 +1,1 @@
-from . import base, iou, scot, challenges, pixel, vector
+from . import base, iou, pixel, vector

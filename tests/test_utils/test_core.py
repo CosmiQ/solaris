@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import rasterio
-from solaris.data import data_dir
 from solaris.utils.core import _check_df_load, _check_gdf_load
 from solaris.utils.core import _check_rasterio_im_load, _check_crs
 import pyproj
 
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 class TestLoadCheckers(object):
     """Test objects for checking loading of various objects."""

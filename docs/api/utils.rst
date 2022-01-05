@@ -11,12 +11,6 @@
 .. automodule:: solaris.utils.core
    :members:
 
-``solaris.utils.config`` Configuration file utilities
------------------------------------------------------
-
-.. automodule:: solaris.utils.config
-   :members:
-
 ``solaris.utils.io`` Imagery and vector I/O utilities
 -----------------------------------------------------
 

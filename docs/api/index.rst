@@ -3,7 +3,7 @@
 .. title:: API reference contents
 
 ###################
-Solaris API summary
+solaris API summary
 ###################
 
 Complete submodule documentation
@@ -12,7 +12,6 @@ Complete submodule documentation
 * `solaris.raster <raster.html>`_: Raster (imagery) coordinate management and formatting
 * `solaris.vector <vector.html>`_: Vector (label) management and format interconversion
 * `solaris.preproc <preproc.html>`_: Preprocessing workflows for imagery and vector labels
-* `solaris.nets <nets.html>`_: Deep learning model ingestion, creation, training, and inference
 * `solaris.eval <eval.html>`_: Deep learning model performance evaluation
 * `solaris.utils <utils.html>`_: Utility functions for the above toolsets
 * `solaris.data <data.html>`_: Data management and format interconversion
