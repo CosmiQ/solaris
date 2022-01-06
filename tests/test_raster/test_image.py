@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import solaris as lunu
-from solaris.data import sample_load_rasterio, sample_load_gdal
+from solaris.data import sample_load_rasterio
 from solaris.raster.image import get_geo_transform, stitch_images
 from affine import Affine
 import skimage.io
@@ -21,11 +21,6 @@ class TestGetGeoTransform(object):
         affine_obj = get_geo_transform(src_obj)
         assert affine_obj == Affine(0.5, 0.0, 733601.0, 0.0, -0.5, 3725139.0)
         src_obj.close()
-
-    def test_get_from_gdal(self):
-        src_obj = sample_load_gdal()
-        affine_obj = get_geo_transform(src_obj)
-        assert affine_obj == Affine(0.5, 0.0, 733601.0, 0.0, -0.5, 3725139.0)
 
 
 class TestStitchImages(object):

@@ -29,7 +29,7 @@ Please describe tests that you added to the pytest codebase (if applicable).
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new errors
 - [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] My PR passes Travis CI tests
+- [ ] My PR passes CI tests
 - [ ] My PR does not reduce coverage in Codecov
 
 _If your PR does not fulfill all of the requirements in the checklist above, that's OK!_ Just prepend [WIP] to the PR title until they are all satisfied. If you need help, @-mention a maintainer and/or add the __Status: Help Needed__ label.
