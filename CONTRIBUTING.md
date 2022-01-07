@@ -65,6 +65,8 @@ For general discussion, questions on usage of solaris, or other general question
 ### Continuing integration
 `Github Actions <https://github.com/features/actions>` is a continuous integration service, triggering tests and other processes automatically after each Pull Request or new branch push. CI runs unit tests, measures code coverage, and checks coding style (PEP8) of your branch. The tests must pass before your PR can be merged. If CI fails, you can find out why by clicking on the "failed" icon (red cross) and inspecting the build and test log. The PR will not be merged until the CI run succeeds.
 
+The easiest way to test your code locally prior to pushing to Github is to use `act <https://github.com/nektos/act>`, a CLI that allows you to run Github actions locally. Using act, you can run the same suite of tests in the same suite of environments that are used when a push is made to a branch on Github. To use `act`, follow the installation instructions and then run `act` in the root directory of this repository. 
+
 A pull request must be approved by a core team member before merging.
 
 ### Unit tests

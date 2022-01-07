@@ -49,7 +49,7 @@ else:
         "opencv-python>=4.1",
         "pandas>=0.25.3",
         "pyproj>=2.1",
-        "pyyaml==5.2",
+        "PyYAML>=5.4",
         "rasterio>=1.0.23",
         "requests==2.22.0",
         "rtree>=0.9.3",
