@@ -3,6 +3,8 @@ import pandas as pd
 import geopandas as gpd
 import rasterio
 
+data_dir = os.path.dirname(__file__) + "/../../tests/data"
+
 
 def load_geojson(gj_fname):
     """Load a geojson into a gdf using GeoPandas."""
