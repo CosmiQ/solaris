@@ -6,7 +6,6 @@
 <img align="center" src="https://img.shields.io/pypi/pyversions/solaris.svg" alt="PyPI python version" href="https://pypi.org/project/solaris/">
 <img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI" href="https://pypi.org/project/solaris/">
 <!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge"> -->
-<img align="center" src="https://travis-ci.com/CosmiQ/solaris.svg?branch=main" alt="build">
 <img align="center" src="https://readthedocs.org/projects/solaris/badge/" alt="docs">
 <img align="center" src="https://img.shields.io/github/license/CosmiQ/solaris.svg" alt="license">
 <a href="https://codecov.io/gh/CosmiQ/solaris"><img align="center" src="https://codecov.io/gh/CosmiQ/solaris/branch/main/graph/badge.svg" /></a>
