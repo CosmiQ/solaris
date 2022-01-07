@@ -13,12 +13,12 @@ all: install_dev_dependencies
 .PHONY: install_dependencies
 install_dependencies: .venv/bin/activate
 	@echo "${bold}Installing dependencies...${reset}"
-	$(VENV_PATH)/pip install -r requirements.txt
-	$(VENV_PATH)/pip install -r requirements-test.txt
+	$(VENV_PATH)/python setup.py install
 
 .PHONY: install_dev_dependencies
 install_dev_dependencies: .venv/bin/activate
 	@echo "${bold}Installing dependencies...${reset}"
+	$(VENV_PATH)/python setup.py develop
 	$(VENV_PATH)/pip install -r requirements-test.txt
 
 # Run

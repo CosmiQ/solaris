@@ -45,7 +45,6 @@ else:
         "fiona>=1.7.13",
         "geopandas>=0.7.0",
         "matplotlib>=3.1.2",
-        "networkx>=2.4",
         "numpy>=1.17.3",
         "opencv-python>=4.1",
         "pandas>=0.25.3",
@@ -58,7 +57,7 @@ else:
         "scipy>=1.3.2",
         "shapely>=1.7.1dev",
         "tqdm>=4.40.0",
-        "urllib3>=1.25.7",
+        "urllib3<1.26",
     ]
 
 
@@ -91,10 +90,7 @@ setup(
     entry_points={
         "console_scripts": [
             "geotransform_footprints = solaris.bin.geotransform_footprints:main",
-            "make_graphs = solaris.bin.make_graphs:main",
             "make_masks = solaris.bin.make_masks:main",
-            "mask_to_polygons = solaris.bin.mask_to_polygons:main",
-            "solaris_run_ml = solaris.bin.solaris_run_ml:main",
         ]
     },
 )
