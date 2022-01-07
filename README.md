@@ -22,7 +22,7 @@
 - [License](#license)
 ---
 
-This library is a minimal fork of the <a href=https://solaris.readthedocs.io/en/latest/>solaris</a> project by <a href=http://www.cosmiqworks.org>CosmiQ Works</a>. Currently, the focus of this library is to extract the dataset preprocessing and evaluation methods that do not depend on tensorflow or pytorch, in order to produce a relatively light, framework agnostic package for preparing geospatial ML datasets and evaluating geospatial ML results.
+Solaris is an open source GeoAI ML toolkit for preprocessing and post processing workflows that are common to machine learning with geospatial imagery. It handles common functionality for preprocessing geotiffs and vector formats into formats that deep learning frameworks can interpret. It also handles post-processing and evaluating detection results, making it easier to compare different models. See the [ROADMAP.md](ROADMAP.md) for a description of how v0.5 differs from v0.4 of solaris.
 
 This repository provides the source code for the `solaris` project, which provides software tools for:
 - Tiling large-format overhead images and vector labels
