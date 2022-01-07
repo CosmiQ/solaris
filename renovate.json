@@ -5,9 +5,9 @@
   "pip_setup": {
     "enabled": true
   },
-  "assignees": ["rbavery"],
+  "assignees": ["CosmiQ"],
   "baseBranches": ["dev"],
   "ignoreDeps": ["GDAL"],
   "labels": ["dependencies"],
-  "reviewers": ["rbavery]
+  "reviewers": ["CosmiQ]
 }

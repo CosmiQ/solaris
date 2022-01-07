@@ -4,7 +4,7 @@
 Installing ``solaris``
 ######################
 
-There are several methods available for installing `solaris <https://github.com/rbavery/solaris>`_:
+There are several methods available for installing `solaris <https://github.com/CosmiQ/solaris>`_:
 
 * :ref:`github-install`
 * :ref:`pip-only`
@@ -29,7 +29,7 @@ on conda-forge yet, you can install from GitHub. You'll need
 
 From a terminal, run::
 
-  git clone https://github.com/rbavery/solaris.git
+  git clone https://github.com/CosmiQ/solaris.git
   cd solaris
   git checkout [branch_name]  # for example, git checkout dev for bleeding-edge
 

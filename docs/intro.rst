@@ -86,4 +86,4 @@ to:
 
 The ``solaris`` Python API documentation can be found `here <api/index>`_, and
 `we have provided tutorials for common use cases <tutorials/index.html>`_.
-The open source codebase is available `on GitHub <https://github.com/rbavery/solaris>`_.
+The open source codebase is available `on GitHub <https://github.com/CosmiQ/solaris>`_.

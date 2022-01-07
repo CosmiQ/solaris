@@ -20,7 +20,7 @@ There are two different ways to use ``solaris``:
 
 Here we provide a brief introduction to these two approaches, links to tutorials,
 and usage recipes to complete common tasks. If there's a common use case not
-covered here, `submit an issue on the GitHub repo to request its inclusion. <https://github.com/rbavery/solaris/issues>`_
+covered here, `submit an issue on the GitHub repo to request its inclusion. <https://github.com/CosmiQ/solaris/issues>`_
 
 ---------------
 

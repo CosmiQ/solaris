@@ -20,9 +20,9 @@ import numpy as np
 # -- Project information -----------------------------------------------------
 
 project = "solaris"
-copyright = "2019, CosmiQ Works"
+copyright = "2018, CosmiQ Works"
 author = "Ryan Avery"
-license = "Apache 2.0"
+license = "MIT"
 import time
 
 copyright = u"2018-{}, CosmiQ Works: an IQT Lab".format(time.strftime("%Y"))

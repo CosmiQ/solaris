@@ -1,15 +1,15 @@
 <p align="center">
-<img src="https://github.com/rbavery/solaris/raw/main/static/sol_logo.png" width="350" alt="solaris">
+<img src="https://github.com/CosmiQ/solaris/raw/main/static/sol_logo.png" width="350" alt="solaris">
 </p>
 <h2 align="center">An open source ML toolkit for overhead imagery.</h2>
 <p align="center">
 <img align="center" src="https://img.shields.io/pypi/pyversions/solaris.svg" alt="PyPI python version" href="https://pypi.org/project/solaris/">
 <img align="center" src="https://img.shields.io/pypi/v/solaris.svg" alt="PyPI" href="https://pypi.org/project/solaris/">
 <!-- <img align="center" src="https://img.shields.io/conda/vn/conda-forge/cw-eval.svg" alt="conda-forge"> -->
-<img align="center" src="https://travis-ci.com/rbavery/solaris.svg?branch=main" alt="build">
+<img align="center" src="https://travis-ci.com/CosmiQ/solaris.svg?branch=main" alt="build">
 <img align="center" src="https://readthedocs.org/projects/solaris/badge/" alt="docs">
-<img align="center" src="https://img.shields.io/github/license/rbavery/solaris.svg" alt="license">
-<a href="https://codecov.io/gh/rbavery/solaris"><img align="center" src="https://codecov.io/gh/rbavery/solaris/branch/main/graph/badge.svg" /></a>
+<img align="center" src="https://img.shields.io/github/license/CosmiQ/solaris.svg" alt="license">
+<a href="https://codecov.io/gh/CosmiQ/solaris"><img align="center" src="https://codecov.io/gh/CosmiQ/solaris/branch/main/graph/badge.svg" /></a>
 </p>
 
 ## This is a beta version of solaris which may continue to develop. Please report any bugs through issues!
@@ -79,7 +79,7 @@ If you don't want to use `conda`, you can [install libspatialindex](https://libs
 
 You may also use this Docker container:
 ```
-docker pull rbavery/solaris
+docker pull CosmiQ/solaris
 ``` -->
 
 <!-- ## API Documentation
@@ -93,6 +93,6 @@ All dependencies can be found in the requirements file [./requirements.txt](requ
 See [LICENSE](./LICENSE.txt).
 <!--
 ## Traffic
-![GitHub](https://img.shields.io/github/downloads/rbavery/cw-eval/total.svg)
+![GitHub](https://img.shields.io/github/downloads/CosmiQ/cw-eval/total.svg)
 ![PyPI](https://img.shields.io/pypi/dm/cw-eval.svg)
 ![Conda](https://img.shields.io/conda/dn/conda-forge/cw-eval.svg) -->

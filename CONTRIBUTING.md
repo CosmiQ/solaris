@@ -4,14 +4,14 @@ _These contributing guidelines are adapted from [scikit-image](https://github.co
 
 We welcome contributions from the open source community! From creating issues to describe bugs or request new features, to PRs to improve the codebase or documentation, we encourage you to dive in, even if you're a novice.
 
-- To find things to work on, check out the [open issues on GitHub](https://github.com/rbavery/solaris/issues?state=open)
+- To find things to work on, check out the [open issues on GitHub](https://github.com/CosmiQ/solaris/issues?state=open)
 - The technical detail of the development process is summed up below.
 
 ## Contributing through issues to identify bugs or request features
 
 We welcome bug reports or feature requests through issues.
 
-1. Go to https://github.com/rbavery/solaris/issues and search the issues to see if your bug/feature is already present in the list. If not,
+1. Go to https://github.com/CosmiQ/solaris/issues and search the issues to see if your bug/feature is already present in the list. If not,
 2. Create a new issue, using the template appropriate for the type of issue you're creating (bug report/feature request/etc.)
   - Please don't change the labels associated with the issue when you create it - maintainers will do so during triage.
   - If you wish to work on resolving the issue yourself, you're welcome to do so! proceed to the next session for guidelines.
@@ -21,7 +21,7 @@ For general discussion, questions on usage of solaris, or other general question
 ## Contributing through pull requests (PRs) to improve the codebase
 
 1. If you are a first-time contributor:
- - Go to [https://github.com/rbavery/solaris](https://github.com/rbavery/solaris) and click the "fork" button to create your own copy of the project.
+ - Go to [https://github.com/CosmiQ/solaris](https://github.com/CosmiQ/solaris) and click the "fork" button to create your own copy of the project.
  - Clone the project to your local computer:
     ```
     git clone https://github.com/your-username/solaris.git
@@ -32,7 +32,7 @@ For general discussion, questions on usage of solaris, or other general question
     ```
  - Add the upstream repository:
     ```
-    git remote add upstream https://github.com/rbavery/solaris.git
+    git remote add upstream https://github.com/CosmiQ/solaris.git
     ```
  - Now, you have remote repositories named:
    - `upstream`, which refers to the main solaris Github repository
@@ -69,11 +69,11 @@ A pull request must be approved by a core team member before merging.
 
 ### Unit tests
 
-Our codebase is tested by `pytest` unit tests [in the tests directory](https://github.com/rbavery/solaris/tree/main/tests). Those tests run during the pull request CI, and if they fail, the CI fails and the PR will not be merged until it is fixed. When adding new functionality, you are encouraged to extend existing tests or implement new tests to test the functionality you added. As a rule of thumb, any PR should increase code coverage on the repository. If substantial changes are made without accompanying tests, maintainers may ask you to add tests before a PR is merged.
+Our codebase is tested by `pytest` unit tests [in the tests directory](https://github.com/CosmiQ/solaris/tree/main/tests). Those tests run during the pull request CI, and if they fail, the CI fails and the PR will not be merged until it is fixed. When adding new functionality, you are encouraged to extend existing tests or implement new tests to test the functionality you added. As a rule of thumb, any PR should increase code coverage on the repository. If substantial changes are made without accompanying tests, maintainers may ask you to add tests before a PR is merged.
 
 ### Document changes
 
-Every pull request must include an update to the "Unreleased" portion of [the changelog](https://github.com/rbavery/solaris/blob/main/CHANGELOG.md).
+Every pull request must include an update to the "Unreleased" portion of [the changelog](https://github.com/CosmiQ/solaris/blob/main/CHANGELOG.md).
 
 Divergence between ``upstream main`` and your feature branch
 --------------------------------------------------------------

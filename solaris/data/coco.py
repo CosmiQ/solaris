@@ -123,7 +123,7 @@ def geojson2coco(
         to ``True`` will induce solaris to descend into subdirectories to find
         files. By default, solaris does not traverse the directory tree.
     explode_all_multipolygons : bool, optional
-        Explode the multipolygons into individual geometries using lunuutils.geo.split_multi_geometries.
+        Explode the multipolygons into individual geometries using solaris.utils.geo.split_multi_geometries.
         Be sure to inspect which geometries are multigeometries, each individual geometries within these
         may represent artifacts rather than true labels.
     remove_all_multipolygons : bool, optional

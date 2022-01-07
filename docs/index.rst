@@ -7,7 +7,7 @@
     :alt: solaris_logo
 
 ############################################################################################################
-`solaris <https://github.com/rbavery/solaris>`__ |release| by `Ryan Avery <https://github.com/rbavery>`__
+`solaris <https://github.com/CosmiQ/solaris>`__ |release| by `Development Seed <https://github.com/developmentseed>`__
 ############################################################################################################
 
 ***********************************************************************************
@@ -47,6 +47,6 @@ Index
 * :ref:`modindex`
 
 
-**License:** `Apache 2.0`__.
+**License:** `MIT`__.
 
-.. __: https://github.com/rbavery/solaris/blob/main/LICENSE.txt
+.. __: https://github.com/CosmiQ/solaris/blob/main/LICENSE.txt
