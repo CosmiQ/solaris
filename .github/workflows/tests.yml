@@ -3,7 +3,7 @@ name: Test Python package
 on:
   - push
       branches-ignore:
-      - master
+      - main
   - pull_request
 
 jobs:
