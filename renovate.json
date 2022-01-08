@@ -5,9 +5,9 @@
   "pip_setup": {
     "enabled": true
   },
-  "assignees": ["nrweir"],
+  "assignees": ["CosmiQ"],
   "baseBranches": ["dev"],
-  "ignoreDeps": ["GDAL", "tensorflow"],
+  "ignoreDeps": ["GDAL"],
   "labels": ["dependencies"],
-  "reviewers": ["nrweir"]
+  "reviewers": ["CosmiQ]
 }

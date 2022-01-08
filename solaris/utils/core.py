@@ -1,17 +1,18 @@
 import os
-import numpy as np
-from shapely.wkt import loads
-from shapely.geometry import Point
-from shapely.geometry.base import BaseGeometry
-import pandas as pd
+from distutils.version import LooseVersion
+from warnings import warn
+
 import geopandas as gpd
+import numpy as np
+import pandas as pd
 import pyproj
 import rasterio
-from distutils.version import LooseVersion
 import skimage
 from fiona._err import CPLE_OpenFailedError
 from fiona.errors import DriverError
-from warnings import warn
+from shapely.geometry import Point
+from shapely.geometry.base import BaseGeometry
+from shapely.wkt import loads
 
 
 def _check_rasterio_im_load(im):
@@ -21,8 +22,7 @@ def _check_rasterio_im_load(im):
     elif isinstance(im, rasterio.DatasetReader):
         return im
     else:
-        raise ValueError(
-            "{} is not an accepted image format for rasterio.".format(im))
+        raise ValueError("{} is not an accepted image format for rasterio.".format(im))
 
 
 def _check_skimage_im_load(im):
@@ -33,13 +33,14 @@ def _check_skimage_im_load(im):
         return im
     else:
         raise ValueError(
-            "{} is not an accepted image format for scikit-image.".format(im))
+            "{} is not an accepted image format for scikit-image.".format(im)
+        )
 
 
 def _check_df_load(df):
     """Check if `df` is already loaded in, if not, load from file."""
     if isinstance(df, str):
-        if df.lower().endswith('json'):
+        if df.lower().endswith("json"):
             return _check_gdf_load(df)
         else:
             return pd.read_csv(df)
@@ -55,15 +56,18 @@ def _check_gdf_load(gdf):
         # as of geopandas 0.6.2, using the OGR CSV driver requires some add'nal
         # kwargs to create a valid geodataframe with a geometry column. see
         # https://github.com/geopandas/geopandas/issues/1234
-        if gdf.lower().endswith('csv'):
-            return gpd.read_file(gdf, GEOM_POSSIBLE_NAMES="geometry",
-                                 KEEP_GEOM_COLUMNS="NO")
+        if gdf.lower().endswith("csv"):
+            return gpd.read_file(
+                gdf, GEOM_POSSIBLE_NAMES="geometry", KEEP_GEOM_COLUMNS="NO"
+            )
         try:
             return gpd.read_file(gdf)
         except (DriverError, CPLE_OpenFailedError):
-            warn(f"GeoDataFrame couldn't be loaded: either {gdf} isn't a valid"
-                 " path or it isn't a valid vector file. Returning an empty"
-                 " GeoDataFrame.")
+            warn(
+                f"GeoDataFrame couldn't be loaded: either {gdf} isn't a valid"
+                " path or it isn't a valid vector file. Returning an empty"
+                " GeoDataFrame."
+            )
             return gpd.GeoDataFrame()
     elif isinstance(gdf, gpd.GeoDataFrame):
         return gdf
@@ -130,12 +134,12 @@ def get_data_paths(path, infer=False):
     """
     df = pd.read_csv(path)
     if infer:
-        return df[['image']]  # no labels in those files
+        return df[["image"]]  # no labels in those files
     else:
-        return df[['image', 'label']]  # remove anything extraneous
+        return df[["image", "label"]]  # remove anything extraneous
 
 
-def get_files_recursively(path, traverse_subdirs=False, extension='.tif'):
+def get_files_recursively(path, traverse_subdirs=False, extension=".tif"):
     """Get files from subdirs of `path`, joining them to the dir."""
     if traverse_subdirs:
         walker = os.walk(path)
@@ -143,10 +147,13 @@ def get_files_recursively(path, traverse_subdirs=False, extension='.tif'):
         for step in walker:
             if not step[2]:  # if there are no files in the current dir
                 continue
-            path_list += [os.path.join(step[0], fname)
-                          for fname in step[2] if
-                          fname.lower().endswith(extension)]
+            path_list += [
+                os.path.join(step[0], fname)
+                for fname in step[2]
+                if fname.lower().endswith(extension)
+            ]
         return path_list
     else:
-        return [os.path.join(path, f) for f in os.listdir(path)
-                if f.endswith(extension)]
+        return [
+            os.path.join(path, f) for f in os.listdir(path) if f.endswith(extension)
+        ]

@@ -1,3 +1,4 @@
-from . import bin, data, eval, nets, preproc, raster, tile, utils, vector
+from . import data, utils, vector
 
-__version__ = "0.4.0"
+#  data, eval, preproc, raster, tile, have gdal in them need to replace with rasterio
+__version__ = "0.0.1"

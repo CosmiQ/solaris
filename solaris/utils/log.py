@@ -18,5 +18,6 @@ def _get_logging_level(level_int):
     elif isinstance(level_int, int):  # if it's an int but not one of the above
         return level_int
     else:
-        raise ValueError(f"logging level set to {level_int}, "
-                         "but it must be an integer <= 2.")
+        raise ValueError(
+            f"logging level set to {level_int}, " "but it must be an integer <= 2."
+        )

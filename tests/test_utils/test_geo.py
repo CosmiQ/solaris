@@ -5,13 +5,13 @@ import shapely
 from affine import Affine
 from shapely.wkt import loads
 from shapely.ops import cascaded_union
-from solaris.data import data_dir
 from solaris.utils.core import _check_gdf_load
 from solaris.utils.geo import list_to_affine, split_multi_geometries
 from solaris.utils.geo import geometries_internal_intersection, split_geom
 from solaris.utils.geo import reproject, reproject_geometry
 import rasterio
 
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 class TestCoordTransformer(object):
     """Tests for the utils.geo.CoordTransformer."""

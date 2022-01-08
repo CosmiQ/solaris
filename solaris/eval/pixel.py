@@ -1,8 +1,9 @@
 import time
+
 import cv2
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def iou(truth_mask, prop_mask, prop_threshold=0.5, verbose=False):
@@ -30,12 +31,13 @@ def iou(truth_mask, prop_mask, prop_threshold=0.5, verbose=False):
         Intersection over union of ground truth and proposal
     """
     if truth_mask.shape != prop_mask.shape:
-        raise ValueError("The shape of `truth_mask` and `prop_mask` must "
-                         "be the same.")
+        raise ValueError(
+            "The shape of `truth_mask` and `prop_mask` must " "be the same."
+        )
     truth_mask_clip = np.clip(truth_mask, 0, 1).astype(float)
     prop_mask_clip = (np.clip(prop_mask, 0, 1) >= prop_threshold).astype(float)
     # subtract array
-    sub_mask = 2*prop_mask_clip - truth_mask_clip
+    sub_mask = 2 * prop_mask_clip - truth_mask_clip
     add_mask = prop_mask_clip + truth_mask_clip
 
     # true pos = 1, false_pos = 2, true_neg = 0, false_neg = -1
@@ -43,7 +45,7 @@ def iou(truth_mask, prop_mask, prop_threshold=0.5, verbose=False):
     union = np.sum(add_mask > 0)
     intersection = tp_count
 
-    iou = 1. * intersection / union
+    iou = 1.0 * intersection / union
 
     if verbose:
         print("intersection:", intersection)
@@ -53,8 +55,17 @@ def iou(truth_mask, prop_mask, prop_threshold=0.5, verbose=False):
     return iou
 
 
-def f1(truth_mask, prop_mask, prop_threshold=0.5, show_plot=False, im_file='',
-       show_colorbar=False, plot_file='', dpi=200, verbose=False):
+def f1(
+    truth_mask,
+    prop_mask,
+    prop_threshold=0.5,
+    show_plot=False,
+    im_file="",
+    show_colorbar=False,
+    plot_file="",
+    dpi=200,
+    verbose=False,
+):
     """Compute pixel-wise precision, recall, and f1 score.
 
     Find true pos, false pos, true neg, false neg as well as f1 score.
@@ -101,7 +112,7 @@ def f1(truth_mask, prop_mask, prop_threshold=0.5, show_plot=False, im_file='',
     truth_mask_clip = np.clip(truth_mask, 0, 1).astype(float)
     prop_mask_clip = (np.clip(prop_mask, 0, 1) >= prop_threshold).astype(float)
     # subtract array
-    sub_mask = 2*prop_mask_clip - truth_mask_clip
+    sub_mask = 2 * prop_mask_clip - truth_mask_clip
     # sub_mask2 = prop_mask_clip - truth_mask_clip
 
     # true pos = 1, false_pos = 2, true_neg = 0, false_neg = -1
@@ -134,18 +145,23 @@ def f1(truth_mask, prop_mask, prop_threshold=0.5, show_plot=False, im_file='',
 
         fontsize = 6
         t0 = time.time()
-        title = "Precision: " + str(np.round(precision, 3)) \
-                + "  Recall: " + str(np.round(recall, 3)) \
-                + "  F1: " + str(np.round(f1, 3))
+        title = (
+            "Precision: "
+            + str(np.round(precision, 3))
+            + "  Recall: "
+            + str(np.round(recall, 3))
+            + "  F1: "
+            + str(np.round(f1, 3))
+        )
 
         if show_colorbar:
-            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True,
-                                                         sharey=True,
-                                                         figsize=(6, 6))
+            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(
+                2, 2, sharex=True, sharey=True, figsize=(6, 6)
+            )
         else:
-            fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex=True,
-                                                sharey=True,
-                                                figsize=(9.5, 3))
+            fig, (ax1, ax2, ax3) = plt.subplots(
+                1, 3, sharex=True, sharey=True, figsize=(9.5, 3)
+            )
         # fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, sharex=True,
         #    sharey=True, figsize=(13,4))
         plt.suptitle(title, fontsize=fontsize)
@@ -157,36 +173,39 @@ def f1(truth_mask, prop_mask, prop_threshold=0.5, show_plot=False, im_file='',
             # ground truth
             # set zeros to nan
             palette = plt.cm.gray
-            palette.set_over('orange', 1.0)
-            palette.set_over('orange', 1.0)
+            palette.set_over("orange", 1.0)
+            palette.set_over("orange", 1.0)
 
             z = truth_mask.astype(float)
             z[z == 0] = np.nan
-            ax1.imshow(z, cmap=palette, alpha=0.5,
-                       norm=matplotlib.colors.Normalize(
-                               vmin=0.5, vmax=0.9, clip=False))
-            ax1.set_title('truth_mask_clip + image', fontsize=fontsize)
+            ax1.imshow(
+                z,
+                cmap=palette,
+                alpha=0.5,
+                norm=matplotlib.colors.Normalize(vmin=0.5, vmax=0.9, clip=False),
+            )
+            ax1.set_title("truth_mask_clip + image", fontsize=fontsize)
         else:
             ax1.imshow(truth_mask_clip)
-            ax1.set_title('truth_mask_clip', fontsize=fontsize)
-        ax1.axis('off')
+            ax1.set_title("truth_mask_clip", fontsize=fontsize)
+        ax1.axis("off")
 
         # proposal mask
         ax2.imshow(prop_mask_clip)
-        ax2.axis('off')
-        ax2.set_title('prop_mask_clip', fontsize=fontsize)
+        ax2.axis("off")
+        ax2.set_title("prop_mask_clip", fontsize=fontsize)
 
         # mask
         if show_colorbar:
             z = ax3.pcolor(sub_mask)
             fig.colorbar(z)
-            ax4.axis('off')
+            ax4.axis("off")
 
         else:
             ax3.imshow(sub_mask)
         # z = ax3.pcolor(sub_mask2)
-        ax3.axis('off')
-        ax3.set_title('subtract_mask', fontsize=fontsize)
+        ax3.axis("off")
+        ax3.set_title("subtract_mask", fontsize=fontsize)
 
         # plt.tight_layout()
         # fig.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -202,11 +221,11 @@ def f1(truth_mask, prop_mask, prop_threshold=0.5, show_plot=False, im_file='',
 
 
 def _get_neighborhood_limits(row, col, h, w, rho=3):
-    '''Get neighbors of point p with pixel coords row, col'''
+    """Get neighbors of point p with pixel coords row, col"""
 
-    rowmin = max(0, row-rho)
+    rowmin = max(0, row - rho)
     rowmax = min(h, row + rho)
-    colmin = max(0, col-rho)
+    colmin = max(0, col - rho)
     colmax = min(w, col + rho)
 
     return rowmin, rowmax, colmin, colmax
@@ -303,7 +322,8 @@ def relaxed_f1(truth_mask, prop_mask, radius=3, verbose=False):
             prop_val = prop_mask_clip[row][col]
             # get window limits
             rowmin, rowmax, colmin, colmax = _get_neighborhood_limits(
-                row, col, h, w, rho=radius)
+                row, col, h, w, rho=radius
+            )
             # get windows
             truth_win = truth_mask_clip[rowmin:rowmax, colmin:colmax]
             prop_win = prop_mask_clip[rowmin:rowmax, colmin:colmax]
@@ -321,15 +341,19 @@ def relaxed_f1(truth_mask, prop_mask, radius=3, verbose=False):
     if n_truth == 0:
         relaxed_recall = 0
     else:
-        relaxed_recall = 1. * recall_count / n_truth
+        relaxed_recall = 1.0 * recall_count / n_truth
     if n_prop == 0:
         relaxed_precision = 0
     else:
-        relaxed_precision = 1. * precision_count / n_prop
+        relaxed_precision = 1.0 * precision_count / n_prop
 
     if (relaxed_recall > 0) and (relaxed_precision > 0):
-        relaxed_f1 = 2 * relaxed_precision * relaxed_recall \
+        relaxed_f1 = (
+            2
+            * relaxed_precision
+            * relaxed_recall
             / (relaxed_precision + relaxed_recall)
+        )
     else:
         relaxed_f1 = 0
 

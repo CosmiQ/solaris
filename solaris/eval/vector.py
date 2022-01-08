@@ -1,13 +1,15 @@
-import os
 import glob
-from tqdm import tqdm
-import numpy as np
+import os
+
 import geopandas as gpd
+import numpy as np
+from tqdm import tqdm
+
 from .iou import calculate_iou
 
 
 def average_score_by_class(ious, threshold=0.5):
-    """ for a list of object ious by class, test if they are a counted as a
+    """for a list of object ious by class, test if they are a counted as a
     positive or a negative.
     Arguments
     ---------
@@ -35,10 +37,14 @@ def average_score_by_class(ious, threshold=0.5):
     return average_by_class
 
 
-def get_all_objects(proposal_polygons_dir, gt_polygons_dir,
-                    prediction_cat_attrib="class", gt_cat_attrib='make',
-                    file_format="geojson"):
-    """ Using the proposal and ground truth polygons, calculate the total.
+def get_all_objects(
+    proposal_polygons_dir,
+    gt_polygons_dir,
+    prediction_cat_attrib="class",
+    gt_cat_attrib="make",
+    file_format="geojson",
+):
+    """Using the proposal and ground truth polygons, calculate the total.
     Filenames of predictions and ground-truth must be identical.
     unique classes present in each
     Arguments
@@ -73,7 +79,7 @@ def get_all_objects(proposal_polygons_dir, gt_polygons_dir,
         if os.path.exists(ground_truth_poly):
             ground_truth_gdf = gpd.read_file(ground_truth_poly)
             proposal_gdf = gpd.read_file(geojson)
-            for index, row in (proposal_gdf.iterrows()):
+            for index, row in proposal_gdf.iterrows():
                 objs.append(row[prediction_cat_attrib])
     prop_objs = list(set(objs))
     os.chdir(gt_polygons_dir)
@@ -85,7 +91,7 @@ def get_all_objects(proposal_polygons_dir, gt_polygons_dir,
         if os.path.exists(proposal_poly):
             proposal_gdf = gpd.read_file(proposal_poly)
             ground_truth_gdf = gpd.read_file(geojson)
-            for index, row in (ground_truth_gdf.iterrows()):
+            for index, row in ground_truth_gdf.iterrows():
                 objs.append(row[gt_cat_attrib])
     gt_objs = list(set(objs))
     all_objs = gt_objs + prop_objs
@@ -93,10 +99,17 @@ def get_all_objects(proposal_polygons_dir, gt_polygons_dir,
     return prop_objs, gt_objs, all_objs
 
 
-def precision_calc(proposal_polygons_dir, gt_polygons_dir,
-                   prediction_cat_attrib="class", gt_cat_attrib='make', confidence_attrib=None,
-                   object_subset=[], threshold=0.5, file_format="geojson"):
-    """ Using the proposal and ground truth polygons, calculate precision metrics.
+def precision_calc(
+    proposal_polygons_dir,
+    gt_polygons_dir,
+    prediction_cat_attrib="class",
+    gt_cat_attrib="make",
+    confidence_attrib=None,
+    object_subset=[],
+    threshold=0.5,
+    file_format="geojson",
+):
+    """Using the proposal and ground truth polygons, calculate precision metrics.
     Filenames of predictions and ground-truth must be identical.  Will only
     calculate metric for classes that exist in the ground truth.
     Arguments
@@ -142,9 +155,12 @@ def precision_calc(proposal_polygons_dir, gt_polygons_dir,
     confidences = []
     if len(object_subset) == 0:
         prop_objs, object_subset, all_objs = get_all_objects(
-            proposal_polygons_dir, gt_polygons_dir,
+            proposal_polygons_dir,
+            gt_polygons_dir,
             prediction_cat_attrib=prediction_cat_attrib,
-            gt_cat_attrib=gt_cat_attrib, file_format=file_format)
+            gt_cat_attrib=gt_cat_attrib,
+            file_format=file_format,
+        )
     for i in range(len(object_subset)):
         iou_holder.append([])
         confidences.append([])
@@ -158,18 +174,22 @@ def precision_calc(proposal_polygons_dir, gt_polygons_dir,
             for obj in object_subset:
                 conf_holder = []
                 proposal_gdf2 = proposal_gdf[proposal_gdf[prediction_cat_attrib] == obj]
-                for index, row in (proposal_gdf2.iterrows()):
+                for index, row in proposal_gdf2.iterrows():
                     if confidence_attrib is not None:
                         conf_holder.append(row[confidence_attrib])
                     iou_GDF = calculate_iou(row.geometry, ground_truth_gdf)
-                    if 'iou_score' in iou_GDF.columns:
+                    if "iou_score" in iou_GDF.columns:
                         iou = iou_GDF.iou_score.max()
-                        max_iou_row = iou_GDF.loc[iou_GDF['iou_score'].idxmax(axis=0, skipna=True)]
+                        max_iou_row = iou_GDF.loc[
+                            iou_GDF["iou_score"].idxmax(axis=0, skipna=True)
+                        ]
                         id_1 = row[prediction_cat_attrib]
                         id_2 = ground_truth_gdf.loc[max_iou_row.name][gt_cat_attrib]
                         if id_1 == id_2:
                             ious.append(iou)
-                            ground_truth_gdf.drop(max_iou_row.name, axis=0, inplace=True)
+                            ground_truth_gdf.drop(
+                                max_iou_row.name, axis=0, inplace=True
+                            )
                         else:
                             iou = 0
                             ious.append(iou)
@@ -207,10 +227,16 @@ def precision_calc(proposal_polygons_dir, gt_polygons_dir,
     return iou_holder, precision_by_class, mPrecision, confidences
 
 
-def recall_calc(proposal_polygons_dir, gt_polygons_dir,
-                prediction_cat_attrib="class", gt_cat_attrib='make',
-                object_subset=[], threshold=0.5, file_format="geojson"):
-    """ Using the proposal and ground truth polygons, calculate recall metrics.
+def recall_calc(
+    proposal_polygons_dir,
+    gt_polygons_dir,
+    prediction_cat_attrib="class",
+    gt_cat_attrib="make",
+    object_subset=[],
+    threshold=0.5,
+    file_format="geojson",
+):
+    """Using the proposal and ground truth polygons, calculate recall metrics.
     Filenames of predictions and ground-truth must be identical. Will only
     calculate metric for classes that exist in the ground truth.
     Arguments
@@ -250,9 +276,12 @@ def recall_calc(proposal_polygons_dir, gt_polygons_dir,
     iou_holder = []
     if len(object_subset) == 0:
         prop_objs, object_subset, all_objs = get_all_objects(
-            proposal_polygons_dir, gt_polygons_dir,
+            proposal_polygons_dir,
+            gt_polygons_dir,
             prediction_cat_attrib=prediction_cat_attrib,
-            gt_cat_attrib=gt_cat_attrib, file_format=file_format)
+            gt_cat_attrib=gt_cat_attrib,
+            file_format=file_format,
+        )
     for i in range(len(object_subset)):
         iou_holder.append([])
     for geojson in tqdm(gt_geojsons):
@@ -262,12 +291,16 @@ def recall_calc(proposal_polygons_dir, gt_polygons_dir,
             ground_truth_gdf = gpd.read_file(geojson)
             i = 0
             for obj in object_subset:
-                ground_truth_gdf2 = ground_truth_gdf[ground_truth_gdf[gt_cat_attrib] == obj]
-                for index, row in (ground_truth_gdf2.iterrows()):
+                ground_truth_gdf2 = ground_truth_gdf[
+                    ground_truth_gdf[gt_cat_attrib] == obj
+                ]
+                for index, row in ground_truth_gdf2.iterrows():
                     iou_GDF = calculate_iou(row.geometry, proposal_gdf)
-                    if 'iou_score' in iou_GDF.columns:
+                    if "iou_score" in iou_GDF.columns:
                         iou = iou_GDF.iou_score.max()
-                        max_iou_row = iou_GDF.loc[iou_GDF['iou_score'].idxmax(axis=0, skipna=True)]
+                        max_iou_row = iou_GDF.loc[
+                            iou_GDF["iou_score"].idxmax(axis=0, skipna=True)
+                        ]
                         id_1 = row[gt_cat_attrib]
                         id_2 = proposal_gdf.loc[max_iou_row.name][prediction_cat_attrib]
                         if id_1 == id_2:
@@ -287,7 +320,9 @@ def recall_calc(proposal_polygons_dir, gt_polygons_dir,
             ground_truth_gdf = gpd.read_file(geojson)
             i = 0
             for obj in object_subset:
-                ground_truth_gdf2 = ground_truth_gdf[ground_truth_gdf[gt_cat_attrib] == obj]
+                ground_truth_gdf2 = ground_truth_gdf[
+                    ground_truth_gdf[gt_cat_attrib] == obj
+                ]
                 for z in range(len(ground_truth_gdf2)):
                     ious.append(0)
                 for item in ious:
@@ -302,10 +337,18 @@ def recall_calc(proposal_polygons_dir, gt_polygons_dir,
     return iou_holder, recall_by_class, mRecall
 
 
-def mF1(proposal_polygons_dir, gt_polygons_dir, prediction_cat_attrib="class",
-        gt_cat_attrib='make', object_subset=[], threshold=0.5, confidence_attrib=None,
-        file_format="geojson", all_outputs=False):
-    """ Using the proposal and ground truth polygons, calculate F1 and mF1
+def mF1(
+    proposal_polygons_dir,
+    gt_polygons_dir,
+    prediction_cat_attrib="class",
+    gt_cat_attrib="make",
+    object_subset=[],
+    threshold=0.5,
+    confidence_attrib=None,
+    file_format="geojson",
+    all_outputs=False,
+):
+    """Using the proposal and ground truth polygons, calculate F1 and mF1
     metrics. Filenames of predictions and ground-truth must be identical.  Will
     only calculate metric for classes that exist in the ground truth.
     Arguments
@@ -368,21 +411,33 @@ def mF1(proposal_polygons_dir, gt_polygons_dir, prediction_cat_attrib="class",
     if len(object_subset) == 0:
         print("getting unique objects...")
         prop_objs, object_subset, all_objs = get_all_objects(
-            proposal_polygons_dir, gt_polygons_dir,
+            proposal_polygons_dir,
+            gt_polygons_dir,
             prediction_cat_attrib=prediction_cat_attrib,
-            gt_cat_attrib=gt_cat_attrib, file_format=file_format)
+            gt_cat_attrib=gt_cat_attrib,
+            file_format=file_format,
+        )
     print("calculating recall...")
     recall_iou_by_obj, recall_by_class, mRecall = recall_calc(
-        proposal_polygons_dir, gt_polygons_dir,
+        proposal_polygons_dir,
+        gt_polygons_dir,
         prediction_cat_attrib=prediction_cat_attrib,
-        gt_cat_attrib=gt_cat_attrib, object_subset=object_subset,
-        threshold=threshold, file_format=file_format)
+        gt_cat_attrib=gt_cat_attrib,
+        object_subset=object_subset,
+        threshold=threshold,
+        file_format=file_format,
+    )
     print("calculating precision...")
     precision_iou_by_obj, precision_by_class, mPrecision, confidences = precision_calc(
-        proposal_polygons_dir, gt_polygons_dir,
+        proposal_polygons_dir,
+        gt_polygons_dir,
         prediction_cat_attrib=prediction_cat_attrib,
-        gt_cat_attrib=gt_cat_attrib, object_subset=object_subset,
-        threshold=threshold, confidence_attrib=confidence_attrib, file_format=file_format)
+        gt_cat_attrib=gt_cat_attrib,
+        object_subset=object_subset,
+        threshold=threshold,
+        confidence_attrib=confidence_attrib,
+        file_format=file_format,
+    )
     print("calculating F1 scores...")
     f1s_by_class = []
     for recall, precision in zip(recall_by_class, precision_by_class):
@@ -392,16 +447,33 @@ def mF1(proposal_polygons_dir, gt_polygons_dir, prediction_cat_attrib="class",
     mF1_score = np.nanmean(f1s_by_class)
     print("mF1:", mF1_score)
     if all_outputs is True:
-        return mF1_score, f1s_by_class, precision_iou_by_obj, precision_by_class, mPrecision, recall_iou_by_obj, recall_by_class, mRecall, object_subset, confidences
+        return (
+            mF1_score,
+            f1s_by_class,
+            precision_iou_by_obj,
+            precision_by_class,
+            mPrecision,
+            recall_iou_by_obj,
+            recall_by_class,
+            mRecall,
+            object_subset,
+            confidences,
+        )
     else:
         return mF1_score, f1s_by_class
 
 
-def mAP_score(proposal_polygons_dir, gt_polygons_dir,
-              prediction_cat_attrib="class", gt_cat_attrib='make',
-              object_subset=[], threshold=0.5, confidence_attrib="confidence",
-              file_format="geojson"):
-    """ Using the proposal and ground truth polygons calculate the Mean Average
+def mAP_score(
+    proposal_polygons_dir,
+    gt_polygons_dir,
+    prediction_cat_attrib="class",
+    gt_cat_attrib="make",
+    object_subset=[],
+    threshold=0.5,
+    confidence_attrib="confidence",
+    file_format="geojson",
+):
+    """Using the proposal and ground truth polygons calculate the Mean Average
     Precision (mAP) and  mF1 metrics. Filenames of predictions and ground-truth
     must be identical.  Will only calculate metric for classes that exist in
     the ground truth.
@@ -459,16 +531,34 @@ def mAP_score(proposal_polygons_dir, gt_polygons_dir,
             All confidences for each object for each class
     """
 
-    mF1_score, f1s_by_class, precision_iou_by_obj, precision_by_class, mPrecision, recall_iou_by_obj, recall_by_class, mRecall, object_subset, confidences = mF1(
-        proposal_polygons_dir, gt_polygons_dir,
+    (
+        mF1_score,
+        f1s_by_class,
+        precision_iou_by_obj,
+        precision_by_class,
+        mPrecision,
+        recall_iou_by_obj,
+        recall_by_class,
+        mRecall,
+        object_subset,
+        confidences,
+    ) = mF1(
+        proposal_polygons_dir,
+        gt_polygons_dir,
         prediction_cat_attrib=prediction_cat_attrib,
-        gt_cat_attrib=gt_cat_attrib, object_subset=object_subset,
-        threshold=threshold, confidence_attrib=confidence_attrib,
-        file_format=file_format, all_outputs=True)
+        gt_cat_attrib=gt_cat_attrib,
+        object_subset=object_subset,
+        threshold=threshold,
+        confidence_attrib=confidence_attrib,
+        file_format=file_format,
+        all_outputs=True,
+    )
 
     recall_thresholds = np.arange(0, 1.01, 0.01).tolist()
     APs_by_class = []
-    for p_obj_list, c_obj_list, r_obj_list in zip(precision_iou_by_obj, confidences, recall_iou_by_obj):
+    for p_obj_list, c_obj_list, r_obj_list in zip(
+        precision_iou_by_obj, confidences, recall_iou_by_obj
+    ):
         num_objs = len(r_obj_list)
         p_obj_list_sorted = [x for _, x in sorted(zip(c_obj_list, p_obj_list))]
         p_obj_list_sorted.reverse()
@@ -494,9 +584,9 @@ def mAP_score(proposal_polygons_dir, gt_polygons_dir,
         recalls = []
 
         for aTP, aFP in zip(Acc_TPs, Acc_FPs):
-            precision = (aTP / (aTP + aFP))
+            precision = aTP / (aTP + aFP)
             precisions.append(precision)
-            recall = (aTP / num_objs)
+            recall = aTP / num_objs
             recalls.append(recall)
         interp = []
         for t in recall_thresholds:
@@ -510,4 +600,17 @@ def mAP_score(proposal_polygons_dir, gt_polygons_dir,
         APs_by_class.append(AP)
     mAP = np.average(APs_by_class)
     print("mAP:", mAP, "@IOU:", threshold)
-    return mAP, APs_by_class, mF1_score, f1s_by_class, precision_iou_by_obj, precision_by_class, mPrecision, recall_iou_by_obj, recall_by_class, mRecall, object_subset, confidences
+    return (
+        mAP,
+        APs_by_class,
+        mF1_score,
+        f1s_by_class,
+        precision_iou_by_obj,
+        precision_by_class,
+        mPrecision,
+        recall_iou_by_obj,
+        recall_by_class,
+        mRecall,
+        object_subset,
+        confidences,
+    )

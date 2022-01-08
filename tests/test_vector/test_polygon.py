@@ -5,10 +5,11 @@ from shapely.geometry import Polygon
 from shapely.wkt import loads, dumps
 import geopandas as gpd
 import rasterio
-from solaris.data import data_dir
 from solaris.vector.polygon import convert_poly_coords, \
     affine_transform_gdf, georegister_px_df, geojson_to_px_gdf, \
     gdf_to_yolo
+
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 square = Polygon([(10, 20), (10, 10), (20, 10), (20, 20)])
 forward_result = loads("POLYGON ((733606 3725129, 733606 3725134, 733611 3725134, 733611 3725129, 733606 3725129))")

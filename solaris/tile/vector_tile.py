@@ -1,12 +1,13 @@
 import os
-import numpy as np
-from shapely.geometry import box, Polygon
+
 import geopandas as gpd
-from ..utils.core import _check_gdf_load, _check_crs
-from ..utils.tile import save_empty_geojson
-from ..utils.geo import get_projection_unit, split_multi_geometries
-from ..utils.geo import reproject_geometry
+import numpy as np
+from shapely.geometry import Polygon, box
 from tqdm.auto import tqdm
+
+from ..utils.core import _check_crs, _check_gdf_load
+from ..utils.geo import get_projection_unit, reproject_geometry, split_multi_geometries
+from ..utils.tile import save_empty_geojson
 
 
 class VectorTiler(object):
@@ -20,10 +21,16 @@ class VectorTiler(object):
     ----------
     """
 
-    def __init__(self, dest_dir=None, dest_crs=None, output_format='GeoJSON',
-                 verbose=False, super_verbose=False):
+    def __init__(
+        self,
+        dest_dir=None,
+        dest_crs=None,
+        output_format="GeoJSON",
+        verbose=False,
+        super_verbose=False,
+    ):
         if verbose or super_verbose:
-            print('Preparing the tiler...')
+            print("Preparing the tiler...")
         self.dest_dir = dest_dir
         if not os.path.isdir(self.dest_dir):
             os.makedirs(self.dest_dir)
@@ -32,14 +39,22 @@ class VectorTiler(object):
         self.output_format = output_format
         self.verbose = verbose
         self.super_verbose = super_verbose
-        self.tile_paths = [] # retains the paths of the last call to .tile()
+        self.tile_paths = []  # retains the paths of the last call to .tile()
         if self.verbose or self.super_verbose:
-            print('Initialization done.')
+            print("Initialization done.")
 
-    def tile(self, src, tile_bounds, tile_bounds_crs=None, geom_type='Polygon',
-             split_multi_geoms=True, min_partial_perc=0.0,
-             dest_fname_base='geoms', obj_id_col=None,
-             output_ext='.geojson'):
+    def tile(
+        self,
+        src,
+        tile_bounds,
+        tile_bounds_crs=None,
+        geom_type="Polygon",
+        split_multi_geoms=True,
+        min_partial_perc=0.0,
+        dest_fname_base="geoms",
+        obj_id_col=None,
+        output_ext=".geojson",
+    ):
         """Tile `src` into vector data tiles bounded by `tile_bounds`.
 
         Arguments
@@ -85,35 +100,54 @@ class VectorTiler(object):
         """
 
         if isinstance(src, gpd.GeoDataFrame) and src.crs is None:
-            raise ValueError("If the src input is a geopandas.GeoDataFrame, it must have a crs attribute.")
+            raise ValueError(
+                "If the src input is a geopandas.GeoDataFrame, it must have a crs attribute."
+            )
 
-        tile_gen = self.tile_generator(src, tile_bounds, tile_bounds_crs,
-                                       geom_type, split_multi_geoms,
-                                       min_partial_perc,
-                                       obj_id_col=obj_id_col)
+        tile_gen = self.tile_generator(
+            src,
+            tile_bounds,
+            tile_bounds_crs,
+            geom_type,
+            split_multi_geoms,
+            min_partial_perc,
+            obj_id_col=obj_id_col,
+        )
         self.tile_paths = []
         for tile_gdf, tb in tqdm(tile_gen):
-            if self.proj_unit not in ['meter', 'metre']:
+            if self.proj_unit not in ["meter", "metre"]:
                 dest_path = os.path.join(
-                    self.dest_dir, '{}_{}_{}{}'.format(dest_fname_base,
-                                                       np.round(tb[0], 3),
-                                                       np.round(tb[3], 3),
-                                                       output_ext))
+                    self.dest_dir,
+                    "{}_{}_{}{}".format(
+                        dest_fname_base,
+                        np.round(tb[0], 3),
+                        np.round(tb[3], 3),
+                        output_ext,
+                    ),
+                )
             else:
                 dest_path = os.path.join(
-                    self.dest_dir, '{}_{}_{}{}'.format(dest_fname_base,
-                                                       int(tb[0]),
-                                                       int(tb[3]),
-                                                       output_ext))
+                    self.dest_dir,
+                    "{}_{}_{}{}".format(
+                        dest_fname_base, int(tb[0]), int(tb[3]), output_ext
+                    ),
+                )
             self.tile_paths.append(dest_path)
             if len(tile_gdf) > 0:
-                tile_gdf.to_file(dest_path, driver='GeoJSON')
+                tile_gdf.to_file(dest_path, driver="GeoJSON")
             else:
                 save_empty_geojson(dest_path, self.dest_crs)
 
-    def tile_generator(self, src, tile_bounds, tile_bounds_crs=None,
-                       geom_type='Polygon', split_multi_geoms=True,
-                       min_partial_perc=0.0, obj_id_col=None):
+    def tile_generator(
+        self,
+        src,
+        tile_bounds,
+        tile_bounds_crs=None,
+        geom_type="Polygon",
+        split_multi_geoms=True,
+        min_partial_perc=0.0,
+        obj_id_col=None,
+    ):
         """Generate `src` vector data tiles bounded by `tile_bounds`.
 
         Arguments
@@ -173,21 +207,27 @@ class VectorTiler(object):
             reproject_bounds = False
 
         self.proj_unit = get_projection_unit(self.src_crs)
-        if getattr(self, 'dest_crs', None) is None:
+        if getattr(self, "dest_crs", None) is None:
             self.dest_crs = self.src_crs
         for i, tb in enumerate(tile_bounds):
             if self.super_verbose:
                 print("\n", i, "/", len(tile_bounds))
             if reproject_bounds:
-                tile_gdf = clip_gdf(self.src,
-                                    reproject_geometry(box(*tb),
-                                                       tile_bounds_crs,
-                                                       self.src_crs),
-                                    min_partial_perc,
-                                    geom_type, verbose=self.super_verbose)
+                tile_gdf = clip_gdf(
+                    self.src,
+                    reproject_geometry(box(*tb), tile_bounds_crs, self.src_crs),
+                    min_partial_perc,
+                    geom_type,
+                    verbose=self.super_verbose,
+                )
             else:
-                tile_gdf = clip_gdf(self.src, tb, min_partial_perc, geom_type,
-                                    verbose=self.super_verbose)
+                tile_gdf = clip_gdf(
+                    self.src,
+                    tb,
+                    min_partial_perc,
+                    geom_type,
+                    verbose=self.super_verbose,
+                )
             if self.src_crs != self.dest_crs:
                 tile_gdf = tile_gdf.to_crs(crs=self.dest_crs.to_wkt())
             if split_multi_geoms:
@@ -216,16 +256,20 @@ def search_gdf_polygon(gdf, tile_polygon):
     sindex = gdf.sindex
     possible_matches_index = list(sindex.intersection(tile_polygon.bounds))
     possible_matches = gdf.iloc[possible_matches_index]
-    precise_matches = possible_matches[
-        possible_matches.intersects(tile_polygon)
-        ]
+    precise_matches = possible_matches[possible_matches.intersects(tile_polygon)]
     if precise_matches.empty:
         precise_matches = gpd.GeoDataFrame(geometry=[])
     return precise_matches
 
 
-def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
-             use_sindex=True, verbose=False):
+def clip_gdf(
+    gdf,
+    tile_bounds,
+    min_partial_perc=0.0,
+    geom_type="Polygon",
+    use_sindex=True,
+    verbose=False,
+):
     """Clip GDF to a provided polygon.
 
     Clips objects within `gdf` to the region defined by
@@ -282,37 +326,37 @@ def clip_gdf(gdf, tile_bounds, min_partial_perc=0.0, geom_type="Polygon",
         gdf = search_gdf_polygon(gdf, tb)
 
     # if geom_type == "LineString":
-    if 'origarea' in gdf.columns:
+    if "origarea" in gdf.columns:
         pass
     else:
         if "geom_type" == "LineString":
-            gdf['origarea'] = 0
+            gdf["origarea"] = 0
         else:
-            gdf['origarea'] = gdf.area
+            gdf["origarea"] = gdf.area
 
-    if 'origlen' in gdf.columns:
+    if "origlen" in gdf.columns:
         pass
     else:
         if "geom_type" == "LineString":
-            gdf['origlen'] = gdf.length
+            gdf["origlen"] = gdf.length
         else:
-            gdf['origlen'] = 0
+            gdf["origlen"] = 0
     # TODO must implement different case for lines and for spatialIndex
     # (Assume RTree is already performed)
 
     cut_gdf = gdf.copy()
     cut_gdf.geometry = gdf.intersection(tb)
 
-    if geom_type == 'Polygon':
-        cut_gdf['partialDec'] = cut_gdf.area / cut_gdf['origarea']
-        cut_gdf = cut_gdf.loc[cut_gdf['partialDec'] > min_partial_perc, :]
-        cut_gdf['truncated'] = (cut_gdf['partialDec'] != 1.0).astype(int)
+    if geom_type == "Polygon":
+        cut_gdf["partialDec"] = cut_gdf.area / cut_gdf["origarea"]
+        cut_gdf = cut_gdf.loc[cut_gdf["partialDec"] > min_partial_perc, :]
+        cut_gdf["truncated"] = (cut_gdf["partialDec"] != 1.0).astype(int)
     else:
         # assume linestrings
         # remove null
-        cut_gdf = cut_gdf[cut_gdf['geometry'].notnull()]
-        cut_gdf['partialDec'] = 1
-        cut_gdf['truncated'] = 0
+        cut_gdf = cut_gdf[cut_gdf["geometry"].notnull()]
+        cut_gdf["partialDec"] = 1
+        cut_gdf["truncated"] = 0
         # cut_gdf = cut_gdf[cut_gdf.geom_type != "GeometryCollection"]
         if len(cut_gdf) > 0 and verbose:
             print("clip_gdf() - gdf.iloc[0]:", gdf.iloc[0])

@@ -1,21 +1,23 @@
 import os
-import shapely
-from affine import Affine
-import rasterio
-from rasterio.warp import transform_bounds
-from rasterio.crs import CRS
-from ..utils.geo import list_to_affine, _reduce_geom_precision
-from ..utils.core import _check_gdf_load, _check_crs, _check_rasterio_im_load
-from ..raster.image import get_geo_transform
-from shapely.geometry import box, Polygon
-import pandas as pd
-import geopandas as gpd
-from rtree.core import RTreeError
 import shutil
 
+import geopandas as gpd
+import pandas as pd
+import rasterio
+import shapely
+from affine import Affine
+from rasterio.warp import transform_bounds
+from rtree.core import RTreeError
+from shapely.geometry import Polygon
 
-def convert_poly_coords(geom, raster_src=None, affine_obj=None, inverse=False,
-                        precision=None):
+from ..raster.image import get_geo_transform
+from ..utils.core import _check_crs, _check_gdf_load, _check_rasterio_im_load
+from ..utils.geo import _reduce_geom_precision, list_to_affine
+
+
+def convert_poly_coords(
+    geom, raster_src=None, affine_obj=None, inverse=False, precision=None
+):
     """Georegister geometry objects currently in pixel coords or vice versa.
 
     Arguments
@@ -70,16 +72,23 @@ def convert_poly_coords(geom, raster_src=None, affine_obj=None, inverse=False,
     elif isinstance(geom, shapely.geometry.base.BaseGeometry):
         g = geom
     else:
-        raise TypeError('The provided geometry is not an accepted format. '
-                        'This function can only accept WKT strings and '
-                        'shapely geometries.')
+        raise TypeError(
+            "The provided geometry is not an accepted format. "
+            "This function can only accept WKT strings and "
+            "shapely geometries."
+        )
 
-    xformed_g = shapely.affinity.affine_transform(g, [affine_xform.a,
-                                                      affine_xform.b,
-                                                      affine_xform.d,
-                                                      affine_xform.e,
-                                                      affine_xform.xoff,
-                                                      affine_xform.yoff])
+    xformed_g = shapely.affinity.affine_transform(
+        g,
+        [
+            affine_xform.a,
+            affine_xform.b,
+            affine_xform.d,
+            affine_xform.e,
+            affine_xform.xoff,
+            affine_xform.yoff,
+        ],
+    )
     if isinstance(geom, str):
         # restore to wkt string format
         xformed_g = shapely.wkt.dumps(xformed_g)
@@ -89,8 +98,9 @@ def convert_poly_coords(geom, raster_src=None, affine_obj=None, inverse=False,
     return xformed_g
 
 
-def affine_transform_gdf(gdf, affine_obj, inverse=False, geom_col="geometry",
-                         precision=None):
+def affine_transform_gdf(
+    gdf, affine_obj, inverse=False, geom_col="geometry", precision=None
+):
     """Perform an affine transformation on a GeoDataFrame.
 
     Arguments
@@ -114,23 +124,23 @@ def affine_transform_gdf(gdf, affine_obj, inverse=False, geom_col="geometry",
         rounding is performed.
     """
     if isinstance(gdf, str):  # assume it's a geojson
-        if gdf.lower().endswith('json'):
+        if gdf.lower().endswith("json"):
             gdf = gpd.read_file(gdf)
-        elif gdf.lower().endswith('csv'):
+        elif gdf.lower().endswith("csv"):
             gdf = pd.read_csv(gdf)
         else:
-            raise ValueError(
-                "The file format is incompatible with this function.")
-    if 'geometry' not in gdf.columns:
-        gdf = gdf.rename(columns={geom_col: 'geometry'})
-    if not isinstance(gdf['geometry'][0], Polygon):
-        gdf['geometry'] = gdf['geometry'].apply(shapely.wkt.loads)
-    gdf["geometry"] = gdf["geometry"].apply(convert_poly_coords,
-                                            affine_obj=affine_obj,
-                                            inverse=inverse)
+            raise ValueError("The file format is incompatible with this function.")
+    if "geometry" not in gdf.columns:
+        gdf = gdf.rename(columns={geom_col: "geometry"})
+    if not isinstance(gdf["geometry"][0], Polygon):
+        gdf["geometry"] = gdf["geometry"].apply(shapely.wkt.loads)
+    gdf["geometry"] = gdf["geometry"].apply(
+        convert_poly_coords, affine_obj=affine_obj, inverse=inverse
+    )
     if precision is not None:
-        gdf['geometry'] = gdf['geometry'].apply(
-            _reduce_geom_precision, precision=precision)
+        gdf["geometry"] = gdf["geometry"].apply(
+            _reduce_geom_precision, precision=precision
+        )
 
     # the CRS is no longer valid - remove it
     gdf.crs = None
@@ -138,8 +148,15 @@ def affine_transform_gdf(gdf, affine_obj, inverse=False, geom_col="geometry",
     return gdf
 
 
-def georegister_px_df(df, im_path=None, affine_obj=None, crs=None,
-                      geom_col='geometry', precision=None, output_path=None):
+def georegister_px_df(
+    df,
+    im_path=None,
+    affine_obj=None,
+    crs=None,
+    geom_col="geometry",
+    precision=None,
+    output_path=None,
+):
     """Convert a dataframe of geometries in pixel coordinates to a geo CRS.
 
     Arguments
@@ -176,24 +193,32 @@ def georegister_px_df(df, im_path=None, affine_obj=None, crs=None,
         crs = im.crs
     else:
         if not affine_obj or not crs:
-            raise ValueError('If an image path is not provided, '
-                             'affine_obj and crs must be.')
+            raise ValueError(
+                "If an image path is not provided, " "affine_obj and crs must be."
+            )
     crs = _check_crs(crs)
-    tmp_df = affine_transform_gdf(df, affine_obj, geom_col=geom_col,
-                                  precision=precision)
-    result = gpd.GeoDataFrame(tmp_df, crs='epsg:' + str(crs.to_epsg()))
+    tmp_df = affine_transform_gdf(
+        df, affine_obj, geom_col=geom_col, precision=precision
+    )
+    result = gpd.GeoDataFrame(tmp_df, crs="epsg:" + str(crs.to_epsg()))
 
     if output_path is not None:
-        if output_path.lower().endswith('json'):
-            result.to_file(output_path, driver='GeoJSON')
+        if output_path.lower().endswith("json"):
+            result.to_file(output_path, driver="GeoJSON")
         else:
             result.to_csv(output_path, index=False)
 
     return result
 
 
-def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
-                      output_path=None, override_crs=False):
+def geojson_to_px_gdf(
+    geojson,
+    im_path,
+    geom_col="geometry",
+    precision=None,
+    output_path=None,
+    override_crs=False,
+):
     """Convert a geojson or set of geojsons from geo coords to px coords.
 
     Arguments
@@ -218,8 +243,8 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
         won't be saved to disk.
     override_crs: bool, optional
         Useful if the geojsons generated by the vector tiler or otherwise were saved
-        out with a non EPSG code projection. True sets the gdf crs to that of the 
-        image, the inputs should have the same underlying projection for this to work. 
+        out with a non EPSG code projection. True sets the gdf crs to that of the
+        image, the inputs should have the same underlying projection for this to work.
         If False, and the gdf does not have an EPSG code, this function will fail.
     Returns
     -------
@@ -239,20 +264,24 @@ def geojson_to_px_gdf(geojson, im_path, geom_col='geometry', precision=None,
 
     if len(gdf):  # if there's at least one geometry
         if override_crs:
-            gdf.crs = im.crs 
+            gdf.crs = im.crs
         overlap_gdf = get_overlapping_subset(gdf, im)
     else:
         overlap_gdf = gdf
 
     affine_obj = im.transform
-    transformed_gdf = affine_transform_gdf(overlap_gdf, affine_obj=affine_obj,
-                                           inverse=True, precision=precision,
-                                           geom_col=geom_col)
-    transformed_gdf['image_fname'] = os.path.split(im_path)[1]
+    transformed_gdf = affine_transform_gdf(
+        overlap_gdf,
+        affine_obj=affine_obj,
+        inverse=True,
+        precision=precision,
+        geom_col=geom_col,
+    )
+    transformed_gdf["image_fname"] = os.path.split(im_path)[1]
 
     if output_path is not None:
-        if output_path.lower().endswith('json'):
-            transformed_gdf.to_file(output_path, driver='GeoJSON')
+        if output_path.lower().endswith("json"):
+            transformed_gdf.to_file(output_path, driver="GeoJSON")
         else:
             transformed_gdf.to_csv(output_path, index=False)
     return transformed_gdf
@@ -294,14 +323,15 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
 
     """
     if im is None and bbox is None:
-        raise ValueError('Either `im` or `bbox` must be provided.')
+        raise ValueError("Either `im` or `bbox` must be provided.")
     gdf = _check_gdf_load(gdf)
     sindex = gdf.sindex
     if im is not None:
         im = _check_rasterio_im_load(im)
         # currently, convert CRSs to WKT strings here to accommodate rasterio.
-        bbox = transform_bounds(im.crs, _check_crs(gdf.crs, return_rasterio=True),
-                                *im.bounds)
+        bbox = transform_bounds(
+            im.crs, _check_crs(gdf.crs, return_rasterio=True), *im.bounds
+        )
         bbox_crs = im.crs
     # use transform_bounds in case the crs is different - no effect if not
     if isinstance(bbox, Polygon):
@@ -310,14 +340,14 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
         try:
             bbox_crs = _check_crs(gdf.crs, return_rasterio=True)
         except AttributeError:
-            raise ValueError('If `im` and `bbox_crs` are not provided, `gdf`'
-                             'must provide a coordinate reference system.')
+            raise ValueError(
+                "If `im` and `bbox_crs` are not provided, `gdf`"
+                "must provide a coordinate reference system."
+            )
     else:
         bbox_crs = _check_crs(bbox_crs, return_rasterio=True)
     # currently, convert CRSs to WKT strings here to accommodate rasterio.
-    bbox = transform_bounds(bbox_crs,
-                            _check_crs(gdf.crs, return_rasterio=True),
-                            *bbox)
+    bbox = transform_bounds(bbox_crs, _check_crs(gdf.crs, return_rasterio=True), *bbox)
     try:
         intersectors = list(sindex.intersection(bbox))
     except RTreeError:
@@ -326,8 +356,15 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
     return gdf.iloc[intersectors, :]
 
 
-def gdf_to_yolo(geodataframe, image, output_dir, column='single_id',
-                im_size=(0, 0), min_overlap=0.66, remove_no_labels=1):
+def gdf_to_yolo(
+    geodataframe,
+    image,
+    output_dir,
+    column="single_id",
+    im_size=(0, 0),
+    min_overlap=0.66,
+    remove_no_labels=1,
+):
     """Convert a geodataframe containing polygons to yolo/yolt format.
 
     Arguments
@@ -379,36 +416,37 @@ def gdf_to_yolo(geodataframe, image, output_dir, column='single_id',
     out_coords = [[x0, y0], [x0, y1], [x1, y1], [x1, y0]]
     points = [shapely.geometry.Point(coord) for coord in out_coords]
     pix_poly = shapely.geometry.Polygon([[p.x, p.y] for p in points])
-    dw = 1. / im_size[0]
-    dh = 1. / im_size[1]
+    dw = 1.0 / im_size[0]
+    dh = 1.0 / im_size[1]
     header = [column, "x", "y", "w", "h"]
     if os.path.isdir(output_dir) is False:
         os.mkdir(output_dir)
-    output = os.path.join(output_dir, image.split('.png')[0] + ".txt")
+    output = os.path.join(output_dir, image.split(".png")[0] + ".txt")
     gdf = geojson_to_px_gdf(geodataframe, image, precision=None)
-    gdf['area'] = gdf['geometry'].area
-    gdf['intersection'] = (
-        gdf['geometry'].intersection(pix_poly).area / gdf['area'])
-    gdf = gdf[gdf['area'] != 0]
-    gdf = gdf[gdf['intersection'] >= min_overlap]
+    gdf["area"] = gdf["geometry"].area
+    gdf["intersection"] = gdf["geometry"].intersection(pix_poly).area / gdf["area"]
+    gdf = gdf[gdf["area"] != 0]
+    gdf = gdf[gdf["intersection"] >= min_overlap]
     if not gdf.empty:
-        boxy = gdf['geometry'].bounds
-        boxy['xmid'] = (boxy['minx'] + boxy['maxx']) / 2.0
-        boxy['ymid'] = (boxy['miny'] + boxy['maxy']) / 2.0
-        boxy['w0'] = (boxy['maxx'] - boxy['minx'])
-        boxy['h0'] = (boxy['maxy'] - boxy['miny'])
-        boxy['x'] = boxy['xmid'] * dw
-        boxy['y'] = boxy['ymid'] * dh
-        boxy['w'] = boxy['w0'] * dw
-        boxy['h'] = boxy['h0'] * dh
+        boxy = gdf["geometry"].bounds
+        boxy["xmid"] = (boxy["minx"] + boxy["maxx"]) / 2.0
+        boxy["ymid"] = (boxy["miny"] + boxy["maxy"]) / 2.0
+        boxy["w0"] = boxy["maxx"] - boxy["minx"]
+        boxy["h0"] = boxy["maxy"] - boxy["miny"]
+        boxy["x"] = boxy["xmid"] * dw
+        boxy["y"] = boxy["ymid"] * dh
+        boxy["w"] = boxy["w0"] * dw
+        boxy["h"] = boxy["h0"] * dh
         if not boxy.empty:
             gdf = gdf.join(boxy)
-            gdf.to_csv(path_or_buf=output, sep=' ',
-                       columns=header, index=False, header=False)
+            gdf.to_csv(
+                path_or_buf=output, sep=" ", columns=header, index=False, header=False
+            )
 
     if remove_no_labels == 1:
         remove_no_labels_dir = os.path.join(
-            os.path.dirname(os.path.abspath(image)), "No_Labels")
+            os.path.dirname(os.path.abspath(image)), "No_Labels"
+        )
         if os.path.isdir(remove_no_labels_dir) is False:
             os.mkdir(remove_no_labels_dir)
         if gdf.empty or boxy.empty:
@@ -416,11 +454,12 @@ def gdf_to_yolo(geodataframe, image, output_dir, column='single_id',
 
     return gdf
 
+
 def remove_multipolygons(gdf):
     """
     Filters out rows of a geodataframe containing MultiPolygons and GeometryCollections.
- 
-    This function is optionally used in geojson2coco. For instance segmentation, where 
+
+    This function is optionally used in geojson2coco. For instance segmentation, where
     objects are composed of single polygons, multi part geometries need to be either removed or
     inspected manually to be resolved as a single geometry.
     """
@@ -429,4 +468,3 @@ def remove_multipolygons(gdf):
         return gdf.drop(gdf[mask].index).reset_index(drop=True)
     else:
         return gdf
-

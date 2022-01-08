@@ -1,14 +1,16 @@
 import os
-import numpy as np
-import geopandas as gpd
-from ..utils.geo import get_subgraph
-import shapely
-from shapely.geometry import Point, LineString
-import networkx as nx
-import rasterio as rio
-import fiona
 import pickle
 from multiprocessing import Pool
+
+import fiona
+import geopandas as gpd
+import networkx as nx
+import numpy as np
+import rasterio as rio
+import shapely
+from shapely.geometry import LineString, Point
+
+from ..utils.geo import get_subgraph
 
 
 class Node(object):
@@ -34,7 +36,7 @@ class Node(object):
         self.y = y
 
     def __repr__(self):
-        return 'Node {} at ({}, {})'.format(self.idx, self.x, self.y)
+        return "Node {} at ({}, {})".format(self.idx, self.x, self.y)
 
 
 class Edge(object):
@@ -54,9 +56,9 @@ class Edge(object):
         self.weight = edge_weight
 
     def __repr__(self):
-        return 'Edge between {} and {} with weight {}'.format(self.nodes[0],
-                                                              self.nodes[1],
-                                                              self.weight)
+        return "Edge between {} and {} with weight {}".format(
+            self.nodes[0], self.nodes[1], self.weight
+        )
 
     def set_edge_weight(self, normalize_factor=None, inverse=False):
         """Get the edge weight based on Euclidean distance between nodes.
@@ -77,14 +79,15 @@ class Edge(object):
             ``normalize_factor`` instead of multiplied by it.
         """
         weight = np.linalg.norm(
-            np.array((self.nodes[0].x, self.nodes[0].y)) -
-            np.array((self.nodes[1].x, self.nodes[1].y)))
+            np.array((self.nodes[0].x, self.nodes[0].y))
+            - np.array((self.nodes[1].x, self.nodes[1].y))
+        )
 
         if normalize_factor is not None:
             if inverse:
-                weight = weight/normalize_factor
+                weight = weight / normalize_factor
             else:
-                weight = weight*normalize_factor
+                weight = weight * normalize_factor
         self.weight = weight
 
     def get_node_idxs(self):
@@ -112,7 +115,7 @@ class Path(object):
         self.properties = properties
 
     def __repr__(self):
-        return 'Path including {}'.format([e for e in self.edges])
+        return "Path including {}".format([e for e in self.edges])
 
     def add_edge(self, edge):
         """Add an edge to the path."""
@@ -125,8 +128,8 @@ class Path(object):
                 continue
             if data_key is not None:
                 edge.set_edge_weight(
-                    normalize_factor=self.properties[data_key],
-                    inverse=inverse)
+                    normalize_factor=self.properties[data_key], inverse=inverse
+                )
             else:
                 edge.set_edge_weight()
 
@@ -139,10 +142,20 @@ class Path(object):
         yield from self.edges
 
 
-def geojson_to_graph(geojson, graph_name=None, retain_all=True,
-                     valid_road_types=None, road_type_field='type', edge_idx=0,
-                     first_node_idx=0, weight_norm_field=None, inverse=False,
-                     workers=1, verbose=False, output_path=None):
+def geojson_to_graph(
+    geojson,
+    graph_name=None,
+    retain_all=True,
+    valid_road_types=None,
+    road_type_field="type",
+    edge_idx=0,
+    first_node_idx=0,
+    weight_norm_field=None,
+    inverse=False,
+    workers=1,
+    verbose=False,
+    output_path=None,
+):
     """Convert a geojson of path strings to a network graph.
 
     Arguments
@@ -202,7 +215,7 @@ def geojson_to_graph(geojson, graph_name=None, retain_all=True,
         geographic distance.
 
     """
-    with fiona.open(geojson, 'r') as f:
+    with fiona.open(geojson, "r") as f:
         crs = f.crs
         f.close()
     # due to an annoying feature of loading these graphs, the numeric road
@@ -214,11 +227,14 @@ def geojson_to_graph(geojson, graph_name=None, retain_all=True,
     # create the graph as a MultiGraph and set the original CRS to EPSG 4326
 
     # extract nodes and paths
-    nodes, paths = get_nodes_paths(geojson,
-                                   valid_road_types=valid_road_types,
-                                   first_node_idx=first_node_idx,
-                                   road_type_field=road_type_field,
-                                   workers=workers, verbose=verbose)
+    nodes, paths = get_nodes_paths(
+        geojson,
+        valid_road_types=valid_road_types,
+        first_node_idx=first_node_idx,
+        road_type_field=road_type_field,
+        workers=workers,
+        verbose=verbose,
+    )
     # nodes is a dict of node_idx: node_params (e.g. location, metadata)
     # pairs.
     # paths is a dict of path dicts. the path key is the path_idx.
@@ -233,13 +249,12 @@ def geojson_to_graph(geojson, graph_name=None, retain_all=True,
         print("paths:", paths)
     # add each osm node to the graph
     for node in nodes:
-        G.add_node(node.idx, **{'x': node.x, 'y': node.y})
+        G.add_node(node.idx, **{"x": node.x, "y": node.y})
     # add each path to the graph
     for path in paths:
         # calculate edge length using euclidean distance and a weighting term
         path.set_edge_weights(data_key=weight_norm_field, inverse=inverse)
-        edges = [(*[node.idx for node in edge.nodes],
-                  edge.weight) for edge in path]
+        edges = [(*[node.idx for node in edge.nodes], edge.weight) for edge in path]
         if verbose:
             print(edges)
         G.add_weighted_edges_from(edges)
@@ -250,16 +265,22 @@ def geojson_to_graph(geojson, graph_name=None, retain_all=True,
         G = get_subgraph(G, largest_cc)
 
     if output_path:
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             pickle.dump(G, f)
             f.close()
 
     return G
 
 
-def get_nodes_paths(vector_file, first_node_idx=0, node_gdf=gpd.GeoDataFrame(),
-                    valid_road_types=None, road_type_field='type', workers=1,
-                    verbose=False):
+def get_nodes_paths(
+    vector_file,
+    first_node_idx=0,
+    node_gdf=gpd.GeoDataFrame(),
+    valid_road_types=None,
+    road_type_field="type",
+    workers=1,
+    verbose=False,
+):
     """
     Extract nodes and paths from a vector file.
 
@@ -313,13 +334,12 @@ def get_nodes_paths(vector_file, first_node_idx=0, node_gdf=gpd.GeoDataFrame(),
 
     """
     if valid_road_types is None:
-        valid_road_types = ['1', '2', '3', '4', '5', '6', '7']
+        valid_road_types = ["1", "2", "3", "4", "5", "6", "7"]
 
-    with fiona.open(vector_file, 'r') as source:
+    with fiona.open(vector_file, "r") as source:
 
         with Pool(processes=workers) as pool:
-            node_list = pool.map(_get_all_nodes, source,
-                                 chunksize=10)
+            node_list = pool.map(_get_all_nodes, source, chunksize=10)
             pool.close()
         source.close()
 
@@ -327,28 +347,30 @@ def get_nodes_paths(vector_file, first_node_idx=0, node_gdf=gpd.GeoDataFrame(),
     node_series = gpd.GeoSeries([i for sublist in node_list for i in sublist])
     # NOTE: It is ESSENTIAL to use keep='last' in the line below; otherwise, it
     # misses a duplicate if it includes the first element of the series.
-    node_series = node_series.drop_duplicates(keep='last')
+    node_series = node_series.drop_duplicates(keep="last")
     node_series = node_series.reset_index(drop=True)
-    node_series.name = 'geometry'
-    node_series.index.name = 'node_idx'
+    node_series.name = "geometry"
+    node_series.index.name = "node_idx"
     node_gdf = gpd.GeoDataFrame(node_series.reset_index())
-    node_gdf['node'] = node_gdf.apply(
-        lambda p: Node(p['node_idx'], p['geometry'].x, p['geometry'].y),
-        axis=1)
+    node_gdf["node"] = node_gdf.apply(
+        lambda p: Node(p["node_idx"], p["geometry"].x, p["geometry"].y), axis=1
+    )
 
     # create another parallelized operation to iterate through edges
     # _init_worker passes the node_series to every process in the pool
-    with fiona.open(vector_file, 'r') as source:
+    with fiona.open(vector_file, "r") as source:
         with Pool(
-                processes=workers, initializer=_init_worker,
-                initargs=(node_gdf, valid_road_types, road_type_field)
-                ) as pool:
-            zipped_edges_properties = pool.map(parallel_linestring_to_path,
-                                               source, chunksize=10)
+            processes=workers,
+            initializer=_init_worker,
+            initargs=(node_gdf, valid_road_types, road_type_field),
+        ) as pool:
+            zipped_edges_properties = pool.map(
+                parallel_linestring_to_path, source, chunksize=10
+            )
         pool.close()
     source.close()
 
-    nodes = node_gdf['node'].tolist()
+    nodes = node_gdf["node"].tolist()
     paths = []
     # it would've been better to do this within the multiprocessing pool but
     # it's REALLY hard to share objects in memory across processes without
@@ -356,8 +378,8 @@ def get_nodes_paths(vector_file, first_node_idx=0, node_gdf=gpd.GeoDataFrame(),
     for edges, properties in zipped_edges_properties:
         path = Path(
             edges=[Edge((nodes[edge[0]], nodes[edge[1]])) for edge in edges],
-            properties=properties
-            )
+            properties=properties,
+        )
         paths.append(path)
     return nodes, paths
 
@@ -384,34 +406,36 @@ def parallel_linestring_to_path(feature):
 
     """
 
-    properties = feature['properties']
+    properties = feature["properties"]
     # TODO: create more adjustable filter
-    if var_dict['road_type_field'] in properties:
-        road_type = properties[var_dict['road_type_field']]
-    elif 'highway' in properties:
-        road_type = properties['highway']
-    elif 'road_type' in properties:
-        road_type = properties['road_type']
+    if var_dict["road_type_field"] in properties:
+        road_type = properties[var_dict["road_type_field"]]
+    elif "highway" in properties:
+        road_type = properties["highway"]
+    elif "road_type" in properties:
+        road_type = properties["road_type"]
     else:
-        road_type = 'None'
+        road_type = "None"
 
-    geom = feature['geometry']
-    if geom['type'] == 'LineString' or \
-            geom['type'] == 'MultiLineString':
-        if road_type not in var_dict['valid_road_types'] or \
-                'LINESTRING EMPTY' in properties.values():
+    geom = feature["geometry"]
+    if geom["type"] == "LineString" or geom["type"] == "MultiLineString":
+        if (
+            road_type not in var_dict["valid_road_types"]
+            or "LINESTRING EMPTY" in properties.values()
+        ):
             return
 
-    if geom['type'] == 'LineString':
+    if geom["type"] == "LineString":
         linestring = shapely.geometry.shape(geom)
-        edges = linestring_to_edges(linestring, var_dict['node_gdf'])
+        edges = linestring_to_edges(linestring, var_dict["node_gdf"])
 
-    elif geom['type'] == 'MultiLineString':
+    elif geom["type"] == "MultiLineString":
         # do the same thing as above, but do it for each piece
         edges = []
         for linestring in shapely.geometry.shape(geom):
             edge_set, node_idx, node_gdf = linestring_to_edges(
-                linestring, var_dict['node_gdf'])
+                linestring, var_dict["node_gdf"]
+            )
             edges.extend(edge_set)
 
     return edges, properties
@@ -441,17 +465,14 @@ def linestring_to_edges(linestring, node_gdf):
 
     for point in linestring.coords:
         point_shp = shapely.geometry.shape(Point(point))
-        nodes.append(
-            node_gdf.node_idx[node_gdf.distance(point_shp) == 0.0].values[0]
-            )
+        nodes.append(node_gdf.node_idx[node_gdf.distance(point_shp) == 0.0].values[0])
         if len(nodes) > 1:
             edges.append(nodes[-2:])
 
     return edges
 
 
-def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False,
-                     verbose=False):
+def graph_to_geojson(G, output_path, encoding="utf-8", overwrite=False, verbose=False):
     """
     Save graph to two geojsons: one containing nodes, the other edges.
     Arguments
@@ -491,7 +512,7 @@ def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False,
     gdf_nodes = gpd.GeoDataFrame(list(data), index=nodes)
 
     # get coordinate reference system
-    g_crs = G_to_save.graph['crs']
+    g_crs = G_to_save.graph["crs"]
     if type(g_crs) == dict:
         # convert from dict
         g_crs = rio.crs.CRS.from_dict(g_crs)
@@ -499,10 +520,10 @@ def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False,
     if verbose:
         print("crs:", g_crs)
 
-    gdf_nodes['geometry'] = gdf_nodes.apply(
-        lambda row: Point(row['x'], row['y']), axis=1
-        )
-    gdf_nodes = gdf_nodes.drop(['x', 'y'], axis=1)
+    gdf_nodes["geometry"] = gdf_nodes.apply(
+        lambda row: Point(row["x"], row["y"]), axis=1
+    )
+    gdf_nodes = gdf_nodes.drop(["x", "y"], axis=1)
     # gdf_nodes['node_idx'] = gdf_nodes['node_idx'].astype(np.int32)
 
     # # make everything but geometry column a string
@@ -512,37 +533,37 @@ def graph_to_geojson(G, output_path, encoding='utf-8', overwrite=False,
     # create GeoDataFrame containing all of the edges
     edges = []
     for u, v, key, data in G_to_save.edges(keys=True, data=True):
-        edge = {'key': key}
+        edge = {"key": key}
         for attr_key in data:
             edge[attr_key] = data[attr_key]
-        if 'geometry' not in data:
-            point_u = Point((G_to_save.nodes[u]['x'], G_to_save.nodes[u]['y']))
-            point_v = Point((G_to_save.nodes[v]['x'], G_to_save.nodes[v]['y']))
-            edge['geometry'] = LineString([point_u, point_v])
+        if "geometry" not in data:
+            point_u = Point((G_to_save.nodes[u]["x"], G_to_save.nodes[u]["y"]))
+            point_v = Point((G_to_save.nodes[v]["x"], G_to_save.nodes[v]["y"]))
+            edge["geometry"] = LineString([point_u, point_v])
         edges.append(edge)
 
     gdf_edges = gpd.GeoDataFrame(edges)
     gdf_edges.crs = g_crs
 
-    for col in [c for c in gdf_nodes.columns if c != 'geometry']:
-        gdf_nodes[col] = gdf_nodes[col].fillna('').apply(str)
-    for col in [c for c in gdf_edges.columns if c != 'geometry']:
-        gdf_edges[col] = gdf_edges[col].fillna('').apply(str)
+    for col in [c for c in gdf_nodes.columns if c != "geometry"]:
+        gdf_nodes[col] = gdf_nodes[col].fillna("").apply(str)
+    for col in [c for c in gdf_edges.columns if c != "geometry"]:
+        gdf_edges[col] = gdf_edges[col].fillna("").apply(str)
 
     # make directory structure
     if not os.path.exists(os.path.split(output_path)[0]):
         os.makedirs(os.path.split(output_path)[0])
 
-    edges_path = os.path.splitext(output_path)[0] + '_edges.geojson'
-    nodes_path = os.path.splitext(output_path)[0] + '_nodes.geojson'
+    edges_path = os.path.splitext(output_path)[0] + "_edges.geojson"
+    nodes_path = os.path.splitext(output_path)[0] + "_nodes.geojson"
     if overwrite:
         if os.path.exists(edges_path):
             os.remove(edges_path)
         if os.path.exists(nodes_path):
             os.remove(nodes_path)
 
-    gdf_edges.to_file(edges_path, encoding=encoding, driver='GeoJSON')
-    gdf_nodes.to_file(nodes_path, encoding=encoding, driver='GeoJSON')
+    gdf_edges.to_file(edges_path, encoding=encoding, driver="GeoJSON")
+    gdf_nodes.to_file(nodes_path, encoding=encoding, driver="GeoJSON")
 
 
 def _get_all_nodes(feature):
@@ -558,11 +579,11 @@ def _get_all_nodes(feature):
     A list of :class:`shapely.geometry.Point` instances. DUPLICATES CAN EXIST.
     """
     points = []
-    geom = feature['geometry']
-    if geom['type'] == 'LineString':
+    geom = feature["geometry"]
+    if geom["type"] == "LineString":
         linestring = shapely.geometry.shape(geom)
         points.extend(_get_linestring_points(linestring))
-    elif geom['type'] == 'MultiLineString':
+    elif geom["type"] == "MultiLineString":
         for linestring in shapely.geometry.shape(geom):
             points.extend(_get_linestring_points(linestring))
 
@@ -577,8 +598,10 @@ def _get_linestring_points(linestring):
 
 
 def _init_worker(node_gdf, valid_road_types, road_type_field):
-    the_dict = {'node_gdf': node_gdf,
-                'valid_road_types': valid_road_types,
-                'road_type_field': road_type_field}
+    the_dict = {
+        "node_gdf": node_gdf,
+        "valid_road_types": valid_road_types,
+        "road_type_field": road_type_field,
+    }
     global var_dict
     var_dict = the_dict

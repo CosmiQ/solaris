@@ -1,8 +1,8 @@
 from solaris.data.coco import geojson2coco
-from solaris.data import data_dir
 import json
 import os
 
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 class TestGeoJSON2COCO(object):
     """Tests for the ``geojson2coco`` function."""

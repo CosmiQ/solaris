@@ -1,17 +1,18 @@
-import gdal
 import json
 import math
-import numpy as np
 import os
-import osr
-import scipy.signal
 import uuid
 import warnings
 import xml.etree.ElementTree as ET
 
-from .pipesegment import PipeSegment, LoadSegment, MergeSegment
-from .image import Image
+import gdal
+import numpy as np
+import osr
+import scipy.signal
+
 from . import image
+from .image import Image
+from .pipesegment import LoadSegment, MergeSegment, PipeSegment
 
 
 class BandMath(PipeSegment):
@@ -19,13 +20,15 @@ class BandMath(PipeSegment):
     Modify the array holding an image's pixel values,
     using a user-supplied function.
     """
-    def __init__(self, function, master=0):
+
+    def __init__(self, function, main=0):
         super().__init__()
         self.function = function
-        self.master = master
+        self.main = main
+
     def transform(self, pin):
         if isinstance(pin, tuple):
-            pin = (pin * image.MergeToStack(self.master))()
+            pin = (pin * image.MergeToStack(self.main))()
         data = self.function(pin.data)
         if data.ndim == 2:
             data = np.expand_dims(data, axis=0)
@@ -36,6 +39,7 @@ class Amplitude(PipeSegment):
     """
     Convert complex image to amplitude, by taking the magnitude of each pixel
     """
+
     def transform(self, pin):
         return Image(np.absolute(pin.data), pin.name, pin.metadata)
 
@@ -44,6 +48,7 @@ class Intensity(PipeSegment):
     """
     Convert amplitude (or complex values) to intensity, by squaring each pixel
     """
+
     def transform(self, pin):
         pout = Image(None, pin.name, pin.metadata)
         if not np.iscomplexobj(pin.data):
@@ -57,6 +62,7 @@ class InPhase(PipeSegment):
     """
     Get in-phase (real) component of complex-valued data
     """
+
     def transform(self, pin):
         return Image(np.real(pin.data), pin.name, pin.metadata)
 
@@ -65,6 +71,7 @@ class Quadrature(PipeSegment):
     """
     Get quadrature (imaginary) component of complex-valued data
     """
+
     def transform(self, pin):
         return Image(np.imag(pin.data), pin.name, pin.metadata)
 
@@ -73,6 +80,7 @@ class Phase(PipeSegment):
     """
     Return the phase of the input image
     """
+
     def transform(self, pin):
         return Image(np.angle(pin.data), pin.name, pin.metadata)
 
@@ -81,23 +89,26 @@ class Conjugate(PipeSegment):
     """
     Return complex conjugate of the input image
     """
+
     def transform(self, pin):
         return Image(np.conj(pin.data), pin.name, pin.metadata)
 
 
 class MultiplyConjugate(PipeSegment):
     """
-    Given an iterable of two images, multiply the first 
+    Given an iterable of two images, multiply the first
     by the complex conjugate of the second.
     """
-    def __init__(self, master=0):
+
+    def __init__(self, main=0):
         super().__init__()
-        self.master = master
+        self.main = main
+
     def transform(self, pin):
         return Image(
             pin[0].data * np.conj(pin[1].data),
-            pin[self.master].name,
-            pin[self.master].metadata
+            pin[self.main].name,
+            pin[self.main].metadata,
         )
 
 
@@ -108,21 +119,23 @@ class Decibels(PipeSegment):
     'min' outputs the log of the image's smallest positive value,
     'nan' outputs NaN, and any other value is used as the flag value itself.
     """
-    def __init__(self, flag='min'):
+
+    def __init__(self, flag="min"):
         super().__init__()
         self.flag = flag
+
     def transform(self, pin):
         pout = Image(None, pin.name, pin.metadata)
-        if isinstance(self.flag, str) and self.flag.lower() == 'min':
-            flagval = 10. * np.log10((pin.data)[pin.data>0].min())
-        elif isinstance(self.flag, str) and self.flag.lower() == 'nan':
+        if isinstance(self.flag, str) and self.flag.lower() == "min":
+            flagval = 10.0 * np.log10((pin.data)[pin.data > 0].min())
+        elif isinstance(self.flag, str) and self.flag.lower() == "nan":
             flagval = math.nan
         else:
-            flagval = self.flag / 10.
-        pout.data = 10. * np.log10(
+            flagval = self.flag / 10.0
+        pout.data = 10.0 * np.log10(
             pin.data,
             out=np.full(np.shape(pin.data), flagval).astype(pin.data.dtype),
-            where=pin.data>0
+            where=pin.data > 0,
         )
         return pout
 
@@ -132,26 +145,28 @@ class Multilook(PipeSegment):
     Multilook filter to reduce speckle in SAR magnitude imagery
     Note: Set kernel_size to a tuple to vary it by direction.
     """
-    def __init__(self, kernel_size=5, method='avg'):
+
+    def __init__(self, kernel_size=5, method="avg"):
         super().__init__()
         self.kernel_size = kernel_size
         self.method = method
+
     def transform(self, pin):
-        if self.method == 'avg':
+        if self.method == "avg":
             filter = scipy.ndimage.filters.uniform_filter
-        elif self.method == 'med':
+        elif self.method == "med":
             filter = scipy.ndimage.filters.median_filter
-        elif self.method == 'max':
+        elif self.method == "max":
             filter = scipy.ndimage.filters.maximum_filter
         else:
-            raise Exception('! Invalid method in Multilook.')
-        pout = Image(np.zeros(pin.data.shape, dtype=pin.data.dtype),
-                     pin.name, pin.metadata)
+            raise Exception("! Invalid method in Multilook.")
+        pout = Image(
+            np.zeros(pin.data.shape, dtype=pin.data.dtype), pin.name, pin.metadata
+        )
         for i in range(pin.data.shape[0]):
             pout.data[i, :, :] = filter(
-                pin.data[i, :, :],
-                size=self.kernel_size,
-                mode='reflect')
+                pin.data[i, :, :], size=self.kernel_size, mode="reflect"
+            )
         return pout
 
 
@@ -159,12 +174,16 @@ class MultilookComplex(Multilook):
     """
     Like 'Multilook', but supports complex input
     """
+
     def transform(self, pin):
-        mkwargs = {'kernel_size':self.kernel_size, 'method':self.method}
-        pout = (pin
-               * (InPhase() * Multilook(**mkwargs) * image.Scale(1.+0.j)
-                  + Quadrature() * Multilook(**mkwargs) * image.Scale(1.j))
-               * image.MergeToSum()
+        mkwargs = {"kernel_size": self.kernel_size, "method": self.method}
+        pout = (
+            pin
+            * (
+                InPhase() * Multilook(**mkwargs) * image.Scale(1.0 + 0.0j)
+                + Quadrature() * Multilook(**mkwargs) * image.Scale(1.0j)
+            )
+            * image.MergeToSum()
         )()
         return pout
 
@@ -173,27 +192,32 @@ class Orthorectify(PipeSegment):
     """
     Orthorectify an image using its ground control points (GCPs) with GDAL
     """
-    def __init__(self, projection=3857, algorithm='lanczos',
-                 row_res=1., col_res=1.):
+
+    def __init__(self, projection=3857, algorithm="lanczos", row_res=1.0, col_res=1.0):
         super().__init__()
         self.projection = projection
         self.algorithm = algorithm
         self.row_res = row_res
         self.col_res = col_res
+
     def transform(self, pin):
-        drivername = 'GTiff'
-        srcpath = '/vsimem/orthorectify_input_' + str(uuid.uuid4()) + '.tif'
-        dstpath = '/vsimem/orthorectify_output_' + str(uuid.uuid4()) + '.tif'
+        drivername = "GTiff"
+        srcpath = "/vsimem/orthorectify_input_" + str(uuid.uuid4()) + ".tif"
+        dstpath = "/vsimem/orthorectify_output_" + str(uuid.uuid4()) + ".tif"
         (pin * image.SaveImage(srcpath, driver=drivername))()
-        gdal.Warp(dstpath, srcpath,
-                  dstSRS='epsg:' + str(self.projection),
-                  resampleAlg=self.algorithm,
-                  xRes=self.row_res, yRes=self.col_res,
-                  dstNodata=math.nan)
+        gdal.Warp(
+            dstpath,
+            srcpath,
+            dstSRS="epsg:" + str(self.projection),
+            resampleAlg=self.algorithm,
+            xRes=self.row_res,
+            yRes=self.col_res,
+            dstNodata=math.nan,
+        )
         pout = image.LoadImage(dstpath)()
         pout.name = pin.name
-        if pin.data.dtype in (bool, np.dtype('bool')):
-            pout.data = pout.data.astype('bool')
+        if pin.data.dtype in (bool, np.dtype("bool")):
+            pout.data = pout.data.astype("bool")
         driver = gdal.GetDriverByName(drivername)
         driver.Delete(srcpath)
         driver.Delete(dstpath)
@@ -205,11 +229,13 @@ class DecompositionPauli(PipeSegment):
     Compute the Pauli decomposition of quad-pol SAR data.
     Note: Convention is alpha-->blue, beta-->red, gamma-->green
     """
+
     def __init__(self, hh_band=0, vv_band=1, xx_band=2):
         super().__init__()
         self.hh_band = hh_band
         self.vv_band = vv_band
         self.xx_band = xx_band
+
     def transform(self, pin):
         hh = pin.data[self.hh_band]
         vv = pin.data[self.vv_band]
@@ -220,9 +246,9 @@ class DecompositionPauli(PipeSegment):
         alpha2 = np.expand_dims(alpha2, axis=0)
         beta2 = np.expand_dims(beta2, axis=0)
         gamma2 = np.expand_dims(gamma2, axis=0)
-        pout = Image(np.concatenate((alpha2, beta2, gamma2), axis=0),
-                     pin.name,
-                     pin.metadata)
+        pout = Image(
+            np.concatenate((alpha2, beta2, gamma2), axis=0), pin.name, pin.metadata
+        )
         return pout
 
 
@@ -232,12 +258,14 @@ class DecompositionFreemanDurden(PipeSegment):
     proposed by Freeman and Durden.
     Note: Convention is Ps-->blue, Pd-->red, Pv-->green
     """
+
     def __init__(self, hh_band=0, vv_band=1, xx_band=2, kernel_size=5):
         super().__init__()
         self.hh_band = hh_band
         self.vv_band = vv_band
         self.xx_band = xx_band
         self.kernel_size = kernel_size
+
     def transform(self, pin):
         # Scattering matrix terms
         hh = pin * image.SelectBands(self.hh_band)
@@ -248,7 +276,7 @@ class DecompositionFreemanDurden(PipeSegment):
         C22 = vv * Intensity()
         C33 = xx * Intensity()
         C12 = (hh + vv) * MultiplyConjugate()
-        mkwargs = {'kernel_size':self.kernel_size, 'method':'avg'}
+        mkwargs = {"kernel_size": self.kernel_size, "method": "avg"}
         C11 = C11 * Multilook(**mkwargs)
         C22 = C22 * Multilook(**mkwargs)
         C33 = C33 * Multilook(**mkwargs)
@@ -257,42 +285,57 @@ class DecompositionFreemanDurden(PipeSegment):
         fv = C33 * image.Scale(1.5)
         c11 = (C11 + fv) * BandMath(lambda x: x[0] - x[1])
         c22 = (C22 + fv) * BandMath(lambda x: x[0] - x[1])
-        c12 = (C12 + fv) * BandMath(lambda x: x[0] - x[1] / 3.)
-        c12 = (c11 + c22 + c12) * BandMath(lambda x: np.where(x[0]*x[1]
-            < np.square(np.abs(x[2])), np.sqrt(x[0]*x[1]) \
-            * x[2]/np.abs(x[2]), x[2]))#
+        c12 = (C12 + fv) * BandMath(lambda x: x[0] - x[1] / 3.0)
+        c12 = (c11 + c22 + c12) * BandMath(
+            lambda x: np.where(
+                x[0] * x[1] < np.square(np.abs(x[2])),
+                np.sqrt(x[0] * x[1]) * x[2] / np.abs(x[2]),
+                x[2],
+            )
+        )  #
         # Surface and dihedral amplitudes
         surfacedominates = c12 * BandMath(lambda x: np.real(x) >= 0)
-        term1 = (c11 + c22 + c12 * InPhase() + c12 * Quadrature()
-            + surfacedominates) * BandMath(lambda x:
-            (x[0]*x[1] - (x[2])**2 - (x[3])**2) /
-            (x[0] + x[1] + 2*x[2]*np.where(x[4], 1, -1)))
-        term1 = term1 * Amplitude()#
+        term1 = (
+            c11 + c22 + c12 * InPhase() + c12 * Quadrature() + surfacedominates
+        ) * BandMath(
+            lambda x: (x[0] * x[1] - (x[2]) ** 2 - (x[3]) ** 2)
+            / (x[0] + x[1] + 2 * x[2] * np.where(x[4], 1, -1))
+        )
+        term1 = term1 * Amplitude()  #
         term2 = (c22 + term1) * BandMath(lambda x: x[0] - x[1])
-        term2 = term2 * Amplitude()#
-        term3 = (term1 + term2 + c12 * InPhase() + c12 * Quadrature()
-            + surfacedominates) * BandMath(lambda x:
-            (x[2] + np.where(x[4], 1, -1) * x[0] + x[3] * 1.j) / x[1])
-        fs = ((term2 + surfacedominates) * image.SetMask(flag=0) + (term1
-            + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)) \
-            * image.MergeToSum()
-        fd = ((term1 + surfacedominates) * image.SetMask(flag=0) + (term2
-            + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)) \
-            * image.MergeToSum()
-        alpha = (surfacedominates * image.Scale(-1.) + (term3
-            + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)) \
-            * BandMath(lambda x: x[0] + x[1])
-        beta = ((term3 + surfacedominates) * image.SetMask(flag=0) \
-            + surfacedominates * image.InvertMask() * image.Scale(1.)) \
-            * BandMath(lambda x: x[0] + x[1])
+        term2 = term2 * Amplitude()  #
+        term3 = (
+            term1 + term2 + c12 * InPhase() + c12 * Quadrature() + surfacedominates
+        ) * BandMath(
+            lambda x: (x[2] + np.where(x[4], 1, -1) * x[0] + x[3] * 1.0j) / x[1]
+        )
+        fs = (
+            (term2 + surfacedominates) * image.SetMask(flag=0)
+            + (term1 + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)
+        ) * image.MergeToSum()
+        fd = (
+            (term1 + surfacedominates) * image.SetMask(flag=0)
+            + (term2 + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)
+        ) * image.MergeToSum()
+        alpha = (
+            surfacedominates * image.Scale(-1.0)
+            + (term3 + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)
+        ) * BandMath(lambda x: x[0] + x[1])
+        beta = (
+            (term3 + surfacedominates) * image.SetMask(flag=0)
+            + surfacedominates * image.InvertMask() * image.Scale(1.0)
+        ) * BandMath(lambda x: x[0] + x[1])
         # Power
-        Ps = (fs + beta * Intensity()) * BandMath(lambda x: x[0] * (1. + x[1]))
-        Pd = (fd + alpha *Intensity()) * BandMath(lambda x: x[0] * (1. + x[1]))
+        Ps = (fs + beta * Intensity()) * BandMath(lambda x: x[0] * (1.0 + x[1]))
+        Pd = (fd + alpha * Intensity()) * BandMath(lambda x: x[0] * (1.0 + x[1]))
         Pv = fv
-        Pmask = (c11 + c22) * BandMath(lambda x: np.logical_and(
-            x[0]==0, x[1]==0)) * image.InvertMask()
-        Ps = (Ps + Pmask) * image.SetMask(flag=0)#
-        Pd = (Pd + Pmask) * image.SetMask(flag=0)#
+        Pmask = (
+            (c11 + c22)
+            * BandMath(lambda x: np.logical_and(x[0] == 0, x[1] == 0))
+            * image.InvertMask()
+        )
+        Ps = (Ps + Pmask) * image.SetMask(flag=0)  #
+        Pd = (Pd + Pmask) * image.SetMask(flag=0)  #
         Pstack = (Ps + Pd + Pv) * image.MergeToStack()
         return Pstack()
 
@@ -301,37 +344,47 @@ class DecompositionHAlpha(PipeSegment):
     """
     Compute H-Alpha (Entropy-alpha) dual-polarization decomposition
     """
+
     def __init__(self, band0=0, band1=1, kernel_size=5):
         super().__init__()
         self.band0 = band0
         self.band1 = band1
         self.kernel_size = kernel_size
+
     def transform(self, pin):
-        mkwargs = {'kernel_size':self.kernel_size, 'method':'avg'}
+        mkwargs = {"kernel_size": self.kernel_size, "method": "avg"}
         image0 = pin * image.SelectBands(self.band0)
         image1 = pin * image.SelectBands(self.band1)
         # Coherence matrix terms
         c00 = image0 * Intensity() * Multilook(**mkwargs)
         c11 = image1 * Intensity() * Multilook(**mkwargs)
-        c01 = (image0 + image1) * MultiplyConjugate() \
-            * MultilookComplex(**mkwargs)
+        c01 = (image0 + image1) * MultiplyConjugate() * MultilookComplex(**mkwargs)
         c01sq = c01 * Intensity()
         # Calculate eigenvalues and some eigenvector terms (assumes c01 != 0)
         # tr=trace; det=determinant; l1,l2=eigenvalues; v..=eigenvector terms
         tr = (c00 + c11) * BandMath(lambda x: x[0] + x[1])
-        det = (c00 + c11 + c01sq) * BandMath(lambda x: x[0]*x[1] - x[2])
-        l1 = (tr + det) * BandMath(lambda x:
-                                   0.5*x[0] + np.sqrt(0.25*x[0]**2-x[1]))
-        l2 = (tr + det) * BandMath(lambda x:
-                                   0.5*x[0] - np.sqrt(0.25*x[0]**2-x[1]))
-        absv11 = (c00 + c01 + l1) * BandMath(lambda x: np.abs(x[1]) / np.sqrt(np.abs(x[1])**2 + np.abs(x[2] - x[0])**2))
-        absv12 = (c00 + c01 + l2) * BandMath(lambda x: np.abs(x[1]) / np.sqrt(np.abs(x[1])**2 + np.abs(x[2] - x[0])**2))
+        det = (c00 + c11 + c01sq) * BandMath(lambda x: x[0] * x[1] - x[2])
+        l1 = (tr + det) * BandMath(
+            lambda x: 0.5 * x[0] + np.sqrt(0.25 * x[0] ** 2 - x[1])
+        )
+        l2 = (tr + det) * BandMath(
+            lambda x: 0.5 * x[0] - np.sqrt(0.25 * x[0] ** 2 - x[1])
+        )
+        absv11 = (c00 + c01 + l1) * BandMath(
+            lambda x: np.abs(x[1])
+            / np.sqrt(np.abs(x[1]) ** 2 + np.abs(x[2] - x[0]) ** 2)
+        )
+        absv12 = (c00 + c01 + l2) * BandMath(
+            lambda x: np.abs(x[1])
+            / np.sqrt(np.abs(x[1]) ** 2 + np.abs(x[2] - x[0]) ** 2)
+        )
         # Calculate entropy (H) and alpha
         P1 = (l1 + l2) * BandMath(lambda x: x[0] / (x[0] + x[1]))
         P2 = (l1 + l2) * BandMath(lambda x: x[1] / (x[0] + x[1]))
-        H = (P1 + P2) * BandMath(lambda x: -x[0] * np.log(x[0])
-                                 - x[1] * np.log(x[1]))
-        alpha = (P1 + P2 + absv11 + absv12) * BandMath(lambda x: x[0] * np.arccos(x[2]) + x[1] * np.arccos(x[3]))
+        H = (P1 + P2) * BandMath(lambda x: -x[0] * np.log(x[0]) - x[1] * np.log(x[1]))
+        alpha = (P1 + P2 + absv11 + absv12) * BandMath(
+            lambda x: x[0] * np.arccos(x[2]) + x[1] * np.arccos(x[3])
+        )
         outputs = (H + alpha) * image.MergeToStack()
         return outputs()
 
@@ -341,9 +394,10 @@ class CapellaScaleFactor(PipeSegment):
     Calibrate Capella single-look complex data (or amplitude thereof)
     using the scale factor in the metadata
     """
+
     def transform(self, pin):
-        tiffjson = json.loads(pin.metadata['meta']['TIFFTAG_IMAGEDESCRIPTION'])
-        scale_factor = tiffjson['collect']['image']['scale_factor']
+        tiffjson = json.loads(pin.metadata["meta"]["TIFFTAG_IMAGEDESCRIPTION"])
+        scale_factor = tiffjson["collect"]["image"]["scale_factor"]
         return Image(scale_factor * pin.data, pin.name, pin.metadata)
 
 
@@ -355,8 +409,16 @@ class CapellaGridToGCPs(PipeSegment):
     Output is the image with modified metadata.  Spacing between points
     is in pixels.
     """
-    def __init__(self, reverse_order=False, row_range=None, col_range=None,
-                 spacing=150, row_spacing=None, col_spacing=None):
+
+    def __init__(
+        self,
+        reverse_order=False,
+        row_range=None,
+        col_range=None,
+        spacing=150,
+        row_spacing=None,
+        col_spacing=None,
+    ):
         super().__init__()
         self.reverse_order = reverse_order
         self.row_range = row_range
@@ -364,6 +426,7 @@ class CapellaGridToGCPs(PipeSegment):
         self.spacing = spacing
         self.row_spacing = row_spacing
         self.col_spacing = col_spacing
+
     def transform(self, pin):
         if not self.reverse_order:
             img = pin[0]
@@ -393,15 +456,18 @@ class CapellaGridToGCPs(PipeSegment):
         gcps = []
         for ri in range(rlo, rhi + 1, rspace):
             for ci in range(clo, chi + 1, cspace):
-                gcps.append(gdal.GCP(
-                    grid.data[1, ri, ci],  #longitude
-                    grid.data[0, ri, ci],  #latitude
-                    grid.data[2, ri, ci],  #altitude
-                    ci, ri  #pixel=column=x, line=row=y
-                ))
+                gcps.append(
+                    gdal.GCP(
+                        grid.data[1, ri, ci],  # longitude
+                        grid.data[0, ri, ci],  # latitude
+                        grid.data[2, ri, ci],  # altitude
+                        ci,
+                        ri,  # pixel=column=x, line=row=y
+                    )
+                )
         if len(gcps) > 10922:
-            warnings.warn('! Many GCPs generated in CapellaGridToGCPs.')
-        pout.metadata['gcps'] = gcps
+            warnings.warn("! Many GCPs generated in CapellaGridToGCPs.")
+        pout.metadata["gcps"] = gcps
         return pout
 
 
@@ -410,10 +476,12 @@ class CapellaGridToPolygon(PipeSegment):
     Given a Capella grid file, return a GeoJSON string indicating its boundary.
     'step' is number of pixels between each recorded point.
     """
+
     def __init__(self, step=100, flags=False):
         super().__init__()
         self.step = step
         self.flags = flags
+
     def transform(self, pin):
         # Get indices of selected points along the edges of the grid file
         nrows = pin.data.shape[1]
@@ -445,8 +513,8 @@ class CapellaGridToPolygon(PipeSegment):
         # Get latitude/longitude values, and ensure they're counterclockwise
         lats = [pin.data[0, ri, ci] for ri, ci in zip(allri, allci)]
         lons = [pin.data[1, ri, ci] for ri, ci in zip(allri, allci)]
-        cornerlats = [pin.data[0, ri, ci] for ri,ci in zip(cornerri, cornerci)]
-        cornerlons = [pin.data[1, ri, ci] for ri,ci in zip(cornerri, cornerci)]
+        cornerlats = [pin.data[0, ri, ci] for ri, ci in zip(cornerri, cornerci)]
+        cornerlons = [pin.data[1, ri, ci] for ri, ci in zip(cornerri, cornerci)]
         vi = (cornerlons[1] - cornerlons[0], cornerlats[1] - cornerlats[0])
         vf = (cornerlons[0] - cornerlons[3], cornerlats[0] - cornerlats[3])
         counterclockwise = vf[0] * vi[1] - vf[1] * vi[0] > 0
@@ -457,17 +525,19 @@ class CapellaGridToPolygon(PipeSegment):
         eastlooking = cornerlons[3] > cornerlons[0]
         flags = (counterclockwise, northlooking, eastlooking)
         # Write latitudes & longitudes of the selected points to a JSON string
-        jsonstring = '{\n' \
-                     '"type": "FeatureCollection",\n' \
-                     '"name": "region_' + pin.name + '",\n' \
-                     '"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },\n' \
-                     '"features": [\n' \
-                     '{ "type": "Feature", "properties": { }, "geometry": { "type": "Polygon", "coordinates": [ [ '
+        jsonstring = (
+            "{\n"
+            '"type": "FeatureCollection",\n'
+            '"name": "region_' + pin.name + '",\n'
+            '"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },\n'
+            '"features": [\n'
+            '{ "type": "Feature", "properties": { }, "geometry": { "type": "Polygon", "coordinates": [ [ '
+        )
         for i, (lat, lon) in enumerate(zip(lats, lons)):
-            if i>0:
-                jsonstring += ', '
-            jsonstring += '[ ' + str(lon) + ', ' + str(lat) + ', 0.0 ]'
-        jsonstring += '] ] } }\n]\n}'
+            if i > 0:
+                jsonstring += ", "
+            jsonstring += "[ " + str(lon) + ", " + str(lat) + ", 0.0 ]"
+        jsonstring += "] ] } }\n]\n}"
         if self.flags:
             return (jsonstring,) + flags
         else:
@@ -481,17 +551,19 @@ class CapellaGridCommonWindow(PipeSegment):
     its array indices for each grid file. Optionally, also return the subpixel
     offset of each grid file needed for exact alignment.
     """
-    def __init__(self, master=0, subpixel=True):
+
+    def __init__(self, main=0, subpixel=True):
         super().__init__()
-        self.master = master
+        self.main = main
         self.subpixel = subpixel
+
     def transform(self, pin):
-        # Find the pixel in each grid that's closest to center of master grid.
+        # Find the pixel in each grid that's closest to center of main grid.
         # 'x' and 'y' are the latitude and longitude bands of the grid files,
         # and (refx, refy) is the (lat, lon) of that center.
-        m = self.master
+        m = self.main
         l = len(pin)
-        order = [m] + list(range(m)) + list(range(m+1, l))
+        order = [m] + list(range(m)) + list(range(m + 1, l))
         localrefs = [[]] * len(pin)
         fineoffsets = [[]] * len(pin)
         extents = [[]] * len(pin)
@@ -499,10 +571,9 @@ class CapellaGridCommonWindow(PipeSegment):
         for step, index in enumerate(order):
             x = pin[index].data[0]
             y = pin[index].data[1]
-            if step==0:
-                localrefs[index] = (int(0.5 * x.shape[0]),
-                                    int(0.5 * x.shape[1]))
-                fineoffsets[index] = (0., 0.)
+            if step == 0:
+                localrefs[index] = (int(0.5 * x.shape[0]), int(0.5 * x.shape[1]))
+                fineoffsets[index] = (0.0, 0.0)
                 # Get latitude and longitude of the reference point
                 refx = x[localrefs[index]]
                 refy = y[localrefs[index]]
@@ -510,18 +581,18 @@ class CapellaGridCommonWindow(PipeSegment):
                 # Find pixel closest to reference point
                 localrefs[index] = self.courseoffset(x, y, refx, refy)
                 # Find subpixel offset of reference point
-                fineoffsets[index] = self.fineoffset(x, y, refx, refy,
-                                                     localrefs[index][0],
-                                                     localrefs[index][1])
+                fineoffsets[index] = self.fineoffset(
+                    x, y, refx, refy, localrefs[index][0], localrefs[index][1]
+                )
             # Find how far from the reference pixel each grid extends
             # Convention is [left, bottom, right, top]
             extents[index] = [
                 localrefs[index][1],
                 x.shape[0] - localrefs[index][0] - 1,
                 x.shape[1] - localrefs[index][1] - 1,
-                localrefs[index][0]
+                localrefs[index][0],
             ]
-            if step==0:
+            if step == 0:
                 minextents = extents[index].copy()
             else:
                 for i in range(4):
@@ -533,7 +604,7 @@ class CapellaGridCommonWindow(PipeSegment):
                 localrefs[index][1] - minextents[0],
                 localrefs[index][0] + minextents[1],
                 localrefs[index][1] + minextents[2],
-                localrefs[index][0] - minextents[3]
+                localrefs[index][0] - minextents[3],
             ]
         # Optionally return subpixel offsets
         if self.subpixel:
@@ -541,7 +612,7 @@ class CapellaGridCommonWindow(PipeSegment):
             windows.append(finearray)
         return windows
 
-    def haversine(self, lat1, lon1, lat2, lon2, rad=False, radius=6.371E6):
+    def haversine(self, lat1, lon1, lat2, lon2, rad=False, radius=6.371e6):
         """
         Haversine formula for distance between two points given their
         latitude and longitude, assuming a spherical earth.
@@ -553,7 +624,7 @@ class CapellaGridCommonWindow(PipeSegment):
             lon2 = np.radians(lon2)
         dlat = lat2 - lat1
         dlon = lon2 - lon1
-        a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+        a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
         return 2 * radius * np.arcsin(np.sqrt(a))
 
     def courseoffset(self, latgrid, longrid, lattarget, lontarget):
@@ -565,36 +636,40 @@ class CapellaGridCommonWindow(PipeSegment):
         bound1 = np.shape(latgrid)[1] - 1
         pos0 = int(bound0 / 2)
         pos1 = int(bound1 / 2)
+
         def score(pos0, pos1):
-            return self.haversine(latgrid[pos0, pos1], longrid[pos0, pos1], lattarget, lontarget)
+            return self.haversine(
+                latgrid[pos0, pos1], longrid[pos0, pos1], lattarget, lontarget
+            )
+
         while True:
             scorenow = score(pos0, pos1)
-            if pos0>0 and score(pos0-1, pos1)<scorenow:
+            if pos0 > 0 and score(pos0 - 1, pos1) < scorenow:
                 pos0 -= 1
-            elif pos0<bound0 and score(pos0+1, pos1)<scorenow:
+            elif pos0 < bound0 and score(pos0 + 1, pos1) < scorenow:
                 pos0 += 1
-            elif pos1>0 and score(pos0, pos1-1)<scorenow:
+            elif pos1 > 0 and score(pos0, pos1 - 1) < scorenow:
                 pos1 -= 1
-            elif pos1<bound1 and score(pos0, pos1+1)<scorenow:
+            elif pos1 < bound1 and score(pos0, pos1 + 1) < scorenow:
                 pos1 += 1
             else:
                 return (pos0, pos1)
 
     def fineoffset(self, latgrid, longrid, lattarget, lontarget, uidx, vidx):
         """
-        Given grids of almost-equally-spaced latitude and longitude, and an 
+        Given grids of almost-equally-spaced latitude and longitude, and an
         exact latitude-longitude pair to aim for, and indices of the (ideally)
         nearest point to that lat-long target, returns a first-order estimate
         of the target offset, in pixels, relative to the specified point.
         """
         mlat = lattarget - latgrid[uidx, vidx]
         mlon = lontarget - longrid[uidx, vidx]
-        ulat = latgrid[uidx+1, vidx] - latgrid[uidx, vidx]
-        ulon = longrid[uidx+1, vidx] - longrid[uidx, vidx]
-        vlat = latgrid[uidx, vidx+1] - latgrid[uidx, vidx]
-        vlon = longrid[uidx, vidx+1] - longrid[uidx, vidx]
-        uoffset = (mlat*ulat + mlon*ulon) / (ulat**2 + ulon**2)
-        voffset = (mlat*vlat + mlon*vlon) / (vlat**2 + vlon**2)
+        ulat = latgrid[uidx + 1, vidx] - latgrid[uidx, vidx]
+        ulon = longrid[uidx + 1, vidx] - longrid[uidx, vidx]
+        vlat = latgrid[uidx, vidx + 1] - latgrid[uidx, vidx]
+        vlon = longrid[uidx, vidx + 1] - longrid[uidx, vidx]
+        uoffset = (mlat * ulat + mlon * ulon) / (ulat ** 2 + ulon ** 2)
+        voffset = (mlat * vlat + mlon * vlon) / (vlat ** 2 + vlon ** 2)
         return uoffset, voffset
 
 
@@ -603,9 +678,11 @@ class TerraSARXScaleFactor(PipeSegment):
     Calibrate TerraSAR-X complex data using the scale factor in the
     accompanying xml file.
     """
+
     def __init__(self, reverse_order=False):
         super().__init__()
         self.reverse_order = reverse_order
+
     def transform(self, pin):
         if not self.reverse_order:
             img = pin[0]
@@ -614,7 +691,7 @@ class TerraSARXScaleFactor(PipeSegment):
             img = pin[1]
             info = pin[0]
         root = ET.fromstring(info)
-        scale_factor = float(list(root.iter('calFactor'))[0].text)
+        scale_factor = float(list(root.iter("calFactor"))[0].text)
         return Image(math.sqrt(scale_factor) * img.data, img.name, img.metadata)
 
 
@@ -625,9 +702,11 @@ class TerraSARXGeorefToGCPs(PipeSegment):
     with the image in the 0 position and the georef file in the 1 position.
     Output is the image with modified metadata.
     """
+
     def __init__(self, reverse_order=False):
         super().__init__()
         self.reverse_order = reverse_order
+
     def transform(self, pin):
         # Define output image
         if not self.reverse_order:
@@ -640,18 +719,20 @@ class TerraSARXGeorefToGCPs(PipeSegment):
         # Set GCP values
         gcps = []
         root = ET.fromstring(georef)
-        gcpentries = root.findall('./geolocationGrid/gridPoint')
+        gcpentries = root.findall("./geolocationGrid/gridPoint")
         for gcpentry in gcpentries:
-            gcps.append(gdal.GCP(
-                float(gcpentry.find('lon').text),     #longitude
-                float(gcpentry.find('lat').text),     #latitude
-                float(gcpentry.find('height').text),  #altitude
-                float(gcpentry.find('col').text),     #pixel=column=x
-                float(gcpentry.find('row').text)      #line=row=y
-            ))
-        pout.metadata['gcps'] = gcps
+            gcps.append(
+                gdal.GCP(
+                    float(gcpentry.find("lon").text),  # longitude
+                    float(gcpentry.find("lat").text),  # latitude
+                    float(gcpentry.find("height").text),  # altitude
+                    float(gcpentry.find("col").text),  # pixel=column=x
+                    float(gcpentry.find("row").text),  # line=row=y
+                )
+            )
+        pout.metadata["gcps"] = gcps
         # Set GCP projection
         crs = osr.SpatialReference()
         crs.ImportFromEPSG(4326)
-        pout.metadata['gcp_projection'] = crs.ExportToWkt()
+        pout.metadata["gcp_projection"] = crs.ExportToWkt()
         return pout

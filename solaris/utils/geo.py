@@ -1,29 +1,46 @@
+import json
 import os
-from .core import _check_df_load, _check_gdf_load, _check_rasterio_im_load
-from .core import _check_geom, _check_crs
+import sys
+from warnings import warn
+
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-from affine import Affine
 import rasterio
-from rasterio.warp import calculate_default_transform, Resampling
-from rasterio.warp import transform_bounds
+from affine import Affine
+from rasterio.warp import Resampling, calculate_default_transform, transform_bounds
 from shapely.affinity import affine_transform
-from shapely.wkt import loads
-from shapely.geometry import Point, Polygon, LineString
-from shapely.geometry import MultiLineString, MultiPolygon, mapping, box, shape
+from shapely.geometry import (
+    LineString,
+    MultiLineString,
+    MultiPolygon,
+    Point,
+    Polygon,
+    box,
+    mapping,
+    shape,
+)
 from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
-import osr
-import gdal
-import json
-from warnings import warn
-import sys
+from shapely.wkt import loads
+
+from .core import (
+    _check_crs,
+    _check_df_load,
+    _check_gdf_load,
+    _check_geom,
+    _check_rasterio_im_load,
+)
 
 
-def reproject(input_object, input_crs=None,
-              target_crs=None, target_object=None, dest_path=None,
-              resampling_method='cubic'):
+def reproject(
+    input_object,
+    input_crs=None,
+    target_crs=None,
+    target_object=None,
+    dest_path=None,
+    resampling_method="cubic",
+):
     """Reproject a dataset (df, gdf, or image) to a new coordinate system.
 
     This function takes a georegistered image or a dataset of vector geometries
@@ -35,11 +52,12 @@ def reproject(input_object, input_crs=None,
 
     Arguments
     ---------
-    input_object : `str` or :class:`rasterio.DatasetReader` or :class:`gdal.Dataset` or :class:`geopandas.GeoDataFrame`
+    input_object : `str` or :class:`rasterio.DatasetReader` or :class:`geopandas.GeoDataFrame`
         An object to transform to a new CRS. If a string, it must be a path
         to a georegistered image or vector dataset (e.g. a .GeoJSON). If the
         object itself does not contain georeferencing information, the
-        coordinate reference system can be provided with `input_crs`.
+        coordinate reference system can be provided with `input_crs`. `gdal.Dataset` is not
+        supported, use rasterio instead.
     input_crs : int, optional
         The EPSG code integer for the input data's CRS. If provided and a CRS
         is also associated with `input_object`, this argument's value has
@@ -56,9 +74,7 @@ def reproject(input_object, input_crs=None,
         appropriate UTM zone. `target_crs` takes precedence if both it and
         `target_object` are provided.
     dest_path : str, optional
-        The path to save the output to (if desired). This argument is only
-        required if the input is a :class:`gdal.Dataset`; otherwise, it is
-        optional.
+        The path to save the output to (if desired).
     resampling_method : str, optional
         The resampling method to use during reprojection of raster data. **Only
         has an effect if the input is a :class:`rasterio.DatasetReader` !**
@@ -67,9 +83,9 @@ def reproject(input_object, input_crs=None,
 
     Returns
     -------
-    output : :class:`rasterio.DatasetReader` or :class:`gdal.Dataset` or :class:`geopandas.GeoDataFrame`
+    output : :class:`rasterio.DatasetReader` or :class:`geopandas.GeoDataFrame`
         An output in the same format as `input_object`, but reprojected
-        into the destination CRS.
+        into the destination CRS. `gdal.Dataset` is not supported, use rasterio instead.
     """
     input_data, input_type = _parse_geo_data(input_object)
     if input_crs is None:
@@ -86,39 +102,54 @@ def reproject(input_object, input_crs=None,
 
     if target_crs is not None:
         target_crs = _check_crs(target_crs)
-        output = _reproject(input_data, input_type, input_crs, target_crs,
-                            dest_path, resampling_method)
+        output = _reproject(
+            input_data, input_type, input_crs, target_crs, dest_path, resampling_method
+        )
     else:
-        output = reproject_to_utm(input_data, input_type, input_crs,
-                                  dest_path, resampling_method)
+        output = reproject_to_utm(
+            input_data, input_type, input_crs, dest_path, resampling_method
+        )
     return output
 
 
-def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
-               resampling_method='bicubic'):
+def _reproject(
+    input_data,
+    input_type,
+    input_crs,
+    target_crs,
+    dest_path,
+    resampling_method="bicubic",
+):
 
     input_crs = _check_crs(input_crs)
     target_crs = _check_crs(target_crs)
-    if input_type == 'vector':
+    if input_type == "vector":
         output = input_data.to_crs(target_crs)
         if dest_path is not None:
-            output.to_file(dest_path, driver='GeoJSON')
+            output.to_file(dest_path, driver="GeoJSON")
 
-    elif input_type == 'raster':
+    elif input_type == "raster":
 
         if isinstance(input_data, rasterio.DatasetReader):
             transform, width, height = calculate_default_transform(
-                input_crs.to_wkt("WKT1_GDAL"), target_crs.to_wkt("WKT1_GDAL"),
-                input_data.width, input_data.height, *input_data.bounds
+                input_crs.to_wkt("WKT1_GDAL"),
+                target_crs.to_wkt("WKT1_GDAL"),
+                input_data.width,
+                input_data.height,
+                *input_data.bounds
             )
             kwargs = input_data.meta.copy()
-            kwargs.update({'crs': target_crs.to_wkt("WKT1_GDAL"),
-                           'transform': transform,
-                           'width': width,
-                           'height': height})
+            kwargs.update(
+                {
+                    "crs": target_crs.to_wkt("WKT1_GDAL"),
+                    "transform": transform,
+                    "width": width,
+                    "height": height,
+                }
+            )
 
             if dest_path is not None:
-                with rasterio.open(dest_path, 'w', **kwargs) as dst:
+                with rasterio.open(dest_path, "w", **kwargs) as dst:
                     for band_idx in range(1, input_data.count + 1):
                         rasterio.warp.reproject(
                             source=rasterio.band(input_data, band_idx),
@@ -127,7 +158,7 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                             src_crs=input_data.crs,
                             dst_transform=transform,
                             dst_crs=target_crs.to_wkt("WKT1_GDAL"),
-                            resampling=getattr(Resampling, resampling_method)
+                            resampling=getattr(Resampling, resampling_method),
                         )
                 output = rasterio.open(dest_path)
                 input_data.close()
@@ -137,47 +168,44 @@ def _reproject(input_data, input_type, input_crs, target_crs, dest_path,
                 for band_idx in range(1, input_data.count + 1):
                     rasterio.warp.reproject(
                         source=rasterio.band(input_data, band_idx),
-                        destination=output[:, :, band_idx-1],
+                        destination=output[:, :, band_idx - 1],
                         src_transform=input_data.transform,
                         src_crs=input_data.crs,
                         dst_transform=transform,
                         dst_crs=target_crs,
-                        resampling=getattr(Resampling, resampling_method)
+                        resampling=getattr(Resampling, resampling_method),
                     )
 
-        elif isinstance(input_data, gdal.Dataset):
-            if dest_path is not None:
-                gdal.Warp(dest_path, input_data,
-                          dstSRS='EPSG:' + str(target_crs.to_epsg()))
-                output = gdal.Open(dest_path)
-            else:
-                raise ValueError('An output path must be provided for '
-                                 'reprojecting GDAL datasets.')
+        else:
+            raise ValueError("Expected input_data to be rasterio.DatasetReader")
     return output
 
 
-def reproject_to_utm(input_data, input_type, input_crs=None, dest_path=None,
-                     resampling_method='bicubic'):
-    """Convert an input to a UTM CRS (after determining the correct UTM zone).
-
-    """
+def reproject_to_utm(
+    input_data, input_type, input_crs=None, dest_path=None, resampling_method="bicubic"
+):
+    """Convert an input to a UTM CRS (after determining the correct UTM zone)."""
     if input_crs is None:
         input_crs = get_crs(input_data)
     if input_crs is None:
-        raise ValueError('An input CRS must be provided by input_data or'
-                         ' input_crs.')
+        raise ValueError("An input CRS must be provided by input_data or" " input_crs.")
     input_crs = _check_crs(input_crs)
 
     bounds = get_bounds(input_data, crs=_check_crs(4326))  # need in wkt84 for UTM zone
-    midpoint = [(bounds[1] + bounds[3])/2., (bounds[0] + bounds[2])/2.]
+    midpoint = [(bounds[1] + bounds[3]) / 2.0, (bounds[0] + bounds[2]) / 2.0]
     utm_epsg = latlon_to_utm_epsg(*midpoint)
 
-    output = _reproject(input_data, input_type=input_type, input_crs=input_crs,
-                        target_crs=utm_epsg, dest_path=dest_path,
-                        resampling_method=resampling_method)
+    output = _reproject(
+        input_data,
+        input_type=input_type,
+        input_crs=input_crs,
+        target_crs=utm_epsg,
+        dest_path=dest_path,
+        resampling_method=resampling_method,
+    )
     # cleanup
-    if os.path.isfile('tmp'):
-        os.remove('tmp')
+    if os.path.isfile("tmp"):
+        os.remove("tmp")
 
     return output
 
@@ -200,26 +228,21 @@ def get_bounds(geo_obj, crs=None):
         ``None``) or in `crs` if it was provided.
     """
     input_data, input_type = _parse_geo_data(geo_obj)
-    if input_type == 'vector':
+    if input_type == "vector":
         bounds = list(input_data.geometry.total_bounds)
-    elif input_type == 'raster':
+    elif input_type == "raster":
         if isinstance(input_data, rasterio.DatasetReader):
             bounds = list(input_data.bounds)
-        elif isinstance(input_data, gdal.Dataset):
-            input_gt = input_data.GetGeoTransform()
-            min_x = input_gt[0]
-            max_x = min_x + input_gt[1]*input_data.RasterXSize
-            max_y = input_gt[3]
-            min_y = max_y + input_gt[5]*input_data.RasterYSize
-
-            bounds = [min_x, min_y, max_x, max_y]
+        else:
+            raise ValueError("Expected input_data to be rasterio.DatasetReader")
 
     if crs is not None:
         crs = _check_crs(crs)
         src_crs = get_crs(input_data)
         # transform bounds to desired CRS
-        bounds = transform_bounds(src_crs.to_wkt("WKT1_GDAL"),
-                                  crs.to_wkt("WKT1_GDAL"), *bounds)
+        bounds = transform_bounds(
+            src_crs.to_wkt("WKT1_GDAL"), crs.to_wkt("WKT1_GDAL"), *bounds
+        )
 
     return bounds
 
@@ -230,41 +253,36 @@ def get_crs(obj):
         return _check_crs(obj.crs)
     elif isinstance(obj, rasterio.DatasetReader):
         return _check_crs(obj.crs)
-    elif isinstance(obj, gdal.Dataset):
-        # rawr
-        return _check_crs(int(osr.SpatialReference(wkt=obj.GetProjection()).GetAttrValue(
-            'AUTHORITY', 1)))
     else:
-        raise TypeError("solaris doesn't know how to extract a crs from an "
-                        "object of type {}".format(type(obj)))
+        raise TypeError(
+            "solaris doesn't know how to extract a crs from an "
+            "object of type {}".format(type(obj))
+        )
 
 
 def _parse_geo_data(input):
     if isinstance(input, str):
-        if input.lower().endswith('json') or input.lower().endswith('csv'):
-            input_type = 'vector'
+        if input.lower().endswith("json") or input.lower().endswith("csv"):
+            input_type = "vector"
             input_data = _check_df_load(input)
-        elif input.lower().endswith('tif') or input.lower().endswith('tiff'):
-            input_type = 'raster'
+        elif input.lower().endswith("tif") or input.lower().endswith("tiff"):
+            input_type = "raster"
             input_data = _check_rasterio_im_load(input)
     else:
         input_data = input
         if isinstance(input_data, pd.DataFrame):
-            input_type = 'vector'
-        elif isinstance(
-                input_data, rasterio.DatasetReader
-        ) or isinstance(
-                input_data, gdal.Dataset
-        ):
-            input_type = 'raster'
+            input_type = "vector"
+        elif isinstance(input_data, rasterio.DatasetReader):
+            input_type = "raster"
         else:
-            raise ValueError('The input format {} is not compatible with '
-                             'solaris.'.format(type(input)))
+            raise ValueError(
+                "The input format {} is not compatible with "
+                "solaris.".format(type(input))
+            )
     return input_data, input_type
 
 
-def reproject_geometry(input_geom, input_crs=None, target_crs=None,
-                       affine_obj=None):
+def reproject_geometry(input_geom, input_crs=None, target_crs=None, affine_obj=None):
     """Reproject a geometry or coordinate into a new CRS.
 
     Arguments
@@ -301,20 +319,23 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None,
     if input_crs is not None:
         input_crs = _check_crs(input_crs)
         if target_crs is None:
-            geom = reproject_geometry(input_geom, input_crs,
-                                      target_crs=_check_crs(4326))
+            geom = reproject_geometry(
+                input_geom, input_crs, target_crs=_check_crs(4326)
+            )
             target_crs = latlon_to_utm_epsg(geom.centroid.y, geom.centroid.x)
         target_crs = _check_crs(target_crs)
         gdf = gpd.GeoDataFrame(geometry=[input_geom], crs=input_crs.to_wkt())
         # create a new instance of the same geometry class as above with the
         # new coordinates
-        output_geom = gdf.to_crs(target_crs.to_wkt()).iloc[0]['geometry']
+        output_geom = gdf.to_crs(target_crs.to_wkt()).iloc[0]["geometry"]
 
     else:
         if affine_obj is None:
-            raise ValueError('If an input CRS is not provided, '
-                             'affine_transform is required to complete the '
-                             'transformation.')
+            raise ValueError(
+                "If an input CRS is not provided, "
+                "affine_transform is required to complete the "
+                "transformation."
+            )
         elif isinstance(affine_obj, Affine):
             affine_obj = affine_to_list(affine_obj)
 
@@ -388,7 +409,6 @@ def get_projection_unit(crs):
     return unit
 
 
-
 def list_to_affine(xform_mat):
     """Create an Affine from a list or array-formatted [a, b, d, e, xoff, yoff]
 
@@ -413,9 +433,14 @@ def list_to_affine(xform_mat):
 
 def affine_to_list(affine_obj):
     """Convert a :class:`affine.Affine` instance to a list for Shapely."""
-    return [affine_obj.a, affine_obj.b,
-            affine_obj.d, affine_obj.e,
-            affine_obj.xoff, affine_obj.yoff]
+    return [
+        affine_obj.a,
+        affine_obj.b,
+        affine_obj.d,
+        affine_obj.e,
+        affine_obj.xoff,
+        affine_obj.yoff,
+    ]
 
 
 def geometries_internal_intersection(polygons):
@@ -449,36 +474,37 @@ def geometries_internal_intersection(polygons):
     intersect_lists = intersect_lists.dropna()
     # drop all objects that only have self-intersects
     # first, filter down to the ones that have _some_ intersection with others
-    intersect_lists = intersect_lists[
-        intersect_lists.apply(lambda x: len(x) > 1)]
+    intersect_lists = intersect_lists[intersect_lists.apply(lambda x: len(x) > 1)]
     if len(intersect_lists) == 0:  # if there are no real intersections
         return GeometryCollection()  # same result as failed union below
     # the below is a royal pain to follow. what it does is create a dataframe
     # with two columns: 'gs_idx' and 'intersectors'. 'gs_idx' corresponds to
     # a polygon's original index in gs, and 'intersectors' gives a list of
     # gs indices for polygons that intersect with its bbox.
-    intersect_lists.name = 'intersectors'
-    intersect_lists.index.name = 'gs_idx'
+    intersect_lists.name = "intersectors"
+    intersect_lists.index.name = "gs_idx"
     intersect_lists = intersect_lists.reset_index()
     # first, we get rid  of self-intersection indices in 'intersectors':
-    intersect_lists['intersectors'] = intersect_lists.apply(
-        lambda x: [i for i in x['intersectors'] if i != x['gs_idx']],
-        axis=1)
+    intersect_lists["intersectors"] = intersect_lists.apply(
+        lambda x: [i for i in x["intersectors"] if i != x["gs_idx"]], axis=1
+    )
     # for each row, we next create a union of the polygons in 'intersectors',
     # and find the intersection of that with the polygon at gs[gs_idx]. this
     # (Multi)Polygon output corresponds to all of the intersections for the
     # polygon at gs[gs_idx]. we add that to a list of intersections stored in
     # output_polys.
     output_polys = []
-    _ = intersect_lists.apply(lambda x: output_polys.append(
-        gs[x['gs_idx']].intersection(cascaded_union(gs[x['intersectors']]))
-    ), axis=1)
+    _ = intersect_lists.apply(
+        lambda x: output_polys.append(
+            gs[x["gs_idx"]].intersection(cascaded_union(gs[x["intersectors"]]))
+        ),
+        axis=1,
+    )
     # we then generate the union of all of these intersections and return it.
     return cascaded_union(output_polys)
 
 
-def split_multi_geometries(gdf, obj_id_col=None, group_col=None,
-                           geom_col='geometry'):
+def split_multi_geometries(gdf, obj_id_col=None, group_col=None, geom_col="geometry"):
     """Split apart MultiPolygon or MultiLineString geometries.
 
     Arguments
@@ -509,7 +535,7 @@ def split_multi_geometries(gdf, obj_id_col=None, group_col=None,
 
     """
     if obj_id_col and not group_col:
-        raise ValueError('group_col must be provided if obj_id_col is used.')
+        raise ValueError("group_col must be provided if obj_id_col is used.")
     gdf2 = _check_gdf_load(gdf)
     # drop duplicate columns (happens if loading a csv with geopandas)
     gdf2 = gdf2.loc[:, ~gdf2.columns.duplicated()]
@@ -519,13 +545,15 @@ def split_multi_geometries(gdf, obj_id_col=None, group_col=None,
     if isinstance(gdf2[geom_col].iloc[0], str):
         gdf2[geom_col] = gdf2[geom_col].apply(loads)
     split_geoms_gdf = pd.concat(
-        gdf2.apply(_split_multigeom_row, axis=1, geom_col=geom_col).tolist())
+        gdf2.apply(_split_multigeom_row, axis=1, geom_col=geom_col).tolist()
+    )
     gdf2 = gdf2.drop(index=split_geoms_gdf.index.unique())  # remove multipolygons
-    gdf2 = gpd.GeoDataFrame(pd.concat([gdf2, split_geoms_gdf],
-                                      ignore_index=True), crs=gdf2.crs)
+    gdf2 = gpd.GeoDataFrame(
+        pd.concat([gdf2, split_geoms_gdf], ignore_index=True), crs=gdf2.crs
+    )
 
     if obj_id_col:
-        gdf2[obj_id_col] = gdf2.groupby(group_col).cumcount()+1
+        gdf2[obj_id_col] = gdf2.groupby(group_col).cumcount() + 1
 
     return gdf2
 
@@ -557,14 +585,20 @@ def get_subgraph(G, node_subset):
     if G2.is_multigraph:
         G2.add_edges_from(
             (n, nbr, key, d)
-            for n, nbrs in G.adj.items() if n in node_subset
-            for nbr, keydict in nbrs.items() if nbr in node_subset
-            for key, d in keydict.items())
+            for n, nbrs in G.adj.items()
+            if n in node_subset
+            for nbr, keydict in nbrs.items()
+            if nbr in node_subset
+            for key, d in keydict.items()
+        )
     else:
         G2.add_edges_from(
             (n, nbr, d)
-            for n, nbrs in G.adj.items() if n in node_subset
-            for nbr, d in nbrs.items() if nbr in node_subset)
+            for n, nbrs in G.adj.items()
+            if n in node_subset
+            for nbr, d in nbrs.items()
+            if nbr in node_subset
+        )
 
     # update graph attribute dict, and return graph
     G2.graph.update(G.graph)
@@ -573,8 +607,9 @@ def get_subgraph(G, node_subset):
 
 def _split_multigeom_row(gdf_row, geom_col):
     new_rows = []
-    if isinstance(gdf_row[geom_col], MultiPolygon) \
-            or isinstance(gdf_row[geom_col], MultiLineString):
+    if isinstance(gdf_row[geom_col], MultiPolygon) or isinstance(
+        gdf_row[geom_col], MultiLineString
+    ):
         new_polys = _split_multigeom(gdf_row[geom_col])
         for poly in new_polys:
             row_w_poly = gdf_row.copy()
@@ -589,8 +624,7 @@ def _split_multigeom(multigeom):
 
 def _reduce_geom_precision(geom, precision=2):
     geojson = mapping(geom)
-    geojson['coordinates'] = np.round(np.array(geojson['coordinates']),
-                                      precision)
+    geojson["coordinates"] = np.round(np.array(geojson["coordinates"]), precision)
     return shape(geojson)
 
 
@@ -618,17 +652,16 @@ def latlon_to_utm_epsg(latitude, longitude, return_proj4=False):
     zone_number, zone_letter = _latlon_to_utm_zone(latitude, longitude)
 
     if return_proj4:
-        if zone_letter == 'N':
-            direction_indicator = '+north'
-        elif zone_letter == 'S':
-            direction_indicator = '+south'
-        proj = "+proj=utm +zone={} {}".format(zone_number,
-                                              direction_indicator)
+        if zone_letter == "N":
+            direction_indicator = "+north"
+        elif zone_letter == "S":
+            direction_indicator = "+south"
+        proj = "+proj=utm +zone={} {}".format(zone_number, direction_indicator)
         proj += " +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
-    if zone_letter == 'N':
+    if zone_letter == "N":
         epsg = 32600 + zone_number
-    elif zone_letter == 'S':
+    elif zone_letter == "S":
         epsg = 32700 + zone_number
 
     return (epsg, proj) if return_proj4 else epsg
@@ -688,8 +721,10 @@ def _latlon_to_utm_zone(latitude, longitude, ns_only=True):
         zone_letter = "N"
 
     if not -80 <= latitude <= 84:
-        warn('Warning: UTM projections not recommended for '
-             'latitude {}'.format(latitude))
+        warn(
+            "Warning: UTM projections not recommended for "
+            "latitude {}".format(latitude)
+        )
     if utm_val is None:
         utm_val = int((longitude + 180) / 6) + 1
 
@@ -720,7 +755,7 @@ def bbox_corners_to_coco(bbox):
         ``[minx, miny, width, height]`` shape.
     """
 
-    return [bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]]
+    return [bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]]
 
 
 def polygon_to_coco(polygon):
@@ -730,9 +765,11 @@ def polygon_to_coco(polygon):
     elif isinstance(polygon, str):  # assume it's WKT
         coords = loads(polygon).exterior.coords.xy
     elif isinstance(polygon, MultiPolygon):
-        raise ValueError("You have MultiPolygon types in your label df. Remove, explode, or fix these to be Polygon geometry types.")
+        raise ValueError(
+            "You have MultiPolygon types in your label df. Remove, explode, or fix these to be Polygon geometry types."
+        )
     else:
-        raise ValueError('polygon must be a shapely geometry or WKT.')
+        raise ValueError("polygon must be a shapely geometry or WKT.")
     # zip together x,y pairs
     coords = list(zip(coords[0], coords[1]))
     coords = [item for coordinate in coords for item in coordinate]
@@ -740,8 +777,9 @@ def polygon_to_coco(polygon):
     return coords
 
 
-def split_geom(geometry, tile_size, resolution=None,
-               use_projection_units=False, src_img=None):
+def split_geom(
+    geometry, tile_size, resolution=None, use_projection_units=False, src_img=None
+):
     """Splits a vector into approximately equal sized tiles.
 
     Adapted from @lossyrob's Gist__
@@ -783,12 +821,12 @@ def split_geom(geometry, tile_size, resolution=None,
     if isinstance(geometry, str):
         gj = json.loads(open(geometry).read())
 
-        features = gj['features']
+        features = gj["features"]
         if not len(features) == 1:
-            print('Feature collection must only contain one feature')
+            print("Feature collection must only contain one feature")
             sys.exit(1)
 
-        geometry = shape(features[0]['geometry'])
+        geometry = shape(features[0]["geometry"])
 
     elif isinstance(geometry, list) or isinstance(geometry, np.ndarray):
         assert len(geometry) == 4
@@ -796,8 +834,10 @@ def split_geom(geometry, tile_size, resolution=None,
 
     if use_projection_units is False:
         if resolution is None:
-            print("Resolution must be specified if use_projection_units is"
-                  " False. Access it from src raster meta.")
+            print(
+                "Resolution must be specified if use_projection_units is"
+                " False. Access it from src raster meta."
+            )
             return
         # convert pixel units to CRS units to use during image tiling.
         # NOTE: This will be imperfect for large AOIs where there isn't
@@ -805,33 +845,33 @@ def split_geom(geometry, tile_size, resolution=None,
         # units.
         if isinstance(resolution, (float, int)):
             resolution = (resolution, resolution)
-        tmp_tile_size = [tile_size[0]*resolution[0],
-                         tile_size[1]*resolution[1]]
+        tmp_tile_size = [tile_size[0] * resolution[0], tile_size[1] * resolution[1]]
     else:
         tmp_tile_size = tile_size
-        
+
     if src_img is not None:
         src_img = _check_rasterio_im_load(src_img)
         geometry = geometry.intersection(box(*src_img.bounds))
         bounds = geometry.bounds
     else:
         bounds = geometry.bounds
-        
+
     xmin = bounds[0]
     xmax = bounds[2]
     ymin = bounds[1]
     ymax = bounds[3]
     x_extent = xmax - xmin
     y_extent = ymax - ymin
-    x_steps = np.ceil(x_extent/tmp_tile_size[1])
-    y_steps = np.ceil(y_extent/tmp_tile_size[0])
-    x_mins = np.arange(xmin, xmin + tmp_tile_size[1]*x_steps,
-                       tmp_tile_size[1])
-    y_mins = np.arange(ymin, ymin + tmp_tile_size[0]*y_steps,
-                       tmp_tile_size[0])
+    x_steps = np.ceil(x_extent / tmp_tile_size[1])
+    y_steps = np.ceil(y_extent / tmp_tile_size[0])
+    x_mins = np.arange(xmin, xmin + tmp_tile_size[1] * x_steps, tmp_tile_size[1])
+    y_mins = np.arange(ymin, ymin + tmp_tile_size[0] * y_steps, tmp_tile_size[0])
     tile_bounds = [
-        (i, j, i+tmp_tile_size[1], j+tmp_tile_size[0])
-        for i in x_mins for j in y_mins if not geometry.intersection(
-            box(*(i, j, i+tmp_tile_size[1], j+tmp_tile_size[0]))).is_empty
-        ]
+        (i, j, i + tmp_tile_size[1], j + tmp_tile_size[0])
+        for i in x_mins
+        for j in y_mins
+        if not geometry.intersection(
+            box(*(i, j, i + tmp_tile_size[1], j + tmp_tile_size[0]))
+        ).is_empty
+    ]
     return tile_bounds

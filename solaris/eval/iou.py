@@ -37,7 +37,7 @@ def calculate_iou(pred_poly, test_data_GDF):
             iou_score = intersection / float(union)
         else:
             iou_score = 0
-        row['iou_score'] = iou_score
+        row["iou_score"] = iou_score
         iou_row_list.append(row)
 
     iou_GDF = gpd.GeoDataFrame(iou_row_list)
@@ -65,7 +65,7 @@ def process_iou(pred_poly, test_data_GDF, remove_matching_element=True):
 
     iou_GDF = calculate_iou(pred_poly, test_data_GDF)
 
-    max_iou_row = iou_GDF.loc[iou_GDF['iou_score'].idxmax(axis=0, skipna=True)]
+    max_iou_row = iou_GDF.loc[iou_GDF["iou_score"].idxmax(axis=0, skipna=True)]
 
     if remove_matching_element:
         test_data_GDF.drop(max_iou_row.name, axis=0, inplace=True)

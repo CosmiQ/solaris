@@ -1,9 +1,9 @@
 import os
-from solaris.data import data_dir
 from solaris.vector.graph import geojson_to_graph
 import pickle
 import networkx as nx
 
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 class TestGeojsonToGraph(object):
     """Tests for cw_geodata.vector_label.graph.geojson_to_graph."""

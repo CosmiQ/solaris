@@ -63,17 +63,16 @@ How do I use ``solaris``?
 After `installing solaris <installation.html>`_, there are two usage
 modes:
 
-Command line: train or test models performance with a single command
+Command line: test models performance with a single command
 --------------------------------------------------------------------
-``solaris`` will provide a command line interface (CLI) tool to run an entire
-geospatial imagery analysis pipeline from raw, un-chipped imagery, through model
-training (if applicable) and prediction, to vector-formatted outputs. If you
-provide ground truth labels over your prediction area, ``solaris`` can generate
-quality metrics for the predictions. See
+``solaris`` will provide a command line interface (CLI) tool to convert raw, 
+un-chipped imagery to inputs ready for model training (if applicable) and prediction, 
+to vector-formatted outputs. If you provide ground truth labels over your prediction area, 
+``solaris`` can generate quality metrics for the predictions. See
 `an introduction to the solaris CLI <tutorials/cli.html>`_ for more.
 
 
-Python API: Use ``solaris`` to accelerate model development
+Python API: Use ``solaris`` to accelerate data preprocessing and model testing
 -----------------------------------------------------------
 Alongside the simple CLI, all of ``solaris``'s functionality is accessible via
 the Python API. The entirely open source codebase provides classes and functions
@@ -82,17 +81,9 @@ to:
 * Tile imagery and labels
 * Convert geospatial raster and vector data to formats compatible with machine
   learning frameworks
-* Train deep learning models using PyTorch and Tensorflow (Keras) - more
-  frameworks coming soon!
-* Generate predictions on any geospatial imagery using your own models or
-  existing pre-trained models from past `SpaceNet <https://www.spacenet.ai>`_
-  challenges
 * Convert model outputs to geospatial raster or vector formats
 * Score model performance using standardized, geospatial-specific metrics
 
 The ``solaris`` Python API documentation can be found `here <api/index>`_, and
 `we have provided tutorials for common use cases <tutorials/index.html>`_.
-The open source codebase is available `on GitHub <https://github.com/cosmiq/solaris>`_.
-
-Follow us at our blog `The DownlinQ <https://medium.com/the-downlinq>`_ or
-`on Twitter <https://twitter.com/cosmiqworks>`_ for updates!
+The open source codebase is available `on GitHub <https://github.com/CosmiQ/solaris>`_.

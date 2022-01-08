@@ -1,7 +1,7 @@
 import os
-from solaris.data import data_dir
 from solaris.eval import vector
 
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 class TestVectorMetrics(object):
     """Test the vector metrics."""
