@@ -1,23 +1,36 @@
+import json
 import os
-from .core import _check_df_load, _check_gdf_load, _check_rasterio_im_load
-from .core import _check_geom, _check_crs
+import sys
+from warnings import warn
+
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-from affine import Affine
 import rasterio
-from rasterio.warp import calculate_default_transform, Resampling
-from rasterio.warp import transform_bounds
+from affine import Affine
+from rasterio.warp import Resampling, calculate_default_transform, transform_bounds
 from shapely.affinity import affine_transform
-from shapely.wkt import loads
-from shapely.geometry import Point, Polygon, LineString
-from shapely.geometry import MultiLineString, MultiPolygon, mapping, box, shape
+from shapely.geometry import (
+    LineString,
+    MultiLineString,
+    MultiPolygon,
+    Point,
+    Polygon,
+    box,
+    mapping,
+    shape,
+)
 from shapely.geometry.collection import GeometryCollection
 from shapely.ops import cascaded_union
+from shapely.wkt import loads
 
-import json
-from warnings import warn
-import sys
+from .core import (
+    _check_crs,
+    _check_df_load,
+    _check_gdf_load,
+    _check_geom,
+    _check_rasterio_im_load,
+)
 
 
 def reproject(
@@ -93,12 +106,19 @@ def reproject(
             input_data, input_type, input_crs, target_crs, dest_path, resampling_method
         )
     else:
-        output = reproject_to_utm(input_data, input_type, input_crs, dest_path, resampling_method)
+        output = reproject_to_utm(
+            input_data, input_type, input_crs, dest_path, resampling_method
+        )
     return output
 
 
 def _reproject(
-    input_data, input_type, input_crs, target_crs, dest_path, resampling_method="bicubic"
+    input_data,
+    input_type,
+    input_crs,
+    target_crs,
+    dest_path,
+    resampling_method="bicubic",
 ):
 
     input_crs = _check_crs(input_crs)
@@ -220,7 +240,9 @@ def get_bounds(geo_obj, crs=None):
         crs = _check_crs(crs)
         src_crs = get_crs(input_data)
         # transform bounds to desired CRS
-        bounds = transform_bounds(src_crs.to_wkt("WKT1_GDAL"), crs.to_wkt("WKT1_GDAL"), *bounds)
+        bounds = transform_bounds(
+            src_crs.to_wkt("WKT1_GDAL"), crs.to_wkt("WKT1_GDAL"), *bounds
+        )
 
     return bounds
 
@@ -254,7 +276,8 @@ def _parse_geo_data(input):
             input_type = "raster"
         else:
             raise ValueError(
-                "The input format {} is not compatible with " "solaris.".format(type(input))
+                "The input format {} is not compatible with "
+                "solaris.".format(type(input))
             )
     return input_data, input_type
 
@@ -296,7 +319,9 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None, affine_obj=N
     if input_crs is not None:
         input_crs = _check_crs(input_crs)
         if target_crs is None:
-            geom = reproject_geometry(input_geom, input_crs, target_crs=_check_crs(4326))
+            geom = reproject_geometry(
+                input_geom, input_crs, target_crs=_check_crs(4326)
+            )
             target_crs = latlon_to_utm_epsg(geom.centroid.y, geom.centroid.x)
         target_crs = _check_crs(target_crs)
         gdf = gpd.GeoDataFrame(geometry=[input_geom], crs=input_crs.to_wkt())
@@ -523,7 +548,9 @@ def split_multi_geometries(gdf, obj_id_col=None, group_col=None, geom_col="geome
         gdf2.apply(_split_multigeom_row, axis=1, geom_col=geom_col).tolist()
     )
     gdf2 = gdf2.drop(index=split_geoms_gdf.index.unique())  # remove multipolygons
-    gdf2 = gpd.GeoDataFrame(pd.concat([gdf2, split_geoms_gdf], ignore_index=True), crs=gdf2.crs)
+    gdf2 = gpd.GeoDataFrame(
+        pd.concat([gdf2, split_geoms_gdf], ignore_index=True), crs=gdf2.crs
+    )
 
     if obj_id_col:
         gdf2[obj_id_col] = gdf2.groupby(group_col).cumcount() + 1
@@ -694,7 +721,10 @@ def _latlon_to_utm_zone(latitude, longitude, ns_only=True):
         zone_letter = "N"
 
     if not -80 <= latitude <= 84:
-        warn("Warning: UTM projections not recommended for " "latitude {}".format(latitude))
+        warn(
+            "Warning: UTM projections not recommended for "
+            "latitude {}".format(latitude)
+        )
     if utm_val is None:
         utm_val = int((longitude + 180) / 6) + 1
 
@@ -747,7 +777,9 @@ def polygon_to_coco(polygon):
     return coords
 
 
-def split_geom(geometry, tile_size, resolution=None, use_projection_units=False, src_img=None):
+def split_geom(
+    geometry, tile_size, resolution=None, use_projection_units=False, src_img=None
+):
     """Splits a vector into approximately equal sized tiles.
 
     Adapted from @lossyrob's Gist__

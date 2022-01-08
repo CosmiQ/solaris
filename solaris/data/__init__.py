@@ -1,6 +1,7 @@
 import os
-import pandas as pd
+
 import geopandas as gpd
+import pandas as pd
 import rasterio
 
 data_dir = os.path.dirname(__file__) + "/../../tests/data"

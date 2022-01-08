@@ -1,6 +1,8 @@
 import multiprocessing
+
+
 def _parallel_compute_function(x):
-    return (x[0])(*(x[1]),**(x[2]))(x[3],x[4])
+    return (x[0])(*(x[1]), **(x[2]))(x[3], x[4])
 
 
 class PipeSegment:
@@ -13,16 +15,18 @@ class PipeSegment:
         self._used = 0
         self._saveall = 0
         self._verbose = 0
+
     def __call__(self, saveall=0, verbose=0):
         self._saveall = saveall
         self._verbose = verbose
         if self.procstart and not self.procfinish:
-            raise Exception('(!) Circular dependency in workflow.')
+            raise Exception("(!) Circular dependency in workflow.")
         if not self.procfinish:
             self.procstart = True
             self.procout = self.process()
             self.procfinish = True
         return self.procout
+
     def process(self):
         pin = self.feeder(self._saveall, self._verbose)
         self.feeder._used += 1
@@ -31,14 +35,17 @@ class PipeSegment:
         if self._verbose > 0:
             self.printout(self._verbose, pin)
         return self.transform(pin)
+
     def transform(self, pin):
         return pin
+
     def reset(self, recursive=True):
         self.procout = None
         self.procstart = False
         self.procfinish = False
         if recursive:
             self.feeder.reset(recursive=True)
+
     def printout(self, verbose, *args):
         if verbose >= 1:
             print(type(self))
@@ -49,15 +56,23 @@ class PipeSegment:
                 print(x)
         if verbose >= 2:
             print()
+
     def selfstring(self, offset=0):
-        return ' '*2*offset + type(self).__name__ + '\n'
+        return " " * 2 * offset + type(self).__name__ + "\n"
+
     def __str__(self, offset=0):
-        return self.selfstring(offset) + self.feeder.__str__(offset+1)
+        return self.selfstring(offset) + self.feeder.__str__(offset + 1)
+
     def attach_check(self, ps):
         if not self.attach(ps):
-            raise Exception('(!) ' + type(self).__name__
-                            + ' has no free input at which to attach '
-                            + type(ps).__name__ + '.')
+            raise Exception(
+                "(!) "
+                + type(self).__name__
+                + " has no free input at which to attach "
+                + type(ps).__name__
+                + "."
+            )
+
     def attach(self, ps):
         if self.feeder is None:
             self.feeder = ps
@@ -65,21 +80,28 @@ class PipeSegment:
             return True
         else:
             return self.feeder.attach(ps) or ps is self
+
     def __mul__(self, other):
         other.attach_check(self)
         return other
+
     def __or__(self, other):
         other.attach_check(self)
         return other
+
     def __add__(self, other):
         return MergeSegment(self, other)
+
     def __rmul__(self, other):
         return LoadSegment(other) * self
+
     def __ror__(self, other):
         return LoadSegment(other) * self
+
     @classmethod
-    def parallel(cls, input_args=None, input_kwargs=None, processes=None,
-                 saveall=0, verbose=0):
+    def parallel(
+        cls, input_args=None, input_kwargs=None, processes=None, saveall=0, verbose=0
+    ):
         if input_args is not None and input_kwargs is None:
             input_kwargs = [{}] * len(input_args)
         elif input_kwargs is not None and input_args is None:
@@ -87,10 +109,16 @@ class PipeSegment:
         elif input_args is None and input_kwargs is None:
             input_args = [[]]
             input_kwargs = [{}]
-        all_inputs = list(zip([cls]*len(input_args), input_args, input_kwargs,
-                              [saveall]*len(input_args),
-                              [verbose]*len(input_args)))
-        #with multiprocessing.get_context('spawn').Pool(processes) as pool:
+        all_inputs = list(
+            zip(
+                [cls] * len(input_args),
+                input_args,
+                input_kwargs,
+                [saveall] * len(input_args),
+                [verbose] * len(input_args),
+            )
+        )
+        # with multiprocessing.get_context('spawn').Pool(processes) as pool:
         with multiprocessing.Pool(processes) as pool:
             return pool.map(_parallel_compute_function, all_inputs)
 
@@ -99,18 +127,23 @@ class LoadSegment(PipeSegment):
     def __init__(self, source=None):
         super().__init__()
         self.source = source
+
     def process(self):
         if self._verbose > 0:
             self.printout(self._verbose)
         return self.load()
+
     def load(self):
         return self.source
+
     def reset(self, recursive=True):
         self.procout = None
         self.procstart = False
         self.procfinish = False
+
     def __str__(self, offset=0):
         return self.selfstring(offset)
+
     def attach(self, ps):
         return ps is self
 
@@ -122,6 +155,7 @@ class MergeSegment(PipeSegment):
         self.feeder1._cited += 1
         self.feeder2 = feeder2
         self.feeder2._cited += 1
+
     def process(self):
         p1 = self.feeder1(self._saveall, self._verbose)
         p2 = self.feeder2(self._saveall, self._verbose)
@@ -138,6 +172,7 @@ class MergeSegment(PipeSegment):
         if not isinstance(p2, tuple):
             p2 = (p2,)
         return p1 + p2
+
     def reset(self, recursive=True):
         self.procout = None
         self.procstart = False
@@ -145,10 +180,14 @@ class MergeSegment(PipeSegment):
         if recursive:
             self.feeder1.reset(recursive=True)
             self.feeder2.reset(recursive=True)
+
     def __str__(self, offset=0):
-        return self.selfstring(offset) \
-            + self.feeder1.__str__(offset+1) \
-            + self.feeder2.__str__(offset+1)
+        return (
+            self.selfstring(offset)
+            + self.feeder1.__str__(offset + 1)
+            + self.feeder2.__str__(offset + 1)
+        )
+
     def attach(self, ps):
         if self.feeder1 is None:
             self.feeder1 = ps
@@ -170,9 +209,11 @@ class SelectItem(PipeSegment):
     Given an iterable, return one of its items.  This can be used to select
     a single output from a class that returns a tuple of outputs.
     """
+
     def __init__(self, index=0):
         super().__init__()
         self.index = index
+
     def transform(self, pin):
         return pin[self.index]
 
@@ -183,6 +224,7 @@ class Identity(PipeSegment):
     emphasize its property of passing data through, unchanged.
     Formally, this is the identity element for the '*' operation.
     """
+
     pass
 
 
@@ -192,6 +234,7 @@ class ReturnEmpty(PipeSegment):
     This can be useful in Map and Conditional classes.
     Formally, this is the identity element for the '+' operation.
     """
+
     def transform(self, pin):
         return ()
 
@@ -203,10 +246,19 @@ class Conditional(PipeSegment):
     If 'True' is returned, then the input is fed through an 'if_class' object.
     Otherwise, the input is fed through an 'else_class' object.
     """
-    def __init__(self, condition_class,
-                 if_class=Identity, else_class=ReturnEmpty,
-                 condition_args=[], if_args=[], else_args=[],
-                 condition_kwargs={}, if_kwargs={}, else_kwargs={}):
+
+    def __init__(
+        self,
+        condition_class,
+        if_class=Identity,
+        else_class=ReturnEmpty,
+        condition_args=[],
+        if_args=[],
+        else_args=[],
+        condition_kwargs={},
+        if_kwargs={},
+        else_kwargs={},
+    ):
         super().__init__()
         self.condition_class = condition_class
         self.if_class = if_class
@@ -217,13 +269,17 @@ class Conditional(PipeSegment):
         self.condition_kwargs = condition_kwargs
         self.if_kwargs = if_kwargs
         self.else_kwargs = else_kwargs
-        if issubclass(self.condition_class, LoadSegment) \
-           and issubclass(self.if_class, LoadSegment) \
-           and issubclass(self.else_class, LoadSegment):
+        if (
+            issubclass(self.condition_class, LoadSegment)
+            and issubclass(self.if_class, LoadSegment)
+            and issubclass(self.else_class, LoadSegment)
+        ):
             self.feeder = LoadSegment(())
+
     def transform(self, pin):
-        condition_obj = self.condition_class(*self.condition_args,
-                                             **self.condition_kwargs)
+        condition_obj = self.condition_class(
+            *self.condition_args, **self.condition_kwargs
+        )
         if not isinstance(condition_obj, LoadSegment):
             condition_obj = LoadSegment(pin) * condition_obj
         if condition_obj(self._saveall, self._verbose):
@@ -242,16 +298,19 @@ class Map(PipeSegment):
     specified by 'inner_class' to each one, then returns all the results
     as a tuple.
     """
+
     def __init__(self, inner_class, *args, **kwargs):
         super().__init__()
         self.inner_class = inner_class
         self.args = args
         self.kwargs = kwargs
+
     def transform(self, pin):
         pout = ()
         for entry in pin:
-            outp = (LoadSegment(entry) * self.inner_class(*self.args,
-                **self.kwargs))(self._saveall, self._verbose)
+            outp = (LoadSegment(entry) * self.inner_class(*self.args, **self.kwargs))(
+                self._saveall, self._verbose
+            )
             if not isinstance(outp, tuple):
                 outp = (outp,)
             pout = pout + outp
@@ -265,9 +324,16 @@ class While(PipeSegment):
     to the piped input over and over again, until sending the piped input
     through an object of class 'condition_class' returns false.
     """
-    def __init__(self, condition_class, inner_class,
-                 condition_args=[], inner_args=[],
-                 condition_kwargs={}, inner_kwargs={}):
+
+    def __init__(
+        self,
+        condition_class,
+        inner_class,
+        condition_args=[],
+        inner_args=[],
+        condition_kwargs={},
+        inner_kwargs={},
+    ):
         super().__init__()
         self.condition_class = condition_class
         self.inner_class = inner_class
@@ -275,15 +341,17 @@ class While(PipeSegment):
         self.inner_args = inner_args
         self.condition_kwargs = condition_kwargs
         self.inner_kwargs = inner_kwargs
+
     def transform(self, pin):
-        condition_obj = self.condition_class(*self.condition_args,
-                                             **self.condition_kwargs)
+        condition_obj = self.condition_class(
+            *self.condition_args, **self.condition_kwargs
+        )
         while (LoadSegment(pin) * condition_obj)(self._saveall, self._verbose):
-            inner_obj = self.inner_class(*self.inner_args,
-                                         **self.inner_kwargs)
+            inner_obj = self.inner_class(*self.inner_args, **self.inner_kwargs)
             pin = (LoadSegment(pin) * inner_obj)(self._saveall, self._verbose)
-            condition_obj = self.condition_class(*self.condition_args,
-                                                 **self.condition_kwargs)
+            condition_obj = self.condition_class(
+                *self.condition_args, **self.condition_kwargs
+            )
         return pin
 
 
@@ -292,11 +360,13 @@ class PipeArgs(PipeSegment):
     Wrapper for any PipeSegment subclass which enables it to accept
     initialization arguments from piped input.
     """
+
     def __init__(self, inner_class, *args, **kwargs):
         super().__init__()
         self.inner_class = inner_class
         self.args = args
         self.kwargs = kwargs
+
     def transform(self, pin):
         if issubclass(self.inner_class, LoadSegment):
             isloadsegment = True
@@ -314,7 +384,7 @@ class PipeArgs(PipeSegment):
                 kwargs.update(p)
             else:
                 args = args + (p,)
-        #Initialize and call object
+        # Initialize and call object
         obj = self.inner_class(*args, **kwargs)
         if isloadsegment:
             return obj(self._saveall, self._verbose)
@@ -326,9 +396,11 @@ class FunctionPipe(PipeSegment):
     """
     Turns a user-supplied function into a PipeSegment
     """
+
     def __init__(self, function):
         super().__init__()
         self.function = function
+
     def transform(self, pin):
         return self.function(pin)
 

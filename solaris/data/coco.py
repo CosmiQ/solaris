@@ -1,15 +1,17 @@
+import json
+import logging
+import os
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import rasterio
+from tqdm.auto import tqdm
+
 from ..utils.core import _check_df_load, _check_geom, get_files_recursively
 from ..utils.geo import bbox_corners_to_coco, polygon_to_coco, split_multi_geometries
 from ..utils.log import _get_logging_level
 from ..vector.polygon import geojson_to_px_gdf, remove_multipolygons
-import numpy as np
-import rasterio
-from tqdm.auto import tqdm
-import json
-import os
-import pandas as pd
-import geopandas as gpd
-import logging
 
 
 def geojson2coco(
@@ -152,9 +154,13 @@ def geojson2coco(
             logger.debug("COCO json provided. Extracting fname:id dict.")
             with open(image_src, "r") as f:
                 image_ref = json.load(f)
-                image_ref = {image["file_name"]: image["id"] for image in image_ref["images"]}
+                image_ref = {
+                    image["file_name"]: image["id"] for image in image_ref["images"]
+                }
         else:
-            image_list = _get_fname_list(image_src, recursive=recursive, extension=image_ext)
+            image_list = _get_fname_list(
+                image_src, recursive=recursive, extension=image_ext
+            )
             image_ref = dict(zip(image_list, list(range(1, len(image_list) + 1))))
     elif isinstance(image_src, dict):
         logger.debug("image COCO dict provided. Extracting fname:id dict.")
@@ -168,7 +174,9 @@ def geojson2coco(
             "Non-COCO formatted image set provided. Generating "
             "image fname:id dict with arbitrary ID integers."
         )
-        image_list = _get_fname_list(image_src, recursive=recursive, extension=image_ext)
+        image_list = _get_fname_list(
+            image_src, recursive=recursive, extension=image_ext
+        )
         image_ref = dict(zip(image_list, list(range(1, len(image_list) + 1))))
 
     logger.debug("Preparing label filename list.")
@@ -184,10 +192,13 @@ def geojson2coco(
         if matching_re is not None:
             im_names["match_substr"] = im_names["image_fname"].str.extract(matching_re)
             logger.debug("Getting substrings for matching from label fnames.")
-            label_names["match_substr"] = label_names["label_fname"].str.extract(matching_re)
+            label_names["match_substr"] = label_names["label_fname"].str.extract(
+                matching_re
+            )
         else:
             logger.debug(
-                "matching_re is none, getting full filenames " "without extensions for matching."
+                "matching_re is none, getting full filenames "
+                "without extensions for matching."
             )
             im_names["match_substr"] = im_names["image_fname"].apply(
                 lambda x: os.path.splitext(os.path.split(x)[1])[0]
@@ -218,7 +229,10 @@ def geojson2coco(
         curr_gdf["image_fname"] = ""
         curr_gdf["image_id"] = np.nan
         if category_attribute is None:
-            logger.debug("No category attribute provided. Creating a default " '"other" category.')
+            logger.debug(
+                "No category attribute provided. Creating a default "
+                '"other" category.'
+            )
             curr_gdf["category_str"] = "other"  # add arbitrary value
             tmp_category_attribute = "category_str"
         else:
@@ -230,7 +244,9 @@ def geojson2coco(
                 curr_gdf = geojson_to_px_gdf(
                     curr_gdf,
                     override_crs=override_crs,
-                    im_path=match_df.loc[match_df["label_fname"] == gj, "image_fname"].values[0],
+                    im_path=match_df.loc[
+                        match_df["label_fname"] == gj, "image_fname"
+                    ].values[0],
                 )
                 curr_gdf["image_id"] = image_ref[
                     match_df.loc[match_df["label_fname"] == gj, "image_fname"].values[0]
@@ -238,7 +254,9 @@ def geojson2coco(
         # handle case with multiple images, one big geojson
         elif len(image_ref) > 1 and len(label_list) == 1:
             logger.debug("do_matches is False. Many images:1 label detected.")
-            raise NotImplementedError("one label file: many images " "not implemented yet.")
+            raise NotImplementedError(
+                "one label file: many images " "not implemented yet."
+            )
         elif len(image_ref) == 1 and len(label_list) == 1:
             logger.debug("do_matches is False. 1 image:1 label detected.")
             logger.debug("Converting to pixel coordinates.")
@@ -254,7 +272,9 @@ def geojson2coco(
             ]
         else:
             curr_gdf = curr_gdf[["image_id", "label_fname", "category_str", "geometry"]]
-        label_df = pd.concat([label_df, curr_gdf], axis="index", ignore_index=True, sort=False)
+        label_df = pd.concat(
+            [label_df, curr_gdf], axis="index", ignore_index=True, sort=False
+        )
 
     logger.info("Finished loading labels.")
     logger.info("Generating COCO-formatted annotations.")
@@ -273,20 +293,28 @@ def geojson2coco(
     if license_dict is not None:
         logger.debug("Getting license ID.")
         if len(license_dict) == 1:
-            logger.debug("Only one license present; assuming it applies to " "all images.")
+            logger.debug(
+                "Only one license present; assuming it applies to " "all images."
+            )
             license_id = 1
         else:
-            logger.debug("Zero or multiple licenses present. Not trying to " "match to images.")
+            logger.debug(
+                "Zero or multiple licenses present. Not trying to " "match to images."
+            )
             license_id = None
         logger.info("Adding licenses to dataset.")
         coco_licenses = []
         license_idx = 1
         for license_name, license_url in license_dict.items():
-            coco_licenses.append({"name": license_name, "url": license_url, "id": license_idx})
+            coco_licenses.append(
+                {"name": license_name, "url": license_url, "id": license_idx}
+            )
             license_idx += 1
         coco_dataset["licenses"] = coco_licenses
     else:
-        logger.debug("No license information provided, skipping for image " "COCO records.")
+        logger.debug(
+            "No license information provided, skipping for image " "COCO records."
+        )
         license_id = None
     coco_image_records = make_coco_image_dict(image_ref, license_id)
     coco_dataset["images"] = coco_image_records
@@ -371,7 +399,9 @@ def df_to_coco_annos(
     temp_df = df.copy()  # for manipulation
     if preset_categories is not None and category_col is None:
         logger.debug("preset_categories has a value, category_col is None.")
-        raise ValueError("category_col must be specified if using" " preset_categories.")
+        raise ValueError(
+            "category_col must be specified if using" " preset_categories."
+        )
     elif preset_categories is not None and category_col is not None:
         logger.debug("Both preset_categories and category_col have values.")
         logger.debug("Getting list of category names.")
@@ -382,9 +412,12 @@ def df_to_coco_annos(
             temp_df = temp_df.loc[temp_df[category_col].isin(category_names), :]
         else:
             logger.info(
-                'Setting category to "other" for objects outside of ' "preset category list."
+                'Setting category to "other" for objects outside of '
+                "preset category list."
             )
-            temp_df.loc[~temp_df[category_col].isin(category_names), category_col] = "other"
+            temp_df.loc[
+                ~temp_df[category_col].isin(category_names), category_col
+            ] = "other"
             if "other" not in category_dict.keys():
                 logger.debug('Adding "other" to category_dict.')
                 other_id = np.array(list(category_dict.values())).max() + 1
@@ -397,7 +430,9 @@ def df_to_coco_annos(
         logger.info(f"Collecting unique category names from {category_col}.")
         category_names = list(temp_df[category_col].unique())
         logger.info("Generating category ID numbers arbitrarily.")
-        category_dict = {k: v for k, v in zip(category_names, range(1, len(category_names) + 1))}
+        category_dict = {
+            k: v for k, v in zip(category_names, range(1, len(category_names) + 1))
+        }
     else:
         logger.debug("No category column or preset categories.")
         logger.info('Setting category to "other" for all objects.')
@@ -470,7 +505,9 @@ def df_to_coco_annos(
     return output_dict
 
 
-def coco_categories_dict_from_df(df, category_id_col, category_name_col, supercategory_col=None):
+def coco_categories_dict_from_df(
+    df, category_id_col, category_name_col, supercategory_col=None
+):
     """Extract category IDs, category names, and supercat names from df.
 
     Arguments
@@ -564,7 +601,9 @@ def _get_fname_list(p, recursive=False, extension=".tif"):
         return p
     elif isinstance(p, str):
         if os.path.isdir(p):
-            return get_files_recursively(p, traverse_subdirs=recursive, extension=extension)
+            return get_files_recursively(
+                p, traverse_subdirs=recursive, extension=extension
+            )
         elif os.path.isfile(p):
             return [p]
         else:

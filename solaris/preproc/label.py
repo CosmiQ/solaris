@@ -3,8 +3,8 @@ import pandas as pd
 import shapely.geometry
 import shapely.wkt
 
-from .pipesegment import PipeSegment, LoadSegment, MergeSegment
 from ..vector.polygon import convert_poly_coords
+from .pipesegment import LoadSegment, MergeSegment, PipeSegment
 
 
 class LoadString(LoadSegment):
@@ -65,7 +65,9 @@ class LoadDataFrame(LoadSegment):
     def load(self):
         if self.pathstring.lower()[-4:] == ".csv":
             df = pd.read_csv(self.pathstring)
-            geometry = df.apply(lambda row: shapely.wkt.loads(row[self.geom_col]), axis=1)
+            geometry = df.apply(
+                lambda row: shapely.wkt.loads(row[self.geom_col]), axis=1
+            )
             df.drop(columns=[self.geom_col])
             gdf = gpd.GeoDataFrame(df, geometry=geometry)
             if self.projection is not None:
@@ -180,7 +182,11 @@ class DataFramePixelCoords(PipeSegment):
         gdf = gdf.copy()
         newgeoms = gdf.apply(
             lambda row: convert_poly_coords(
-                row.geometry, affine_obj=affine, inverse=self.inverse, *self.args, **self.kwargs
+                row.geometry,
+                affine_obj=affine,
+                inverse=self.inverse,
+                *self.args,
+                **self.kwargs
             ),
             axis=1,
         )

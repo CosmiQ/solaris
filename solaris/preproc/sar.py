@@ -1,17 +1,18 @@
-import gdal
 import json
 import math
-import numpy as np
 import os
-import osr
-import scipy.signal
 import uuid
 import warnings
 import xml.etree.ElementTree as ET
 
-from .pipesegment import PipeSegment, LoadSegment, MergeSegment
-from .image import Image
+import gdal
+import numpy as np
+import osr
+import scipy.signal
+
 from . import image
+from .image import Image
+from .pipesegment import LoadSegment, MergeSegment, PipeSegment
 
 
 class BandMath(PipeSegment):
@@ -105,7 +106,9 @@ class MultiplyConjugate(PipeSegment):
 
     def transform(self, pin):
         return Image(
-            pin[0].data * np.conj(pin[1].data), pin[self.main].name, pin[self.main].metadata
+            pin[0].data * np.conj(pin[1].data),
+            pin[self.main].name,
+            pin[self.main].metadata,
         )
 
 
@@ -157,9 +160,13 @@ class Multilook(PipeSegment):
             filter = scipy.ndimage.filters.maximum_filter
         else:
             raise Exception("! Invalid method in Multilook.")
-        pout = Image(np.zeros(pin.data.shape, dtype=pin.data.dtype), pin.name, pin.metadata)
+        pout = Image(
+            np.zeros(pin.data.shape, dtype=pin.data.dtype), pin.name, pin.metadata
+        )
         for i in range(pin.data.shape[0]):
-            pout.data[i, :, :] = filter(pin.data[i, :, :], size=self.kernel_size, mode="reflect")
+            pout.data[i, :, :] = filter(
+                pin.data[i, :, :], size=self.kernel_size, mode="reflect"
+            )
         return pout
 
 
@@ -239,7 +246,9 @@ class DecompositionPauli(PipeSegment):
         alpha2 = np.expand_dims(alpha2, axis=0)
         beta2 = np.expand_dims(beta2, axis=0)
         gamma2 = np.expand_dims(gamma2, axis=0)
-        pout = Image(np.concatenate((alpha2, beta2, gamma2), axis=0), pin.name, pin.metadata)
+        pout = Image(
+            np.concatenate((alpha2, beta2, gamma2), axis=0), pin.name, pin.metadata
+        )
         return pout
 
 
@@ -286,7 +295,9 @@ class DecompositionFreemanDurden(PipeSegment):
         )  #
         # Surface and dihedral amplitudes
         surfacedominates = c12 * BandMath(lambda x: np.real(x) >= 0)
-        term1 = (c11 + c22 + c12 * InPhase() + c12 * Quadrature() + surfacedominates) * BandMath(
+        term1 = (
+            c11 + c22 + c12 * InPhase() + c12 * Quadrature() + surfacedominates
+        ) * BandMath(
             lambda x: (x[0] * x[1] - (x[2]) ** 2 - (x[3]) ** 2)
             / (x[0] + x[1] + 2 * x[2] * np.where(x[4], 1, -1))
         )
@@ -295,7 +306,9 @@ class DecompositionFreemanDurden(PipeSegment):
         term2 = term2 * Amplitude()  #
         term3 = (
             term1 + term2 + c12 * InPhase() + c12 * Quadrature() + surfacedominates
-        ) * BandMath(lambda x: (x[2] + np.where(x[4], 1, -1) * x[0] + x[3] * 1.0j) / x[1])
+        ) * BandMath(
+            lambda x: (x[2] + np.where(x[4], 1, -1) * x[0] + x[3] * 1.0j) / x[1]
+        )
         fs = (
             (term2 + surfacedominates) * image.SetMask(flag=0)
             + (term1 + surfacedominates * image.InvertMask()) * image.SetMask(flag=0)
@@ -351,13 +364,19 @@ class DecompositionHAlpha(PipeSegment):
         # tr=trace; det=determinant; l1,l2=eigenvalues; v..=eigenvector terms
         tr = (c00 + c11) * BandMath(lambda x: x[0] + x[1])
         det = (c00 + c11 + c01sq) * BandMath(lambda x: x[0] * x[1] - x[2])
-        l1 = (tr + det) * BandMath(lambda x: 0.5 * x[0] + np.sqrt(0.25 * x[0] ** 2 - x[1]))
-        l2 = (tr + det) * BandMath(lambda x: 0.5 * x[0] - np.sqrt(0.25 * x[0] ** 2 - x[1]))
+        l1 = (tr + det) * BandMath(
+            lambda x: 0.5 * x[0] + np.sqrt(0.25 * x[0] ** 2 - x[1])
+        )
+        l2 = (tr + det) * BandMath(
+            lambda x: 0.5 * x[0] - np.sqrt(0.25 * x[0] ** 2 - x[1])
+        )
         absv11 = (c00 + c01 + l1) * BandMath(
-            lambda x: np.abs(x[1]) / np.sqrt(np.abs(x[1]) ** 2 + np.abs(x[2] - x[0]) ** 2)
+            lambda x: np.abs(x[1])
+            / np.sqrt(np.abs(x[1]) ** 2 + np.abs(x[2] - x[0]) ** 2)
         )
         absv12 = (c00 + c01 + l2) * BandMath(
-            lambda x: np.abs(x[1]) / np.sqrt(np.abs(x[1]) ** 2 + np.abs(x[2] - x[0]) ** 2)
+            lambda x: np.abs(x[1])
+            / np.sqrt(np.abs(x[1]) ** 2 + np.abs(x[2] - x[0]) ** 2)
         )
         # Calculate entropy (H) and alpha
         P1 = (l1 + l2) * BandMath(lambda x: x[0] / (x[0] + x[1]))
@@ -619,7 +638,9 @@ class CapellaGridCommonWindow(PipeSegment):
         pos1 = int(bound1 / 2)
 
         def score(pos0, pos1):
-            return self.haversine(latgrid[pos0, pos1], longrid[pos0, pos1], lattarget, lontarget)
+            return self.haversine(
+                latgrid[pos0, pos1], longrid[pos0, pos1], lattarget, lontarget
+            )
 
         while True:
             scorenow = score(pos0, pos1)

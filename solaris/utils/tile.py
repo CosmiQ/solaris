@@ -1,10 +1,13 @@
-from .core import _check_crs
-import geopandas as gpd
 import json
+
+import geopandas as gpd
 from affine import Affine
-from rasterio.windows import Window
-from rasterio.vrt import WarpedVRT
 from rasterio.enums import Resampling
+from rasterio.vrt import WarpedVRT
+from rasterio.windows import Window
+
+from .core import _check_crs
+
 # temporarily removing the below until I can get COG functionality implemented
 # from rio_tiler.utils import get_vrt_transform, has_alpha_band
 # from rio_tiler.utils import _requested_tile_aligned_with_internal_tile
@@ -14,19 +17,14 @@ def save_empty_geojson(path, crs):
     crs = _check_crs(crs)
     empty_geojson_dict = {
         "type": "FeatureCollection",
-        "crs":
-        {
+        "crs": {
             "type": "name",
-            "properties":
-            {
-                "name": "urn:ogc:def:crs:EPSG:{}".format(crs.to_epsg())
-            }
+            "properties": {"name": "urn:ogc:def:crs:EPSG:{}".format(crs.to_epsg())},
         },
-        "features":
-        []
+        "features": [],
     }
 
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(empty_geojson_dict, f)
         f.close()
 

@@ -1,16 +1,19 @@
 import os
+
+import numpy as np
 import rasterio
-from rasterio.warp import Resampling, calculate_default_transform
-from rasterio.vrt import WarpedVRT
 from rasterio.mask import mask as rasterio_mask
+from rasterio.vrt import WarpedVRT
+from rasterio.warp import Resampling, calculate_default_transform
+from shapely.geometry import box
+from tqdm.auto import tqdm
+
 # from rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
 # removing the following until COG functionality is implemented
 # from ..utils.tile import read_cog_tile
-from ..utils.geo import reproject, split_geom, raster_get_projection_unit
-import numpy as np
-from shapely.geometry import box
-from tqdm.auto import tqdm
+from ..utils.geo import raster_get_projection_unit, reproject, split_geom
+
 
 class RasterTiler(object):
     """An object to tile geospatial image strips into smaller pieces.
@@ -103,12 +106,24 @@ class RasterTiler(object):
         loaded.
     """
 
-    def __init__(self, dest_dir=None, dest_crs=None, project_to_meters=False,
-                 channel_idxs=None, src_tile_size=(900, 900), use_src_metric_size=False,
-                 dest_tile_size=None, dest_metric_size=False,
-                 aoi_boundary=None, nodata=None, alpha=None,
-                 force_load_cog=False, resampling=None, tile_bounds=None,
-                 verbose=False):
+    def __init__(
+        self,
+        dest_dir=None,
+        dest_crs=None,
+        project_to_meters=False,
+        channel_idxs=None,
+        src_tile_size=(900, 900),
+        use_src_metric_size=False,
+        dest_tile_size=None,
+        dest_metric_size=False,
+        aoi_boundary=None,
+        nodata=None,
+        alpha=None,
+        force_load_cog=False,
+        resampling=None,
+        tile_bounds=None,
+        verbose=False,
+    ):
         # set up attributes
         if verbose:
             print("Initializing Tiler...")
@@ -133,25 +148,33 @@ class RasterTiler(object):
         self.tile_bounds = tile_bounds
         self.project_to_meters = project_to_meters
         self.tile_paths = []  # retains the paths of the last call to .tile()
-#        self.cog_output = cog_output
+        #        self.cog_output = cog_output
         self.verbose = verbose
         if self.verbose:
-            print('Tiler initialized.')
-            print('dest_dir: {}'.format(self.dest_dir))
+            print("Tiler initialized.")
+            print("dest_dir: {}".format(self.dest_dir))
             if dest_crs is not None:
-                print('dest_crs: {}'.format(self.dest_crs))
+                print("dest_crs: {}".format(self.dest_crs))
             else:
-                print('dest_crs will be inferred from source data.')
-            print('src_tile_size: {}'.format(self.src_tile_size))
-            print('tile size units metric: {}'.format(self.use_src_metric_size))
+                print("dest_crs will be inferred from source data.")
+            print("src_tile_size: {}".format(self.src_tile_size))
+            print("tile size units metric: {}".format(self.use_src_metric_size))
             if self.resampling is not None:
-                print('Resampling is set to {}'.format(self.resampling))
+                print("Resampling is set to {}".format(self.resampling))
             else:
-                print('Resampling is set to None')
+                print("Resampling is set to None")
 
-    def tile(self, src, dest_dir=None, channel_idxs=None, nodata=None,
-             alpha=None, restrict_to_aoi=False,
-             dest_fname_base=None, nodata_threshold = None):
+    def tile(
+        self,
+        src,
+        dest_dir=None,
+        channel_idxs=None,
+        nodata=None,
+        alpha=None,
+        restrict_to_aoi=False,
+        dest_fname_base=None,
+        nodata_threshold=None,
+    ):
         """An object to tile geospatial image strips into smaller pieces.
 
         Arguments
@@ -164,63 +187,107 @@ class RasterTiler(object):
             Requires aoi_boundary. Sets all pixel values outside the aoi_boundary to the nodata value of the src image.
         """
         src = _check_rasterio_im_load(src)
-        restricted_im_path = os.path.join(self.dest_dir, "aoi_restricted_"+ os.path.basename(src.name))
-        self.src_name = src.name # preserves original src name in case restrict is used
+        restricted_im_path = os.path.join(
+            self.dest_dir, "aoi_restricted_" + os.path.basename(src.name)
+        )
+        self.src_name = src.name  # preserves original src name in case restrict is used
         if restrict_to_aoi is True:
             if self.aoi_boundary is None:
-                raise ValueError("aoi_boundary must be specified when RasterTiler is called.")
-            mask_geometry = self.aoi_boundary.intersection(box(*src.bounds)) # prevents enlarging raster to size of aoi_boundary
-            index_lst = list(np.arange(1,src.meta['count']+1))
+                raise ValueError(
+                    "aoi_boundary must be specified when RasterTiler is called."
+                )
+            mask_geometry = self.aoi_boundary.intersection(
+                box(*src.bounds)
+            )  # prevents enlarging raster to size of aoi_boundary
+            index_lst = list(np.arange(1, src.meta["count"] + 1))
             # no need to use transform t since we don't crop. cropping messes up transform of tiled outputs
-            arr, t = rasterio_mask(src, [mask_geometry], all_touched=False, invert=False, nodata=src.meta['nodata'],
-                         filled=True, crop=False, pad=False, pad_width=0.5, indexes=list(index_lst))
-            with rasterio.open(restricted_im_path, 'w', **src.profile) as dest:
+            arr, t = rasterio_mask(
+                src,
+                [mask_geometry],
+                all_touched=False,
+                invert=False,
+                nodata=src.meta["nodata"],
+                filled=True,
+                crop=False,
+                pad=False,
+                pad_width=0.5,
+                indexes=list(index_lst),
+            )
+            with rasterio.open(restricted_im_path, "w", **src.profile) as dest:
                 dest.write(arr)
                 dest.close()
                 src.close()
-            src = _check_rasterio_im_load(restricted_im_path) #if restrict_to_aoi, we overwrite the src to be the masked raster
+            src = _check_rasterio_im_load(
+                restricted_im_path
+            )  # if restrict_to_aoi, we overwrite the src to be the masked raster
 
-        tile_gen = self.tile_generator(src, dest_dir, channel_idxs, nodata,
-                                       alpha, self.aoi_boundary, restrict_to_aoi)
+        tile_gen = self.tile_generator(
+            src,
+            dest_dir,
+            channel_idxs,
+            nodata,
+            alpha,
+            self.aoi_boundary,
+            restrict_to_aoi,
+        )
 
         if self.verbose:
-            print('Beginning tiling...')
+            print("Beginning tiling...")
         self.tile_paths = []
         if nodata_threshold is not None:
             if nodata_threshold > 1:
-                raise ValueError("nodata_threshold should be expressed as a float less than 1.")
-            print("nodata value threshold supplied, filtering based on this percentage.")
+                raise ValueError(
+                    "nodata_threshold should be expressed as a float less than 1."
+                )
+            print(
+                "nodata value threshold supplied, filtering based on this percentage."
+            )
             new_tile_bounds = []
             for tile_data, mask, profile, tb in tqdm(tile_gen):
-                nodata_count = np.logical_or.reduce((tile_data == profile['nodata']), axis=0).sum()
+                nodata_count = np.logical_or.reduce(
+                    (tile_data == profile["nodata"]), axis=0
+                ).sum()
                 nodata_perc = nodata_count / (tile_data.shape[1] * tile_data.shape[2])
                 if nodata_perc < nodata_threshold:
                     dest_path = self.save_tile(
-                        tile_data, mask, profile, dest_fname_base)
+                        tile_data, mask, profile, dest_fname_base
+                    )
                     self.tile_paths.append(dest_path)
                     new_tile_bounds.append(tb)
                 else:
-                    print("{} of nodata is over the nodata_threshold, tile not saved.".format(nodata_perc))
-            self.tile_bounds = new_tile_bounds # only keep the tile bounds that make it past the nodata threshold
+                    print(
+                        "{} of nodata is over the nodata_threshold, tile not saved.".format(
+                            nodata_perc
+                        )
+                    )
+            self.tile_bounds = new_tile_bounds  # only keep the tile bounds that make it past the nodata threshold
         else:
             for tile_data, mask, profile, tb in tqdm(tile_gen):
-                dest_path = self.save_tile(
-                    tile_data, mask, profile, dest_fname_base)
+                dest_path = self.save_tile(tile_data, mask, profile, dest_fname_base)
                 self.tile_paths.append(dest_path)
         if self.verbose:
-            print('Tiling complete. Cleaning up...')
+            print("Tiling complete. Cleaning up...")
         self.src.close()
-        if os.path.exists(os.path.join(self.dest_dir, 'tmp.tif')):
-            os.remove(os.path.join(self.dest_dir, 'tmp.tif'))
+        if os.path.exists(os.path.join(self.dest_dir, "tmp.tif")):
+            os.remove(os.path.join(self.dest_dir, "tmp.tif"))
         if os.path.exists(restricted_im_path):
             os.remove(restricted_im_path)
         if self.verbose:
             print("Done. CRS returned for vector tiling.")
-        return _check_crs(profile['crs'])  # returns the crs to be used for vector tiling
+        return _check_crs(
+            profile["crs"]
+        )  # returns the crs to be used for vector tiling
 
-    def tile_generator(self, src, dest_dir=None, channel_idxs=None,
-                       nodata=None, alpha=None, aoi_boundary=None,
-                       restrict_to_aoi=False):
+    def tile_generator(
+        self,
+        src,
+        dest_dir=None,
+        channel_idxs=None,
+        nodata=None,
+        alpha=None,
+        aoi_boundary=None,
+        restrict_to_aoi=False,
+    ):
         """Create the tiled output imagery from input tiles.
 
         Uses the arguments provided at initialization to generate output tiles.
@@ -284,13 +351,15 @@ class RasterTiler(object):
         if channel_idxs is None:  # if not provided, include them all
             channel_idxs = list(range(1, self.src.count + 1))
             print(channel_idxs)
-        self.src_crs = _check_crs(self.src.crs, return_rasterio=True) # necessary to use rasterio crs for reproject
+        self.src_crs = _check_crs(
+            self.src.crs, return_rasterio=True
+        )  # necessary to use rasterio crs for reproject
         if self.verbose:
-            print('Source CRS: EPSG:{}'.format(self.src_crs.to_epsg()))
+            print("Source CRS: EPSG:{}".format(self.src_crs.to_epsg()))
         if self.dest_crs is None:
             self.dest_crs = self.src_crs
         if self.verbose:
-            print('Destination CRS: EPSG:{}'.format(self.dest_crs.to_epsg()))
+            print("Destination CRS: EPSG:{}".format(self.dest_crs.to_epsg()))
         self.src_path = self.src.name
         self.proj_unit = raster_get_projection_unit(self.src)  # for rounding
         if self.verbose:
@@ -300,22 +369,23 @@ class RasterTiler(object):
                 print("Checking if inputs are in metric units...")
             if self.project_to_meters:
                 if self.verbose:
-                    print("Input CRS is not metric. "
-                          "Reprojecting the input to UTM.")
-                self.src = reproject(self.src,
-                                     resampling_method=self.resampling,
-                                     dest_path=os.path.join(self.dest_dir,
-                                                            'tmp.tif'))
+                    print("Input CRS is not metric. " "Reprojecting the input to UTM.")
+                self.src = reproject(
+                    self.src,
+                    resampling_method=self.resampling,
+                    dest_path=os.path.join(self.dest_dir, "tmp.tif"),
+                )
                 if self.verbose:
-                    print('Done reprojecting.')
+                    print("Done reprojecting.")
         if nodata is None and self.nodata is None:
             self.nodata = self.src.nodata
         elif nodata is not None:
             self.nodata = nodata
         # get index of alpha channel
         if alpha is None and self.alpha is None:
-            mf_list = [rasterio.enums.MaskFlags.alpha in i for i in
-                       self.src.mask_flag_enums]  # list with True at idx of alpha c
+            mf_list = [
+                rasterio.enums.MaskFlags.alpha in i for i in self.src.mask_flag_enums
+            ]  # list with True at idx of alpha c
             try:
                 self.alpha = np.where(mf_list)[0] + 1
             except IndexError:  # if there isn't a True
@@ -323,38 +393,46 @@ class RasterTiler(object):
         else:
             self.alpha = alpha
 
-        if getattr(self, 'tile_bounds', None) is None:
+        if getattr(self, "tile_bounds", None) is None:
             self.get_tile_bounds()
 
         for tb in self.tile_bounds:
             # removing the following line until COG functionality implemented
             if True:  # not self.is_cog or self.force_load_cog:
                 window = rasterio.windows.from_bounds(
-                    *tb, transform=self.src.transform,
+                    *tb,
+                    transform=self.src.transform,
                     width=self.src_tile_size[1],
-                    height=self.src_tile_size[0])
-                print('reading data from window')
+                    height=self.src_tile_size[0]
+                )
+                print("reading data from window")
                 print(self.nodata)
                 if self.src.count != 1:
                     src_data = self.src.read(
                         window=window,
                         indexes=channel_idxs,
                         boundless=True,
-                        fill_value=self.nodata)
+                        fill_value=self.nodata,
+                    )
                 else:
                     src_data = self.src.read(
-                        window=window,
-                        boundless=True,
-                        fill_value=self.nodata)
+                        window=window, boundless=True, fill_value=self.nodata
+                    )
 
                 dst_transform, width, height = calculate_default_transform(
-                    self.src.crs, self.dest_crs,
-                    self.src.width, self.src.height, *tb,
+                    self.src.crs,
+                    self.dest_crs,
+                    self.src.width,
+                    self.src.height,
+                    *tb,
                     dst_height=self.dest_tile_size[0],
-                    dst_width=self.dest_tile_size[1])
+                    dst_width=self.dest_tile_size[1]
+                )
 
                 if self.dest_crs != self.src_crs and self.resampling_method is not None:
-                    tile_data = np.zeros(shape=(src_data.shape[0], height, width), dtype=src_data.dtype)
+                    tile_data = np.zeros(
+                        shape=(src_data.shape[0], height, width), dtype=src_data.dtype
+                    )
                     rasterio.warp.reproject(
                         source=src_data,
                         destination=tile_data,
@@ -363,15 +441,21 @@ class RasterTiler(object):
                         dst_transform=dst_transform,
                         dst_crs=self.dest_crs,
                         dst_nodata=self.nodata,
-                        resampling=getattr(Resampling, self.resampling))
+                        resampling=getattr(Resampling, self.resampling),
+                    )
 
                 elif self.dest_crs != self.src_crs and self.resampling_method is None:
-                    print("Warning: You've set resampling to None but your "
-                          "destination projection differs from the source "
-                          "projection. Using bilinear resampling by default.")
-                    tile_data = np.zeros(shape=(src_data.shape[0], height, width),
-                                         dtype=src_data.dtype)
-                    tile_data = np.zeros(shape=(src_data.shape[0], height, width), dtype=src_data.dtype)
+                    print(
+                        "Warning: You've set resampling to None but your "
+                        "destination projection differs from the source "
+                        "projection. Using bilinear resampling by default."
+                    )
+                    tile_data = np.zeros(
+                        shape=(src_data.shape[0], height, width), dtype=src_data.dtype
+                    )
+                    tile_data = np.zeros(
+                        shape=(src_data.shape[0], height, width), dtype=src_data.dtype
+                    )
                     rasterio.warp.reproject(
                         source=src_data,
                         destination=tile_data,
@@ -380,15 +464,15 @@ class RasterTiler(object):
                         dst_transform=dst_transform,
                         dst_crs=self.dest_crs,
                         dst_nodata=self.nodata,
-                        resampling=getattr(Resampling, "bilinear"))
+                        resampling=getattr(Resampling, "bilinear"),
+                    )
 
                 else:  # for the case where there is no resampling and no dest_crs specified, no need to reproject or resample
 
                     tile_data = src_data
 
                 if self.nodata:
-                    mask = np.all(tile_data != nodata,
-                                  axis=0).astype(np.uint8) * 255
+                    mask = np.all(tile_data != nodata, axis=0).astype(np.uint8) * 255
                 elif self.alpha:
                     mask = self.src.read(self.alpha, window=window)
                 else:
@@ -404,10 +488,12 @@ class RasterTiler(object):
             #         resampling_method=self.resampling
             #         )
             profile = self.src.profile
-            profile.update(width=self.dest_tile_size[1],
-                           height=self.dest_tile_size[0],
-                           crs=self.dest_crs,
-                           transform=dst_transform)
+            profile.update(
+                width=self.dest_tile_size[1],
+                height=self.dest_tile_size[0],
+                crs=self.dest_crs,
+                transform=dst_transform,
+            )
             if len(tile_data.shape) == 2:  # if there's no channel band
                 profile.update(count=1)
             else:
@@ -418,36 +504,36 @@ class RasterTiler(object):
     def save_tile(self, tile_data, mask, profile, dest_fname_base=None):
         """Save a tile created by ``Tiler.tile_generator()``."""
         if dest_fname_base is None:
-            dest_fname_root = os.path.splitext(
-                os.path.split(self.src_path)[1])[0]
+            dest_fname_root = os.path.splitext(os.path.split(self.src_path)[1])[0]
         else:
             dest_fname_root = dest_fname_base
-        if self.proj_unit not in ['meter', 'metre']:
-            dest_fname = '{}_{}_{}.tif'.format(
+        if self.proj_unit not in ["meter", "metre"]:
+            dest_fname = "{}_{}_{}.tif".format(
                 dest_fname_root,
-                np.round(profile['transform'][2], 3),
-                np.round(profile['transform'][5], 3))
+                np.round(profile["transform"][2], 3),
+                np.round(profile["transform"][5], 3),
+            )
         else:
-            dest_fname = '{}_{}_{}.tif'.format(
+            dest_fname = "{}_{}_{}.tif".format(
                 dest_fname_root,
-                int(profile['transform'][2]),
-                int(profile['transform'][5]))
+                int(profile["transform"][2]),
+                int(profile["transform"][5]),
+            )
         # if self.cog_output:
         #     dest_path = os.path.join(self.dest_dir, 'tmp.tif')
         # else:
         dest_path = os.path.join(self.dest_dir, dest_fname)
 
-        with rasterio.open(dest_path, 'w',
-                           **profile) as dest:
-            if profile['count'] == 1:
+        with rasterio.open(dest_path, "w", **profile) as dest:
+            if profile["count"] == 1:
                 dest.write(tile_data[0, :, :], 1)
             else:
-                for band in range(1, profile['count'] + 1):
+                for band in range(1, profile["count"] + 1):
                     # base-1 vs. base-0 indexing...bleh
-                    dest.write(tile_data[band-1, :, :], band)
+                    dest.write(tile_data[band - 1, :, :], band)
             if self.alpha:
                 # write the mask if there's an alpha band
-                dest.write(mask, profile['count'] + 1)
+                dest.write(mask, profile["count"] + 1)
 
             dest.close()
 
@@ -478,53 +564,71 @@ class RasterTiler(object):
         src = _check_rasterio_im_load(self.src_name)
         if nodata_fill == "mean":
             arr = src.read()
-            arr_nan = np.where(arr!=src.nodata, arr, np.nan)
+            arr_nan = np.where(arr != src.nodata, arr, np.nan)
             fill_values = np.nanmean(arr_nan, axis=tuple(range(1, arr_nan.ndim)))
-            print('Fill values set to {}'.format(fill_values))
+            print("Fill values set to {}".format(fill_values))
         elif isinstance(nodata_fill, (float, int)):
-            fill_values = src.meta['count'] * [nodata_fill]
-            print('Fill values set to {}'.format(fill_values))
+            fill_values = src.meta["count"] * [nodata_fill]
+            print("Fill values set to {}".format(fill_values))
         else:
-            raise TypeError('nodata_fill must be "mean", int, or float. {} was supplied.'.format(nodata_fill))
+            raise TypeError(
+                'nodata_fill must be "mean", int, or float. {} was supplied.'.format(
+                    nodata_fill
+                )
+            )
         src.close()
         for tile_path in self.tile_paths:
             tile_src = rasterio.open(tile_path, "r+")
             tile_data = tile_src.read()
             for i in np.arange(tile_data.shape[0]):
-                tile_data[i,...][tile_data[i,...] == tile_src.nodata] = fill_values[i] # set fill value for each band
-            if tile_src.meta['count'] == 1:
+                tile_data[i, ...][tile_data[i, ...] == tile_src.nodata] = fill_values[
+                    i
+                ]  # set fill value for each band
+            if tile_src.meta["count"] == 1:
                 tile_src.write(tile_data[0, :, :], 1)
             else:
-                for band in range(1, tile_src.meta['count'] + 1):
+                for band in range(1, tile_src.meta["count"] + 1):
                     # base-1 vs. base-0 indexing...bleh
-                    tile_src.write(tile_data[band-1, :, :], band)
+                    tile_src.write(tile_data[band - 1, :, :], band)
             tile_src.close()
         return fill_values
 
     def _create_cog(self, src_path, dest_path):
         """Overwrite non-cloud-optimized GeoTIFF with a COG."""
-        cog_translate(src_path=src_path, dst_path=dest_path,
-                      dst_kwargs={'crs': self.dest_crs},
-                      resampling=self.resampling,
-                      latitude_adjustment=False)
+        cog_translate(
+            src_path=src_path,
+            dst_path=dest_path,
+            dst_kwargs={"crs": self.dest_crs},
+            resampling=self.resampling,
+            latitude_adjustment=False,
+        )
 
     def get_tile_bounds(self):
         """Get tile bounds for each tile to be created in the input CRS."""
         if not self.aoi_boundary:
             if not self.src:
-                raise ValueError('aoi_boundary and/or a source file must be '
-                                 'provided.')
+                raise ValueError(
+                    "aoi_boundary and/or a source file must be " "provided."
+                )
             else:
                 # set to the bounds of the image
                 # split_geom can take a list
                 self.aoi_boundary = list(self.src.bounds)
 
-        self.tile_bounds = split_geom(geometry=self.aoi_boundary, tile_size=self.src_tile_size, resolution=(
-            self.src.transform[0], -self.src.transform[4]), use_projection_units=self.use_src_metric_size, src_img=self.src)
+        self.tile_bounds = split_geom(
+            geometry=self.aoi_boundary,
+            tile_size=self.src_tile_size,
+            resolution=(self.src.transform[0], -self.src.transform[4]),
+            use_projection_units=self.use_src_metric_size,
+            src_img=self.src,
+        )
 
     def load_src_vrt(self):
         """Load a source dataset's VRT into the destination CRS."""
-        vrt_params = dict(crs=self.dest_crs,
-                          resampling=getattr(Resampling, self.resampling),
-                          src_nodata=self.nodata, dst_nodata=self.nodata)
+        vrt_params = dict(
+            crs=self.dest_crs,
+            resampling=getattr(Resampling, self.resampling),
+            src_nodata=self.nodata,
+            dst_nodata=self.nodata,
+        )
         return WarpedVRT(self.src, **vrt_params)

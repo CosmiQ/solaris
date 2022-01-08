@@ -20,3 +20,5 @@ urllib3<1.26
 black
 pytest
 tox
+isort
+flake8

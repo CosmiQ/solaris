@@ -30,15 +30,12 @@ test: install_dev_dependencies
 .PHONY: lint
 lint:
 	@echo "${bold}Linting...${reset}"
-	${VENV_PATH}/black api cdk
-	${VENV_PATH}/isort api cdk
-	${VENV_PATH}/flake8 api cdk
-	${VENV_PATH}/mypy api  --no-strict-optional
-
+	${VENV_PATH}/black solaris
+	${VENV_PATH}/isort solaris
+	${VENV_PATH}/flake8 solaris
 
 .PHONY: lint-ci
 lint-ci:
 	@echo "${bold}Linting...${reset}"
-	${VENV_PATH}/black api cdk --check
-	${VENV_PATH}/isort api cdk --check
-	${VENV_PATH}/mypy api  --no-strict-optional
+	${VENV_PATH}/black solaris --check
+	${VENV_PATH}/isort solaris --check

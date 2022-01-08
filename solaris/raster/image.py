@@ -1,7 +1,9 @@
-import rasterio
-import numpy as np
-from ..utils.raster import reorder_axes
 import os
+
+import numpy as np
+import rasterio
+
+from ..utils.raster import reorder_axes
 
 
 def get_geo_transform(raster_src):
@@ -26,13 +28,20 @@ def get_geo_transform(raster_src):
     elif isinstance(raster_src, rasterio.DatasetReader):
         affine_obj = raster_src.transform
     else:
-        raise ValueError("Expected input_data to be rasterio.DatasetReader or rasterio transform.")
+        raise ValueError(
+            "Expected input_data to be rasterio.DatasetReader or rasterio transform."
+        )
 
     return affine_obj
 
 
 def stitch_images(
-    im_arr, idx_refs=None, out_width=None, out_height=None, method="average", use_GPU=True
+    im_arr,
+    idx_refs=None,
+    out_width=None,
+    out_height=None,
+    method="average",
+    use_GPU=True,
 ):
     """Stitch together images into a single 2- or 3-channel array.
 
@@ -158,7 +167,8 @@ def stitch_images(
 
     return output_arr
 
-#TODO this needs to be rewritten with rasterio
+
+# TODO this needs to be rewritten with rasterio
 # def create_multiband_geotiff(
 #     array, out_name, proj, geo, nodata=0, out_format=gdal.GDT_Byte, verbose=False
 # ):
@@ -217,7 +227,12 @@ def stitch_images(
 
 
 def get_intensity_quantiles(
-    dataset_dir, percentiles=[0, 100], ext="tif", recursive=False, channels=None, verbose=0
+    dataset_dir,
+    percentiles=[0, 100],
+    ext="tif",
+    recursive=False,
+    channels=None,
+    verbose=0,
 ):
     """Get approximate dataset pixel intensity percentiles for normalization.
 
@@ -256,7 +271,9 @@ class K1ScaleFunction(ScaleFunction):
         return np.sin((2 * np.pi * k) / self.compression_delta) + 1
 
 
-def get_tdigest(data_buffer, tdigest=None, scale_function=K1ScaleFunction, compression_delta=0.01):
+def get_tdigest(
+    data_buffer, tdigest=None, scale_function=K1ScaleFunction, compression_delta=0.01
+):
     """Create a new t-digest or merge it with an existing digest.
 
     This function is an implementation of Algorithm 1 from https://github.com/tdunning/t-digest/blob/main/docs/t-digest-paper/histo.pdf
@@ -290,7 +307,8 @@ def get_tdigest(data_buffer, tdigest=None, scale_function=K1ScaleFunction, compr
         q = q0 + (sigma_weight + buffer_weights[idx]) / S
         if q <= q_limit:
             sigma_centroid = (
-                sigma_centroid * sigma_weight + buffer_centroids[idx] * buffer_weights[idx]
+                sigma_centroid * sigma_weight
+                + buffer_centroids[idx] * buffer_weights[idx]
             ) / (sigma_weight + buffer_weights[idx])
             sigma_weight = sigma_weight + buffer_weights[idx]
         else:
@@ -307,4 +325,6 @@ def get_tdigest(data_buffer, tdigest=None, scale_function=K1ScaleFunction, compr
 
 
 def _get_q_limit(scale_function, q0, compression_delta):
-    return 1.0 / (scale_function(scale_function(q0, compression_delta) + 1, compression_delta))
+    return 1.0 / (
+        scale_function(scale_function(q0, compression_delta) + 1, compression_delta)
+    )
