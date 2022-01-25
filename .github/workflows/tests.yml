@@ -50,4 +50,4 @@ jobs:
       - name: Flake8 with tox
         run: tox -e flake8
       - name: Test with tox
-        run: tox
+        run: tox -e test
