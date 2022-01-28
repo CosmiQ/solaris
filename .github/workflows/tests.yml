@@ -45,8 +45,8 @@ jobs:
           python -m pip install tox tox-gh-actions
       - name: Lint with tox
         run: tox -e lint
-      # - name: Format with tox
-      #   run: tox -e format
+      - name: Format with tox
+        run: tox -e format
       - name: Flake8 with tox
         run: tox -e flake8
       - name: Test with tox
