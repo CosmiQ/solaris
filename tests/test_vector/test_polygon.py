@@ -1,24 +1,33 @@
 import os
+
+import geopandas as gpd
 import pandas as pd
+import rasterio
 from affine import Affine
 from shapely.geometry import Polygon
-from shapely.wkt import loads, dumps
-import geopandas as gpd
-import rasterio
-from solaris.vector.polygon import convert_poly_coords, \
-    affine_transform_gdf, georegister_px_df, geojson_to_px_gdf, \
-    gdf_to_yolo
+from shapely.wkt import dumps, loads
+
+from solaris.vector.polygon import (
+    affine_transform_gdf,
+    convert_poly_coords,
+    gdf_to_yolo,
+    geojson_to_px_gdf,
+    georegister_px_df,
+)
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
 square = Polygon([(10, 20), (10, 10), (20, 10), (20, 20)])
-forward_result = loads("POLYGON ((733606 3725129, 733606 3725134, 733611 3725134, 733611 3725129, 733606 3725129))")
-reverse_result = loads("POLYGON ((-1467182 7450238, -1467182 7450258, -1467162 7450258, -1467162 7450238, -1467182 7450238))")
+forward_result = loads(
+    "POLYGON ((733606 3725129, 733606 3725134, 733611 3725134, 733611 3725129, 733606 3725129))"
+)
+reverse_result = loads(
+    "POLYGON ((-1467182 7450238, -1467182 7450258, -1467162 7450258, -1467162 7450238, -1467182 7450238))"
+)
 # note that the xform below is the same as in cw_geodata/data/sample_geotiff.tif
 aff = Affine(0.5, 0.0, 733601.0, 0.0, -0.5, 3725139.0)
 affine_list = [0.5, 0.0, 733601.0, 0.0, -0.5, 3725139.0]
-long_affine_list = [0.5, 0.0, 733601.0, 0.0, -0.5, 3725139.0,
-                    0.0, 0.0, 1.0]
+long_affine_list = [0.5, 0.0, 733601.0, 0.0, -0.5, 3725139.0, 0.0, 0.0, 1.0]
 gdal_affine_list = [733601.0, 0.5, 0.0, 3725139.0, 0.0, -0.5]
 
 
@@ -29,39 +38,32 @@ class TestConvertPolyCoords(object):
         """Test both forward and inverse transforms when passed affine obj."""
         xform_result = convert_poly_coords(square, affine_obj=aff)
         assert xform_result == forward_result
-        rev_xform_result = convert_poly_coords(square,
-                                               affine_obj=aff,
-                                               inverse=True)
+        rev_xform_result = convert_poly_coords(square, affine_obj=aff, inverse=True)
         assert rev_xform_result == reverse_result
 
     def test_square_pass_raster(self):
         """Test forward affine transform when passed a raster reference."""
-        raster_src = os.path.join(data_dir, 'sample_geotiff.tif')
+        raster_src = os.path.join(data_dir, "sample_geotiff.tif")
         xform_result = convert_poly_coords(square, raster_src=raster_src)
         assert xform_result == forward_result
 
     def test_square_pass_list(self):
         """Test forward and reverse affine transform when passed a list."""
-        fwd_xform_result = convert_poly_coords(square,
-                                               affine_obj=affine_list)
+        fwd_xform_result = convert_poly_coords(square, affine_obj=affine_list)
         assert fwd_xform_result == forward_result
-        rev_xform_result = convert_poly_coords(square,
-                                               affine_obj=affine_list,
-                                               inverse=True)
+        rev_xform_result = convert_poly_coords(
+            square, affine_obj=affine_list, inverse=True
+        )
         assert rev_xform_result == reverse_result
 
     def test_square_pass_gdal_list(self):
         """Test forward affine transform when passed a list in gdal order."""
-        fwd_xform_result = convert_poly_coords(square,
-                                               affine_obj=gdal_affine_list
-                                               )
+        fwd_xform_result = convert_poly_coords(square, affine_obj=gdal_affine_list)
         assert fwd_xform_result == forward_result
 
     def test_square_pass_long_list(self):
         """Test forward affine transform when passed a full 9-element xform."""
-        fwd_xform_result = convert_poly_coords(
-            square, affine_obj=long_affine_list
-            )
+        fwd_xform_result = convert_poly_coords(square, affine_obj=long_affine_list)
         assert fwd_xform_result == forward_result
 
 
@@ -69,12 +71,12 @@ class TestAffineTransformGDF(object):
     """Test the affine_transform_gdf functionality."""
 
     def test_transform_csv(self):
-        truth_gdf = pd.read_csv(os.path.join(data_dir, 'aff_gdf_result.csv'))
-        input_df = os.path.join(data_dir, 'sample.csv')
-        output_gdf = affine_transform_gdf(input_df, aff,
-                                          geom_col="PolygonWKT_Pix",
-                                          precision=0)
-        output_gdf['geometry'] = output_gdf['geometry'].apply(dumps, trim=True)
+        truth_gdf = pd.read_csv(os.path.join(data_dir, "aff_gdf_result.csv"))
+        input_df = os.path.join(data_dir, "sample.csv")
+        output_gdf = affine_transform_gdf(
+            input_df, aff, geom_col="PolygonWKT_Pix", precision=0
+        )
+        output_gdf["geometry"] = output_gdf["geometry"].apply(dumps, trim=True)
         assert output_gdf.equals(truth_gdf)
 
 
@@ -82,30 +84,32 @@ class TestGeoregisterPxDF(object):
     """Test the georegister_px_df functionality."""
 
     def test_transform_using_raster(self):
-        input_df = os.path.join(data_dir, 'sample.csv')
-        input_im = os.path.join(data_dir, 'sample_geotiff.tif')
-        output_gdf = georegister_px_df(input_df, im_path=input_im,
-                                       geom_col='PolygonWKT_Pix', precision=0)
-        truth_df = pd.read_csv(os.path.join(data_dir, 'aff_gdf_result.csv'))
-        truth_df['geometry'] = truth_df['geometry'].apply(loads)
+        input_df = os.path.join(data_dir, "sample.csv")
+        input_im = os.path.join(data_dir, "sample_geotiff.tif")
+        output_gdf = georegister_px_df(
+            input_df, im_path=input_im, geom_col="PolygonWKT_Pix", precision=0
+        )
+        truth_df = pd.read_csv(os.path.join(data_dir, "aff_gdf_result.csv"))
+        truth_df["geometry"] = truth_df["geometry"].apply(loads)
         truth_gdf = gpd.GeoDataFrame(
             truth_df,
-            crs=rasterio.open(os.path.join(data_dir, 'sample_geotiff.tif')).crs
-            )
+            crs=rasterio.open(os.path.join(data_dir, "sample_geotiff.tif")).crs,
+        )
 
         assert truth_gdf.equals(output_gdf)
 
     def test_transform_using_aff_crs(self):
-        input_df = os.path.join(data_dir, 'sample.csv')
-        crs = rasterio.open(os.path.join(data_dir, 'sample_geotiff.tif')).crs
-        output_gdf = georegister_px_df(input_df, affine_obj=aff, crs=crs,
-                                       geom_col='PolygonWKT_Pix', precision=0)
-        truth_df = pd.read_csv(os.path.join(data_dir, 'aff_gdf_result.csv'))
-        truth_df['geometry'] = truth_df['geometry'].apply(loads)
+        input_df = os.path.join(data_dir, "sample.csv")
+        crs = rasterio.open(os.path.join(data_dir, "sample_geotiff.tif")).crs
+        output_gdf = georegister_px_df(
+            input_df, affine_obj=aff, crs=crs, geom_col="PolygonWKT_Pix", precision=0
+        )
+        truth_df = pd.read_csv(os.path.join(data_dir, "aff_gdf_result.csv"))
+        truth_df["geometry"] = truth_df["geometry"].apply(loads)
         truth_gdf = gpd.GeoDataFrame(
             truth_df,
-            crs=rasterio.open(os.path.join(data_dir, 'sample_geotiff.tif')).crs
-            )
+            crs=rasterio.open(os.path.join(data_dir, "sample_geotiff.tif")).crs,
+        )
 
         assert truth_gdf.equals(output_gdf)
 
@@ -115,14 +119,13 @@ class TestGeojsonToPxGDF(object):
 
     def test_transform_to_px_coords(self):
         output_gdf = geojson_to_px_gdf(
-            os.path.join(data_dir, 'geotiff_labels.geojson'),
-            os.path.join(data_dir, 'sample_geotiff.tif'),
-            precision=0
-            )
-        truth_gdf = gpd.read_file(os.path.join(data_dir,
-                                               'gj_to_px_result.geojson'))
-        truth_subset = truth_gdf[['geometry']]
-        output_subset = output_gdf[['geometry']].reset_index(drop=True)
+            os.path.join(data_dir, "geotiff_labels.geojson"),
+            os.path.join(data_dir, "sample_geotiff.tif"),
+            precision=0,
+        )
+        truth_gdf = gpd.read_file(os.path.join(data_dir, "gj_to_px_result.geojson"))
+        truth_subset = truth_gdf[["geometry"]]
+        output_subset = output_gdf[["geometry"]].reset_index(drop=True)
 
         assert truth_subset.equals(output_subset)
 
@@ -131,12 +134,12 @@ class TestGDFToYOLO(object):
     """Test the gdf_to_yolo function."""
 
     def test_gdf_to_yolo(self):
-        gdf = gpd.read_file(os.path.join(data_dir, 'geotiff_labels.geojson'))
-        image = os.path.join(data_dir, 'sample_geotiff.tif')
-        output_gdf = gdf_to_yolo(gdf, image, data_dir, column='origlen')
-        truth_gdf = pd.read_csv(os.path.join(data_dir, 'yolo_gdf_result.csv'))
-        truth_gdf = truth_gdf.sort_values(by='area').reset_index(drop=True)
-        output_gdf = output_gdf.sort_values(by='area').reset_index(drop=True)
-        truth_gdf = truth_gdf['w'].round(4)
-        output_gdf = output_gdf['w'].round(4)
+        gdf = gpd.read_file(os.path.join(data_dir, "geotiff_labels.geojson"))
+        image = os.path.join(data_dir, "sample_geotiff.tif")
+        output_gdf = gdf_to_yolo(gdf, image, data_dir, column="origlen")
+        truth_gdf = pd.read_csv(os.path.join(data_dir, "yolo_gdf_result.csv"))
+        truth_gdf = truth_gdf.sort_values(by="area").reset_index(drop=True)
+        output_gdf = output_gdf.sort_values(by="area").reset_index(drop=True)
+        truth_gdf = truth_gdf["w"].round(4)
+        output_gdf = output_gdf["w"].round(4)
         assert truth_gdf.equals(output_gdf)

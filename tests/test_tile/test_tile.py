@@ -1,11 +1,13 @@
 import os
-import skimage.io
+
+import geopandas as gpd
 import numpy as np
+import skimage.io
+from shapely.ops import cascaded_union
+
 from solaris.tile.raster_tile import RasterTiler
 from solaris.tile.vector_tile import VectorTiler
 from solaris.vector.mask import geojsons_to_masks_and_fill_nodata
-import geopandas as gpd
-from shapely.ops import cascaded_union
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
@@ -16,13 +18,19 @@ class TestTilers(object):
             os.path.join(data_dir, "rastertile_test_result"), src_tile_size=(90, 90)
         )
         raster_tiler.tile(src=os.path.join(data_dir, "sample_geotiff.tif"))
-        raster_tiling_result_files = os.listdir(os.path.join(data_dir, "rastertile_test_result"))
+        raster_tiling_result_files = os.listdir(
+            os.path.join(data_dir, "rastertile_test_result")
+        )
         assert len(raster_tiling_result_files) == len(
             os.listdir(os.path.join(data_dir, "rastertile_test_expected"))
         )
         for f in raster_tiling_result_files:
-            result = skimage.io.imread(os.path.join(data_dir, "rastertile_test_result", f))
-            expected = skimage.io.imread(os.path.join(data_dir, "rastertile_test_expected", f))
+            result = skimage.io.imread(
+                os.path.join(data_dir, "rastertile_test_result", f)
+            )
+            expected = skimage.io.imread(
+                os.path.join(data_dir, "rastertile_test_expected", f)
+            )
             assert np.array_equal(result, expected)
             os.remove(os.path.join(data_dir, "rastertile_test_result", f))
         os.rmdir(os.path.join(data_dir, "rastertile_test_result"))
@@ -30,13 +38,17 @@ class TestTilers(object):
         vector_tiler.tile(
             os.path.join(data_dir, "geotiff_labels.geojson"), raster_tiler.tile_bounds
         )
-        vector_tiling_result_files = os.listdir(os.path.join(data_dir, "vectortile_test_result"))
+        vector_tiling_result_files = os.listdir(
+            os.path.join(data_dir, "vectortile_test_result")
+        )
         assert len(vector_tiling_result_files) == len(
             os.listdir(os.path.join(data_dir, "vectortile_test_expected"))
         )
         for f in vector_tiling_result_files:
             result = gpd.read_file(os.path.join(data_dir, "vectortile_test_result", f))
-            expected = gpd.read_file(os.path.join(data_dir, "vectortile_test_expected", f))
+            expected = gpd.read_file(
+                os.path.join(data_dir, "vectortile_test_expected", f)
+            )
             if len(result) == 0:
                 assert len(expected) == 0
             else:
@@ -48,7 +60,8 @@ class TestTilers(object):
 
     def test_tiler_custom_proj(self):
         raster_tiler = RasterTiler(
-            os.path.join(data_dir, "rastertile_test_custom_proj_result"), src_tile_size=(128, 128)
+            os.path.join(data_dir, "rastertile_test_custom_proj_result"),
+            src_tile_size=(128, 128),
         )
         raster_tiler.tile(src=os.path.join(data_dir, "sample_geotiff_custom_proj.tif"))
         raster_tiling_result_files = os.listdir(
@@ -67,9 +80,12 @@ class TestTilers(object):
             assert np.array_equal(result, expected)
             os.remove(os.path.join(data_dir, "rastertile_test_custom_proj_result", f))
         os.rmdir(os.path.join(data_dir, "rastertile_test_custom_proj_result"))
-        vector_tiler = VectorTiler(os.path.join(data_dir, "vectortile_test_custom_proj_result"))
+        vector_tiler = VectorTiler(
+            os.path.join(data_dir, "vectortile_test_custom_proj_result")
+        )
         vector_tiler.tile(
-            os.path.join(data_dir, "geotiff_custom_proj_labels.geojson"), raster_tiler.tile_bounds
+            os.path.join(data_dir, "geotiff_custom_proj_labels.geojson"),
+            raster_tiler.tile_bounds,
         )
         vector_tiling_result_files = os.listdir(
             os.path.join(data_dir, "vectortile_test_custom_proj_result")
@@ -78,7 +94,9 @@ class TestTilers(object):
             os.listdir(os.path.join(data_dir, "vectortile_test_custom_proj_expected"))
         )
         for f in vector_tiling_result_files:
-            result = gpd.read_file(os.path.join(data_dir, "vectortile_test_custom_proj_result", f))
+            result = gpd.read_file(
+                os.path.join(data_dir, "vectortile_test_custom_proj_result", f)
+            )
             expected = gpd.read_file(
                 os.path.join(data_dir, "vectortile_test_custom_proj_expected", f)
             )
@@ -106,7 +124,9 @@ class TestTilers(object):
             restrict_to_aoi=True,
         )
 
-        vector_tiler = VectorTiler(os.path.join(data_dir, "vectortile_test_nonfilled_result"))
+        vector_tiler = VectorTiler(
+            os.path.join(data_dir, "vectortile_test_nonfilled_result")
+        )
 
         vector_tiler.tile(
             os.path.join(data_dir, "nebraska_wgs84_with_nodata_labels.geojson"),
@@ -157,7 +177,9 @@ class TestTilers(object):
             assert np.array_equal(result, expected)
 
         for f in vector_tiling_result_files:
-            result = skimage.io.imread(os.path.join(data_dir, "vectortile_test_filled_result", f))
+            result = skimage.io.imread(
+                os.path.join(data_dir, "vectortile_test_filled_result", f)
+            )
             expected = skimage.io.imread(
                 os.path.join(data_dir, "vectortile_test_filled_expected", f)
             )

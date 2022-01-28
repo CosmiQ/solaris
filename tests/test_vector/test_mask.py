@@ -1,16 +1,18 @@
 import os
-import numpy as np
+
 import geopandas as gpd
+import numpy as np
 import skimage
+
 from solaris.vector.mask import (
-    footprint_mask,
     boundary_mask,
     contact_mask,
     df_to_px_mask,
-    mask_to_poly_geojson,
-    road_mask,
-    preds_to_binary,
+    footprint_mask,
     instance_mask,
+    mask_to_poly_geojson,
+    preds_to_binary,
+    road_mask,
 )
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
@@ -52,7 +54,9 @@ class TestFootprintMask(object):
             do_transform=True,
             out_file=os.path.join(data_dir, "test_out.tif"),
         )
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_fp_mask_from_geojson.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_fp_mask_from_geojson.tif")
+        )
         saved_output_mask = skimage.io.imread(os.path.join(data_dir, "test_out.tif"))
 
         assert np.array_equal(output_mask, truth_mask)
@@ -66,7 +70,9 @@ class TestFootprintMask(object):
             reference_im=os.path.join(data_dir, "sample_geotiff.tif"),
             out_file=os.path.join(data_dir, "test_out.tif"),
         )
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_fp_mask_from_geojson.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_fp_mask_from_geojson.tif")
+        )
         saved_output_mask = skimage.io.imread(os.path.join(data_dir, "test_out.tif"))
 
         assert np.array_equal(output_mask, truth_mask)
@@ -82,7 +88,9 @@ class TestBoundaryMask(object):
         """test creating a boundary mask using an existing footprint mask."""
         fp_mask = skimage.io.imread(os.path.join(data_dir, "sample_fp_mask.tif"))
         output_mask = boundary_mask(fp_mask)
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_b_mask_inner.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_b_mask_inner.tif")
+        )
 
         assert np.array_equal(output_mask, truth_mask)
 
@@ -90,7 +98,9 @@ class TestBoundaryMask(object):
         """test creating a boundary mask using an existing footprint mask."""
         fp_mask = skimage.io.imread(os.path.join(data_dir, "sample_fp_mask.tif"))
         output_mask = boundary_mask(fp_mask, boundary_type="outer")
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_b_mask_outer.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_b_mask_outer.tif")
+        )
 
         assert np.array_equal(output_mask, truth_mask)
 
@@ -98,7 +108,9 @@ class TestBoundaryMask(object):
         """test creating a 10-px thick boundary mask."""
         fp_mask = skimage.io.imread(os.path.join(data_dir, "sample_fp_mask.tif"))
         output_mask = boundary_mask(fp_mask, boundary_type="outer", boundary_width=10)
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_b_mask_outer_10.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_b_mask_outer_10.tif")
+        )
 
         assert np.array_equal(output_mask, truth_mask)
 
@@ -107,7 +119,9 @@ class TestBoundaryMask(object):
         output_mask = boundary_mask(
             df=os.path.join(data_dir, "sample.csv"), geom_col="PolygonWKT_Pix"
         )
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_b_mask_inner.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_b_mask_inner.tif")
+        )
 
         assert np.array_equal(output_mask, truth_mask)
 
@@ -142,7 +156,9 @@ class TestDFToPxMask(object):
             reference_im=os.path.join(data_dir, "sample_geotiff.tif"),
             out_file=os.path.join(data_dir, "test_out.tif"),
         )
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_fp_from_df2px.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_fp_from_df2px.tif")
+        )
         saved_output_mask = skimage.io.imread(os.path.join(data_dir, "test_out.tif"))
 
         assert np.array_equal(output_mask, truth_mask)
@@ -157,7 +173,9 @@ class TestDFToPxMask(object):
             reference_im=os.path.join(data_dir, "sample_geotiff.tif"),
             out_file=os.path.join(data_dir, "test_out.tif"),
         )
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_b_from_df2px.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_b_from_df2px.tif")
+        )
         saved_output_mask = skimage.io.imread(os.path.join(data_dir, "test_out.tif"))
 
         assert np.array_equal(output_mask, truth_mask)
@@ -172,7 +190,9 @@ class TestDFToPxMask(object):
             reference_im=os.path.join(data_dir, "sample_geotiff.tif"),
             out_file=os.path.join(data_dir, "test_out.tif"),
         )
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_c_from_df2px.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_c_from_df2px.tif")
+        )
         saved_output_mask = skimage.io.imread(os.path.join(data_dir, "test_out.tif"))
 
         assert np.array_equal(output_mask, truth_mask)
@@ -191,7 +211,9 @@ class TestDFToPxMask(object):
             reference_im=os.path.join(data_dir, "sample_geotiff.tif"),
             out_file=os.path.join(data_dir, "test_out.tif"),
         )
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_fbc_from_df2px.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_fbc_from_df2px.tif")
+        )
         saved_output_mask = skimage.io.imread(os.path.join(data_dir, "test_out.tif"))
 
         assert np.array_equal(output_mask, truth_mask)
@@ -203,7 +225,9 @@ class TestMaskToGDF(object):
     """Tests for converting pixel masks to geodataframes or geojsons."""
 
     def test_mask_to_gdf_basic(self):
-        gdf = mask_to_poly_geojson(os.path.join(data_dir, "sample_fp_mask_from_geojson.tif"))
+        gdf = mask_to_poly_geojson(
+            os.path.join(data_dir, "sample_fp_mask_from_geojson.tif")
+        )
         truth_gdf = gpd.read_file(os.path.join(data_dir, "gdf_from_mask_1.geojson"))
         assert truth_gdf[["geometry", "value"]].geom_equals(gdf).all()
 
@@ -232,7 +256,12 @@ class TestMaskToGDF(object):
         assert np.array_equal(
             result,
             np.array(
-                [[255, 255, 0, 255], [255, 255, 255, 255], [0, 255, 255, 0], [0, 0, 0, 255]],
+                [
+                    [255, 255, 0, 255],
+                    [255, 255, 255, 255],
+                    [0, 255, 255, 0],
+                    [0, 0, 0, 255],
+                ],
                 dtype="uint8",
             ),
         )
@@ -251,7 +280,9 @@ class TestRoadMask(object):
             do_transform=True,
             out_file=os.path.join(data_dir, "test_out.tif"),
         )
-        truth_mask = skimage.io.imread(os.path.join(data_dir, "sample_road_raster_mask.tif"))
+        truth_mask = skimage.io.imread(
+            os.path.join(data_dir, "sample_road_raster_mask.tif")
+        )
         saved_output_mask = skimage.io.imread(os.path.join(data_dir, "test_out.tif"))
 
         assert np.array_equal(output_mask, truth_mask)

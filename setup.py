@@ -1,9 +1,10 @@
-import os
-import sys
-import subprocess
 import logging
-from setuptools import setup, find_packages
+import os
 import re
+import subprocess
+import sys
+
+from setuptools import find_packages, setup
 
 
 def get_version():

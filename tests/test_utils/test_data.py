@@ -1,4 +1,5 @@
 import os
+
 from solaris.utils.data import make_dataset_csv
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
