@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Docker | GDAL=${{ matrix.gdal-version }} | python=${{ matrix.python-version }}
-    container: osgeo/gdal:ubuntu-full-${{ matrix.gdal-version }}
+    container: osgeo/gdal:ubuntu-small-${{ matrix.gdal-version }}
     strategy:
       fail-fast: false
       matrix:
@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install tox tox-gh-actions
+          python -m pip install tox
       - name: Lint with tox
         run: tox -e lint
       # - name: Format with tox
