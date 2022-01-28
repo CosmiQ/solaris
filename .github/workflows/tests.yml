@@ -4,7 +4,7 @@ on:
   - push
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     name: Docker | GDAL=${{ matrix.gdal-version }} | python=${{ matrix.python-version }}
     container: osgeo/gdal:ubuntu-full-${{ matrix.gdal-version }}
@@ -51,3 +51,4 @@ jobs:
         run: tox -e flake8
       - name: Test with tox
         run: tox -e test
+
