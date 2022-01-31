@@ -8,7 +8,7 @@ from rasterio.warp import Resampling, calculate_default_transform
 from shapely.geometry import box
 from tqdm.auto import tqdm
 
-# from rio_cogeo.cogeo import cog_validate, cog_translate
+from rio_cogeo.cogeo import cog_translate  # ,cog_validate
 from ..utils.core import _check_crs, _check_rasterio_im_load
 
 # removing the following until COG functionality is implemented
