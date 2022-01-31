@@ -111,7 +111,6 @@ class Evaluator:
         scoring_dict_list = []
         self.ground_truth_GDF[iou_field] = 0.0
         iou_index = self.ground_truth_GDF.columns.get_loc(iou_field)
-        id_cols = 2
 
         for imageID in tqdm(imageIDList):
             self.ground_truth_GDF_Edit = self.ground_truth_GDF[
