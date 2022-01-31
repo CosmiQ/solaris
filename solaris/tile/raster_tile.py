@@ -10,6 +10,7 @@ from tqdm.auto import tqdm
 
 # from rio_cogeo.cogeo import cog_validate, cog_translate
 from ..utils.core import _check_crs, _check_rasterio_im_load
+
 # removing the following until COG functionality is implemented
 # from ..utils.tile import read_cog_tile
 from ..utils.geo import raster_get_projection_unit, reproject, split_geom

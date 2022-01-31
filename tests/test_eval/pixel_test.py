@@ -1,7 +1,8 @@
 """Tests for ``solaris.eval.pixel_metrics`` functions."""
 
 import numpy as np
-from solaris.eval.pixel import iou, f1, relaxed_f1
+
+from solaris.eval.pixel import f1, iou, relaxed_f1
 
 
 class TestIoU(object):
