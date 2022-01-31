@@ -4,7 +4,7 @@ on:
   - push
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     name: Docker | GDAL=${{ matrix.gdal-version }} | python=${{ matrix.python-version }}
     container: osgeo/gdal:ubuntu-small-${{ matrix.gdal-version }}
@@ -45,9 +45,10 @@ jobs:
           python -m pip install tox
       - name: Lint with tox
         run: tox -e lint
-      # - name: Format with tox
-      #   run: tox -e format
+      - name: Format with tox
+        run: tox -e format
       - name: Flake8 with tox
         run: tox -e flake8
       - name: Test with tox
         run: tox -e test
+
