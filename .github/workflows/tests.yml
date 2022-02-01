@@ -38,7 +38,8 @@ jobs:
             python${{ matrix.python-version }}-dev \
             python${{ matrix.python-version }}-venv \
             python3-pip \
-            g++
+            g++ \
+            libgl1
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
