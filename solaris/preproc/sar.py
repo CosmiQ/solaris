@@ -1,6 +1,5 @@
 import json
 import math
-import os
 import uuid
 import warnings
 import xml.etree.ElementTree as ET
@@ -12,7 +11,7 @@ import scipy.signal
 
 from . import image
 from .image import Image
-from .pipesegment import LoadSegment, MergeSegment, PipeSegment
+from .pipesegment import PipeSegment
 
 
 class BandMath(PipeSegment):

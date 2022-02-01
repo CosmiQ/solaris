@@ -1,12 +1,9 @@
 import os
 
-import numpy as np
-import skimage.io
 from affine import Affine
 
-import solaris as sol
 from solaris.data import sample_load_rasterio
-from solaris.raster.image import get_geo_transform, stitch_images
+from solaris.raster.image import get_geo_transform
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 

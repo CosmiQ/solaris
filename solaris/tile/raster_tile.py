@@ -5,10 +5,10 @@ import rasterio
 from rasterio.mask import mask as rasterio_mask
 from rasterio.vrt import WarpedVRT
 from rasterio.warp import Resampling, calculate_default_transform
+from rio_cogeo.cogeo import cog_translate  # ,cog_validate
 from shapely.geometry import box
 from tqdm.auto import tqdm
 
-from rio_cogeo.cogeo import cog_translate  # ,cog_validate
 from ..utils.core import _check_crs, _check_rasterio_im_load
 
 # removing the following until COG functionality is implemented

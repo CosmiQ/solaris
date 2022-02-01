@@ -2,9 +2,8 @@ import colorsys
 
 import numpy as np
 
-from . import image
 from .image import Image
-from .pipesegment import LoadSegment, MergeSegment, PipeSegment
+from .pipesegment import PipeSegment
 
 
 class RGBToHSL(PipeSegment):
