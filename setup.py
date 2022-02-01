@@ -80,7 +80,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Topic :: Scientific/Engineering :: GIS",
     ],
-    author=u"Ryan Avery",
+    author="Ryan Avery",
     author_email="ryan@developmentseed.org",
     url="https://github.com/CosmiQ/solaris",
     license="MIT",
