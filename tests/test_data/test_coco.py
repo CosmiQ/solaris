@@ -23,7 +23,7 @@ class TestGeoJSON2COCO(object):
             expected_dict = json.load(f)
         with open(os.path.join(data_dir, "tmp_coco.json"), "r") as f:
             saved_result = json.load(f)
-        ## Simplified test due to rounding errors- JSS
+        # Simplified test due to rounding errors- JSS
         assert (
             coco_dict["annotations"][0]["bbox"]
             == expected_dict["annotations"][0]["bbox"]
@@ -62,7 +62,7 @@ class TestGeoJSON2COCO(object):
 
         with open(os.path.join(data_dir, "coco_sample_1.json"), "r") as f:
             expected_dict = json.load(f)
-        ## Simplified test due to rounding errors- JSS
+        # Simplified test due to rounding errors- JSS
         assert (
             expected_dict["annotations"][0]["bbox"]
             == coco_dict["annotations"][0]["bbox"]

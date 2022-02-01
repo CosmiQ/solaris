@@ -86,7 +86,6 @@ class TestEvaluator(object):
         path_truth = os.path.join(data_folder, "SN2_sample_truth.csv")
         path_pred = os.path.join(data_folder, "SN2_sample_preds.csv")
         path_ious = os.path.join(data_folder, "SN2_sample_iou_by_building.csv")
-        path_temp = "./temp.pd"
         eb = Evaluator(path_truth)
         eb.load_proposal(path_pred, conf_field_list=["Confidence"], proposalCSV=True)
         eb.eval_iou_spacenet_csv(miniou=0.5, imageIDField="ImageId", min_area=20)

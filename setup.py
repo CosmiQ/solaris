@@ -52,6 +52,7 @@ else:
         "pyproj>=2.1",
         "PyYAML>=5.4",
         "rasterio>=1.0.23",
+        "rio-cogeo>=3.0.2",
         "requests==2.22.0",
         "rtree>=0.9.3",
         "scikit-image>=0.16.2",

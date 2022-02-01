@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 class TestImports(object):
     def test_imports(self):
         import solaris

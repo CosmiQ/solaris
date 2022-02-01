@@ -1,11 +1,5 @@
 import json
 
-import geopandas as gpd
-from affine import Affine
-from rasterio.enums import Resampling
-from rasterio.vrt import WarpedVRT
-from rasterio.windows import Window
-
 from .core import _check_crs
 
 # temporarily removing the below until I can get COG functionality implemented
