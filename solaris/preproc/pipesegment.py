@@ -412,7 +412,7 @@ def PipeFunction(inner_class=PipeSegment, pin=(), *args, **kwargs):
     and *args and **kwargs are sent to the PipeSegment's constructor.
     """
     psobject = inner_class(*args, **kwargs)
-    if issubclass(self.inner_class, LoadSegment):
+    if issubclass(self.inner_class, LoadSegment):  # noqa: F821
         return psobject()
     else:
         return (pin * psobject)()

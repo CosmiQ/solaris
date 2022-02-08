@@ -14,7 +14,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
-import numpy as np
+import numpy as np  # noqa: F401
 import sphinx_bootstrap_theme
 
 # -- Project information -----------------------------------------------------
@@ -25,7 +25,7 @@ author = "Ryan Avery"
 license = "MIT"
 import time
 
-copyright = u"2018-{}, CosmiQ Works: an IQT Lab".format(time.strftime("%Y"))
+copyright = "2018-{}, CosmiQ Works: an IQT Lab".format(time.strftime("%Y"))
 
 # The full version, including alpha/beta/rc tags
 release = "0.0.1"

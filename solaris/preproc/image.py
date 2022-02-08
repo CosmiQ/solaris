@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from osgeo import gdal_array
 
-from .pipesegment import LoadSegment, MergeSegment, PipeSegment
+from .pipesegment import LoadSegment, PipeSegment
 
 
 class Image:
