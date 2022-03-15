@@ -512,7 +512,7 @@ class RasterTiler(object):
             dest_fname = "{}_{}_{}.tif".format(
                 dest_fname_root,
                 np.round(profile["transform"][2], 6),
-                np.round(profile["transform"][5], 6),   
+                np.round(profile["transform"][5], 6),
             )
         else:
             dest_fname = "{}_{}_{}.tif".format(
