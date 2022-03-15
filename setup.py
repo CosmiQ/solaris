@@ -1,9 +1,10 @@
-import os
-import sys
-import subprocess
 import logging
-from setuptools import setup, find_packages
+import os
 import re
+import subprocess
+import sys
+
+from setuptools import find_packages, setup
 
 
 def get_version():
@@ -51,6 +52,7 @@ else:
         "pyproj>=2.1",
         "PyYAML>=5.4",
         "rasterio>=1.0.23",
+        "rio-cogeo>=3.0.2",
         "requests==2.22.0",
         "rtree>=0.9.3",
         "scikit-image>=0.16.2",
@@ -78,7 +80,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Topic :: Scientific/Engineering :: GIS",
     ],
-    author=u"Ryan Avery",
+    author="Ryan Avery",
     author_email="ryan@developmentseed.org",
     url="https://github.com/CosmiQ/solaris",
     license="MIT",

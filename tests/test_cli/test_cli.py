@@ -1,9 +1,8 @@
 import os
-import numpy as np
-import pickle
 import subprocess
+
+import numpy as np
 import skimage.io
-import networkx as nx
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/"))
 
@@ -65,7 +64,9 @@ class TestCLI(object):
             if os.path.exists(os.path.join(dest_dir, im_fname)):
                 os.remove(os.path.join(dest_dir, im_fname))
             # run the CLI command
-            subprocess.run(cmd_start + os.path.join(dest_dir, im_fname) + arg, shell=True)
+            subprocess.run(
+                cmd_start + os.path.join(dest_dir, im_fname) + arg, shell=True
+            )
             truth_im = skimage.io.imread(os.path.join(expected_dir, im_fname))
             result_im = skimage.io.imread(os.path.join(dest_dir, im_fname))
             # compare the expected to the result

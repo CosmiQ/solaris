@@ -4,7 +4,7 @@ import shapely.geometry
 import shapely.wkt
 
 from ..vector.polygon import convert_poly_coords
-from .pipesegment import LoadSegment, MergeSegment, PipeSegment
+from .pipesegment import LoadSegment, PipeSegment
 
 
 class LoadString(LoadSegment):

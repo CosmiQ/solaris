@@ -4,14 +4,14 @@ on:
   - push
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     name: Docker | GDAL=${{ matrix.gdal-version }} | python=${{ matrix.python-version }}
-    container: osgeo/gdal:ubuntu-full-${{ matrix.gdal-version }}
+    container: osgeo/gdal:ubuntu-small-${{ matrix.gdal-version }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9"]
+        python-version: ["3.8", "3.9", "3.10"]
         gdal-version: ["3.4.0", "3.3.3"]
         include:
           - python-version: "3.8"
@@ -38,10 +38,16 @@ jobs:
             python${{ matrix.python-version }}-dev \
             python${{ matrix.python-version }}-venv \
             python3-pip \
-            g++
+            g++ \
+            libgl1
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install tox tox-gh-actions
+          python -m pip install tox
+      - name: Lint with tox
+        run: tox -e lint
+      - name: Format with tox
+        run: tox -e format
       - name: Test with tox
-        run: tox
+        run: tox -e test
+
