@@ -17,9 +17,9 @@ shapely>=1.8.0
 tqdm>=4.40.0
 urllib3<1.26
 # testing requirements
-black
+black==22.1.0
 pytest
-tox
-isort
-flake8
+tox==3.24.5
+isort==5.10.1
+flake8==4.0.1
 pre-commit
