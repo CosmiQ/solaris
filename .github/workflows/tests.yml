@@ -1,10 +1,6 @@
 name: Test Python package
 
-on:
-  push:
-    branches:
-      - main
-      - "0.5.0"
+on: push
 
 jobs:
   test:
