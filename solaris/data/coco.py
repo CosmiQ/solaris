@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
@@ -47,7 +48,7 @@ def geojson2coco(
 
     Arguments
     ---------
-    image_src : :class:`str` or :class:`list` or :class:`dict`
+    image_src : :class:`str` or :class:`pathlib.Path` or :class:`list` or :class:`dict`
         Source image(s) to use in the dataset. This can be::
 
             1. a string path to an image,
@@ -149,8 +150,8 @@ def geojson2coco(
     logger.setLevel(_get_logging_level(int(verbose)))
     logger.debug("Preparing image filename: image ID dict.")
     # pdb.set_trace()
-    if isinstance(image_src, str):
-        if image_src.endswith("json"):
+    if isinstance(image_src, (str, Path)):
+        if str(image_src).endswith("json"):
             logger.debug("COCO json provided. Extracting fname:id dict.")
             with open(image_src, "r") as f:
                 image_ref = json.load(f)
@@ -599,13 +600,13 @@ def _get_fname_list(p, recursive=False, extension=".tif"):
     """Get a list of filenames from p, which can be a dir, fname, or list."""
     if isinstance(p, list):
         return p
-    elif isinstance(p, str):
-        if os.path.isdir(p):
+    elif isinstance(p, (str, Path)):
+        if Path(p).is_dir():
             return get_files_recursively(
                 p, traverse_subdirs=recursive, extension=extension
             )
-        elif os.path.isfile(p):
-            return [p]
+        elif Path(p).is_file():
+            return [str(p)]
         else:
             raise ValueError("If a string is provided, it must be a valid" " path.")
     else:

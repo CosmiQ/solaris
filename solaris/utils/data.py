@@ -33,19 +33,19 @@ def make_dataset_csv(
 
     Arguments
     ---------
-    im_dir : str
+    im_dir : str or :class:`pathlib.Path`
         The path to the directory containing images to be used by your model.
         Images in sub-directories can be included by setting
         ``recursive=True``.
     im_ext : str, optional
         The file extension used by your images. Defaults to ``"tif"``. Not case
         sensitive.
-    label_dir : str, optional
+    label_dir : str or :class:`pathlib.Path`, optional
         The path to the directory containing images to be used by your model.
         Images in sub-directories can be included by setting
         ``recursive=True``. This argument is required if `stage` is ``"train"``
         (default) or ``"val"``, but has no effect if `stage` is ``"infer"``.
-    output_path : str, optional
+    output_path : str or :class:`pathlib.Path`, optional
         The path to save the generated CSV to. Defaults to ``"dataset.csv"``.
     stage : str, optional
         The stage that the csv is generated for. Can be ``"train"`` (default),

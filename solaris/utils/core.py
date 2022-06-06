@@ -1,5 +1,6 @@
 import os
 from distutils.version import LooseVersion
+from pathlib import Path
 from warnings import warn
 
 import geopandas as gpd
@@ -17,7 +18,7 @@ from shapely.wkt import loads
 
 def _check_rasterio_im_load(im):
     """Check if `im` is already loaded in; if not, load it in."""
-    if isinstance(im, str):
+    if isinstance(im, (str, Path)):
         return rasterio.open(im)
     elif isinstance(im, rasterio.DatasetReader):
         return im
@@ -27,7 +28,7 @@ def _check_rasterio_im_load(im):
 
 def _check_skimage_im_load(im):
     """Check if `im` is already loaded in; if not, load it in."""
-    if isinstance(im, str):
+    if isinstance(im, (str, Path)):
         return skimage.io.imread(im)
     elif isinstance(im, np.ndarray):
         return im
@@ -39,8 +40,8 @@ def _check_skimage_im_load(im):
 
 def _check_df_load(df):
     """Check if `df` is already loaded in, if not, load from file."""
-    if isinstance(df, str):
-        if df.lower().endswith("json"):
+    if isinstance(df, (str, Path)):
+        if str(df).lower().endswith("json"):
             return _check_gdf_load(df)
         else:
             return pd.read_csv(df)
@@ -52,11 +53,11 @@ def _check_df_load(df):
 
 def _check_gdf_load(gdf):
     """Check if `gdf` is already loaded in, if not, load from geojson."""
-    if isinstance(gdf, str):
+    if isinstance(gdf, (str, Path)):
         # as of geopandas 0.6.2, using the OGR CSV driver requires some add'nal
         # kwargs to create a valid geodataframe with a geometry column. see
         # https://github.com/geopandas/geopandas/issues/1234
-        if gdf.lower().endswith("csv"):
+        if str(gdf).lower().endswith("csv"):
             return gpd.read_file(
                 gdf, GEOM_POSSIBLE_NAMES="geometry", KEEP_GEOM_COLUMNS="NO"
             )
@@ -117,7 +118,7 @@ def get_data_paths(path, infer=False):
 
     Arguments
     ---------
-    path : str
+    path : str or :class:`pathlib.Path
         Path to a .CSV-formatted reference file defining the location of
         training, validation, or inference data. See docs for details.
     infer : bool, optional
@@ -142,7 +143,7 @@ def get_data_paths(path, infer=False):
 def get_files_recursively(path, traverse_subdirs=False, extension=".tif"):
     """Get files from subdirs of `path`, joining them to the dir."""
     if traverse_subdirs:
-        walker = os.walk(path)
+        walker = os.walk(str(path))
         path_list = []
         for step in walker:
             if not step[2]:  # if there are no files in the current dir
