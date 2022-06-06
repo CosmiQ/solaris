@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from pathlib import Path
 from warnings import warn
 
 import geopandas as gpd
@@ -52,7 +53,7 @@ def reproject(
 
     Arguments
     ---------
-    input_object : `str` or :class:`rasterio.DatasetReader` or :class:`geopandas.GeoDataFrame`
+    input_object : `str`, :class:`pathlib.Path`, :class:`Rasterio.DatasetReader` or :class:`geopandas.GeoDataFrame`
         An object to transform to a new CRS. If a string, it must be a path
         to a georegistered image or vector dataset (e.g. a .GeoJSON). If the
         object itself does not contain georeferencing information, the
@@ -73,7 +74,7 @@ def reproject(
         `target_crs` is provided, the input will be projected into the
         appropriate UTM zone. `target_crs` takes precedence if both it and
         `target_object` are provided.
-    dest_path : str, optional
+    dest_path : `str` or :class:`pathlib.Path`, optional
         The path to save the output to (if desired).
     resampling_method : str, optional
         The resampling method to use during reprojection of raster data. **Only
@@ -261,11 +262,11 @@ def get_crs(obj):
 
 
 def _parse_geo_data(input):
-    if isinstance(input, str):
-        if input.lower().endswith("json") or input.lower().endswith("csv"):
+    if isinstance(input, (str, Path)):
+        if str(input).lower().endswith("json") or str(input).lower().endswith("csv"):
             input_type = "vector"
             input_data = _check_df_load(input)
-        elif input.lower().endswith("tif") or input.lower().endswith("tiff"):
+        elif str(input).lower().endswith("tif") or str(input).lower().endswith("tiff"):
             input_type = "raster"
             input_data = _check_rasterio_im_load(input)
     else:
@@ -299,7 +300,7 @@ def reproject_geometry(input_geom, input_crs=None, target_crs=None, affine_obj=N
         The target coordinate reference system to re-project the geometry into.
         If not provided, the appropriate UTM zone will be selected by default,
         unless `affine_transform` is provided (and therefore CRSs are ignored.)
-    affine_transform : :class:`affine.Affine`, optional
+    affine_obj : :class:`affine.Affine`, optional
         An :class:`affine.Affine` object (or a ``[a, b, c, d, e, f]`` list to
         convert to that format) to use for transformation. Has no effect unless
         `input_crs` **and** `target_crs` are not provided.
@@ -372,7 +373,7 @@ def raster_get_projection_unit(image):
 
     Arguments
     ---------
-    image : raster image, GeoTIFF or other format
+    image : `str`, :class:`pathlib.Path` or :class:`Rasterio.DatasetReader`
         A raster file with georeferencing
 
     Notes
@@ -807,7 +808,7 @@ def split_geom(
     resolution: `tuple` of `float`s, optional
         (x resolution, y resolution). Used by default if use_metric_size is False.
         Can be acquired from rasterio dataset object's metadata.
-    src_img:  `str` or `raster`, optional
+    src_img:  `str`, :class:`pathlib.Path` or :class:`Rasterio.DatasetReader`, optional
         A rasterio raster object or path to a geotiff. The bounds of this raster and the geometry will be
         intersected and the result of the intersection will be tiled. Useful in cases where the extent of
         collected labels and source imagery partially overlap. The src_img must have the same projection units

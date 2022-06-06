@@ -59,7 +59,7 @@ class VectorTiler(object):
 
         Arguments
         ---------
-        src : `str` or :class:`geopandas.GeoDataFrame`
+        src : `str`, :class:`pathlib.Path` or :class:`geopandas.GeoDataFrame`
             The source vector data to tile. Must either be a path to a GeoJSON
             or a :class:`geopandas.GeoDataFrame`.
         tile_bounds : list
@@ -152,7 +152,7 @@ class VectorTiler(object):
 
         Arguments
         ---------
-        src : `str` or :class:`geopandas.GeoDataFrame`
+        src : `str`, :class:`pathlib.Path` or :class:`geopandas.GeoDataFrame`
             The source vector data to tile. Must either be a path to a GeoJSON
             or a :class:`geopandas.GeoDataFrame`.
         tile_bounds : list

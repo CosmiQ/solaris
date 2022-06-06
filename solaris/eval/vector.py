@@ -1,5 +1,6 @@
 import glob
 import os
+from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
@@ -49,9 +50,9 @@ def get_all_objects(
     unique classes present in each
     Arguments
     ---------
-        proposal_polygons_dir : str
+        proposal_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains any model proposal polygons
-        gt_polygons_dir : str
+        gt_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains the ground truth polygons
         prediction_cat_attrib : str
             The column or attribute within the predictions that specifies
@@ -71,23 +72,23 @@ def get_all_objects(
                 A union of the prop_objs and gt_objs lists
     """
     objs = []
-    os.chdir(proposal_polygons_dir)
+    os.chdir(str(proposal_polygons_dir))
     search = "*" + file_format
     proposal_geojsons = glob.glob(search)
     for geojson in tqdm(proposal_geojsons):
-        ground_truth_poly = os.path.join(gt_polygons_dir, geojson)
+        ground_truth_poly = Path(gt_polygons_dir) / geojson
         if os.path.exists(ground_truth_poly):
             ground_truth_gdf = gpd.read_file(ground_truth_poly)
             proposal_gdf = gpd.read_file(geojson)
             for index, row in proposal_gdf.iterrows():
                 objs.append(row[prediction_cat_attrib])
     prop_objs = list(set(objs))
-    os.chdir(gt_polygons_dir)
+    os.chdir(str(gt_polygons_dir))
     search = "*" + file_format
     objs = []
     gt_geojsons = glob.glob(search)
     for geojson in tqdm(gt_geojsons):
-        proposal_poly = os.path.join(proposal_polygons_dir, geojson)
+        proposal_poly = Path(proposal_polygons_dir) / geojson
         if os.path.exists(proposal_poly):
             proposal_gdf = gpd.read_file(proposal_poly)
             ground_truth_gdf = gpd.read_file(geojson)
@@ -114,9 +115,9 @@ def precision_calc(
     calculate metric for classes that exist in the ground truth.
     Arguments
     ---------
-        proposal_polygons_dir : str
+        proposal_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains any model proposal polygons
-        gt_polygons_dir : str
+        gt_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains the ground truth polygons
         prediction_cat_attrib : str
             The column or attribute within the predictions that specifies
@@ -148,7 +149,7 @@ def precision_calc(
             All confidences for each object for each class
     """
     ious = []
-    os.chdir(proposal_polygons_dir)
+    os.chdir(str(proposal_polygons_dir))
     search = "*" + file_format
     proposal_geojsons = glob.glob(search)
     iou_holder = []
@@ -166,7 +167,7 @@ def precision_calc(
         confidences.append([])
 
     for geojson in tqdm(proposal_geojsons):
-        ground_truth_poly = os.path.join(gt_polygons_dir, geojson)
+        ground_truth_poly = Path(gt_polygons_dir) / geojson
         if os.path.exists(ground_truth_poly):
             ground_truth_gdf = gpd.read_file(ground_truth_poly)
             proposal_gdf = gpd.read_file(geojson)
@@ -241,9 +242,9 @@ def recall_calc(
     calculate metric for classes that exist in the ground truth.
     Arguments
     ---------
-        proposal_polygons_dir : str
+        proposal_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains any model proposal polygons
-        gt_polygons_dir : str
+        gt_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains the ground truth polygons
         prediction_cat_attrib : str
             The column or attribute within the predictions that specifies
@@ -270,7 +271,7 @@ def recall_calc(
             The mean recall score of recall_by_class
     """
     ious = []
-    os.chdir(gt_polygons_dir)
+    os.chdir(str(gt_polygons_dir))
     search = "*" + file_format
     gt_geojsons = glob.glob(search)
     iou_holder = []
@@ -285,7 +286,7 @@ def recall_calc(
     for i in range(len(object_subset)):
         iou_holder.append([])
     for geojson in tqdm(gt_geojsons):
-        proposal_poly = os.path.join(proposal_polygons_dir, geojson)
+        proposal_poly = Path(proposal_polygons_dir) / geojson
         if os.path.exists(proposal_poly):
             proposal_gdf = gpd.read_file(proposal_poly)
             ground_truth_gdf = gpd.read_file(geojson)
@@ -353,9 +354,9 @@ def mF1(
     only calculate metric for classes that exist in the ground truth.
     Arguments
     ---------
-        proposal_polygons_dir : str
+        proposal_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains any model proposal polygons
-        gt_polygons_dir : str
+        gt_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains the ground truth polygons
         prediction_cat_attrib : str
             The column or attribute within the predictions that specifies
@@ -480,9 +481,9 @@ def mAP_score(
 
     Arguments
     ---------
-        proposal_polygons_dir : str
+        proposal_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains any model proposal polygons
-        gt_polygons_dir : str
+        gt_polygons_dir : `str` or :class:`pathlib.Path`
             The path that contains the ground truth polygons
         prediction_cat_attrib : str
             The column or attribute within the predictions that specifies

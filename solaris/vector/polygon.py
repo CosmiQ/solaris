@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -25,7 +26,7 @@ def convert_poly_coords(
     geom : :class:`shapely.geometry.shape` or str
         A :class:`shapely.geometry.shape`, or WKT string-formatted geometry
         object currently in pixel coordinates.
-    raster_src : str, optional
+    raster_src : str or :class:`pathlib.Path`, optional
         Path to a raster image with georeferencing data to apply to `geom`.
         Alternatively, an opened :class:`rasterio.Band` object or
         :class:`osgeo.gdal.Dataset` object can be provided. Required if not
@@ -164,7 +165,7 @@ def georegister_px_df(
     df : :class:`pandas.DataFrame`
         A :class:`pandas.DataFrame` with polygons in a column named
         ``"geometry"``.
-    im_path : str, optional
+    im_path : str or :class:`pathlib.Path`, optional
         A filename or :class:`rasterio.DatasetReader` object containing an
         image that has the same bounds as the pixel coordinates in `df`. If
         not provided, `affine_obj` and `crs` must both be provided.
@@ -223,11 +224,11 @@ def geojson_to_px_gdf(
 
     Arguments
     ---------
-    geojson : str
+    geojson : str or :class:`pathlib.Path`
         Path to a geojson. This function will also accept a
         :class:`pandas.DataFrame` or :class:`geopandas.GeoDataFrame` with a
         column named ``'geometry'`` in this argument.
-    im_path : str
+    im_path : str or :class:`pathlib.Path`
         Path to a georeferenced image (ie a GeoTIFF) that geolocates to the
         same geography as the `geojson`(s). This function will also accept a
         :class:`osgeo.gdal.Dataset` or :class:`rasterio.DatasetReader` with
@@ -299,7 +300,7 @@ def get_overlapping_subset(gdf, im=None, bbox=None, bbox_crs=None):
     ---------
     gdf : :class:`geopandas.GeoDataFrame`
         A :class:`geopandas.GeoDataFrame` instance or a path to a geojson.
-    im : :class:`rasterio.DatasetReader` or `str`, optional
+    im : :class:`rasterio.DatasetReader`, `str` or :class:`pathlib.Path`, optional
         An image object loaded with `rasterio` or a path to a georeferenced
         image (i.e. a GeoTIFF).
     bbox : `list` or :class:`shapely.geometry.Polygon`, optional
@@ -369,19 +370,19 @@ def gdf_to_yolo(
 
     Arguments
     ---------
-    geodataframe : str
+    geodataframe : str or :class:`pathlib.Path`
         Path to a :class:`geopandas.GeoDataFrame` with a column named
         ``'geometry'``.  Can be created from a geojson with labels for unique
         objects. Can be converted to this format with
         ``geodataframe=gpd.read_file("./xView_30.geojson")``.
-    im_path : str
+    image : str or :class:`pathlib.Path`
         Path to a georeferenced image (ie a GeoTIFF or png created with GDAL)
         that geolocates to the same geography as the `geojson`(s). If a
         directory, the bounds of each GeoTIFF will be loaded in and all
         overlapping geometries will be transformed. This function will also
         accept a :class:`osgeo.gdal.Dataset` or :class:`rasterio.DatasetReader`
         with georeferencing information in this argument.
-    output_dir : str
+    output_dir : str or :class:`pathlib.Path`
         Path to an output directory where all of the yolo readable text files
         will be placed.
     column : str, optional
@@ -419,9 +420,9 @@ def gdf_to_yolo(
     dw = 1.0 / im_size[0]
     dh = 1.0 / im_size[1]
     header = [column, "x", "y", "w", "h"]
-    if os.path.isdir(output_dir) is False:
-        os.mkdir(output_dir)
-    output = os.path.join(output_dir, image.split(".png")[0] + ".txt")
+    output_dir = Path(output_dir)
+    output_dir.mkdir(exist_ok=True)
+    output = output_dir / f"{Path(image).stem}.txt"
     gdf = geojson_to_px_gdf(geodataframe, image, precision=None)
     gdf["area"] = gdf["geometry"].area
     gdf["intersection"] = gdf["geometry"].intersection(pix_poly).area / gdf["area"]

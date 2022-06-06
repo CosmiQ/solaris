@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -29,7 +30,7 @@ class Evaluator:
 
     Arguments
     ---------
-    ground_truth_vector_file : str
+    ground_truth_vector_file : `str` or :class:`pathlib.Path`
         Path to .geojson file for ground truth.
 
     """
@@ -37,11 +38,11 @@ class Evaluator:
     def __init__(self, ground_truth_vector_file):
         # Load Ground Truth : Ground Truth should be in geojson or shape file
         try:
-            if ground_truth_vector_file.lower().endswith("json"):
+            if str(ground_truth_vector_file).lower().endswith("json"):
                 self.load_truth(ground_truth_vector_file)
-            elif ground_truth_vector_file.lower().endswith("csv"):
+            elif str(ground_truth_vector_file).lower().endswith("csv"):
                 self.load_truth(ground_truth_vector_file, truthCSV=True)
-            self.ground_truth_fname = ground_truth_vector_file
+            self.ground_truth_fname = str(ground_truth_vector_file)
         except AttributeError:  # handles passing gdf instead of path to file
             self.ground_truth_GDF = ground_truth_vector_file
             self.ground_truth_fname = "GeoDataFrame variable"
@@ -509,7 +510,7 @@ class Evaluator:
 
         Arguments
         ---------
-        proposal_vector_file : str
+        proposal_vector_file : `str` or :class:`pathlib.Path`
             Path to the file containing proposal vector objects. This can be
             a .geojson or a .csv.
         conf_field_list : list, optional
@@ -540,7 +541,7 @@ class Evaluator:
         """
 
         # Load Proposal if proposal_vector_file is a path to a file
-        if os.path.isfile(proposal_vector_file):
+        if Path(proposal_vector_file).is_file():
             # if it's a CSV format, first read into a pd df and then convert
             # to gpd gdf by loading in geometries using shapely
             if proposalCSV:
@@ -588,7 +589,7 @@ class Evaluator:
 
         Arguments
         ---------
-        ground_truth_vector_file : str
+        ground_truth_vector_file : `str` or :class:`pathlib.Path`
             Path to the ground truth vector file. Must be either .geojson or
             .csv format.
         truthCSV : bool, optional

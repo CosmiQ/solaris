@@ -84,13 +84,13 @@ def f1(
         ``1``, values < `prop_threshold` will be set to ``0``.
     show_plot : bool, optional
         Switch to plot the outputs. Defaults to ``False``.
-    im_file : str, optional
+    im_file : `str` or :class:`pathlib.Path`, optional
         Image file corresponding to the masks. Ignored if
         ``show_plot == False``. Defaults to ``''``.
     show_colorbar : bool, optional
         Switch to show colorbar. Ignored if ``show_plot == False``.
         Defaults to ``False``.
-    plot_file : str, optional
+    plot_file : `str` or :class:`pathlib.Path`, optional
         Output file if plotting. Ignored if ``show_plot == False``.
         Defaults to ``''``.
     dpi : int, optional
@@ -167,7 +167,7 @@ def f1(
         plt.suptitle(title, fontsize=fontsize)
 
         # ground truth
-        if len(im_file) > 0:
+        if len(str(im_file)) > 0:
             # raw image
             ax1.imshow(cv2.imread(im_file, 1))
             # ground truth
@@ -211,7 +211,7 @@ def f1(
         # fig.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.subplots_adjust(top=0.8)
 
-        if len(plot_file) > 0:
+        if len(str(plot_file)) > 0:
             plt.savefig(plot_file, dpi=dpi)
         print("Time to create and save F1 plots:", time.time() - t0, "seconds")
 
