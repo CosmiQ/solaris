@@ -6,6 +6,7 @@ import pandas as pd
 import shapely.wkt
 from fiona._err import CPLE_OpenFailedError
 from fiona.errors import DriverError
+from solaris.utils.core import _check_gdf_load
 from tqdm.auto import tqdm
 
 from . import iou
@@ -37,21 +38,22 @@ class Evaluator:
 
     def __init__(self, ground_truth_vector_file):
         # Load Ground Truth : Ground Truth should be in geojson or shape file
-        try:
-            if str(ground_truth_vector_file).lower().endswith("json"):
-                self.load_truth(ground_truth_vector_file)
-            elif str(ground_truth_vector_file).lower().endswith("csv"):
-                self.load_truth(ground_truth_vector_file, truthCSV=True)
+        if isinstance(ground_truth_vector_file, (str, Path)):
             self.ground_truth_fname = str(ground_truth_vector_file)
-        except AttributeError:  # handles passing gdf instead of path to file
-            self.ground_truth_GDF = ground_truth_vector_file
+        else:
             self.ground_truth_fname = "GeoDataFrame variable"
+
+        if isinstance(ground_truth_vector_file, (str, Path)) and ground_truth_vector_file.lower().endswith("csv"):
+            self.load_truth(ground_truth_vector_file, truthCSV=True)
+        else:
+            self.load_truth(ground_truth_vector_file)
         self.ground_truth_sindex = self.ground_truth_GDF.sindex  # get sindex
         # create deep copy of ground truth file for calculations
         self.ground_truth_GDF_Edit = self.ground_truth_GDF.copy(deep=True)
         self.proposal_GDF = gpd.GeoDataFrame([])  # initialize proposal GDF
 
     def __repr__(self):
+
         return "Evaluator {}".format(os.path.split(self.ground_truth_fname)[-1])
 
     def get_iou_by_building(self):
@@ -618,12 +620,7 @@ class Evaluator:
                 ],
             )
         else:
-            try:
-                self.ground_truth_GDF = gpd.read_file(ground_truth_vector_file)
-            except (CPLE_OpenFailedError, DriverError):  # empty geojson
-                self.ground_truth_GDF = gpd.GeoDataFrame(
-                    {"sindex": [], "condition": [], "geometry": []}
-                )
+            self.ground_truth_GDF = _check_gdf_load(ground_truth_vector_file)
         # force calculation of spatialindex
         self.ground_truth_sindex = self.ground_truth_GDF.sindex
         # create deep copy of ground truth file for calculations

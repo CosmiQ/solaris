@@ -69,7 +69,9 @@ def _check_gdf_load(gdf):
                 " path or it isn't a valid vector file. Returning an empty"
                 " GeoDataFrame."
             )
-            return gpd.GeoDataFrame()
+            return gpd.GeoDataFrame(
+                    {"sindex": [], "condition": [], "geometry": []}
+                )
     elif isinstance(gdf, gpd.GeoDataFrame):
         return gdf
     else:
