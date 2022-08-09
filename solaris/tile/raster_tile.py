@@ -511,8 +511,8 @@ class RasterTiler(object):
         if self.proj_unit not in ["meter", "metre"]:
             dest_fname = "{}_{}_{}.tif".format(
                 dest_fname_root,
-                np.round(profile["transform"][2], 3),
-                np.round(profile["transform"][5], 3),
+                np.round(profile["transform"][2], 6),
+                np.round(profile["transform"][5], 6),
             )
         else:
             dest_fname = "{}_{}_{}.tif".format(
@@ -537,7 +537,6 @@ class RasterTiler(object):
                 dest.write(mask, profile["count"] + 1)
 
             dest.close()
-
         return dest_path
 
         # if self.cog_output:

@@ -1,7 +1,6 @@
 name: Test Python package
 
-on:
-  - push
+on: [push, pull_request]
 
 jobs:
   test:
@@ -50,4 +49,3 @@ jobs:
         run: tox -e format
       - name: Test with tox
         run: tox -e test
-
