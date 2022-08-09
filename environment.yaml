@@ -9,7 +9,7 @@ dependencies:
   - geopandas>=0.7.0
   - matplotlib>=3.1.2
   - numpy>=1.17.3
-  - opencv>=4.5.5
+  - opencv-python>=4.1
   - pandas>=0.25.3
   - pyproj>=2.1
   - PyYAML>=5.4
