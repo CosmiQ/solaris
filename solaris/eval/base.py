@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
 import shapely.wkt
 from fiona._err import CPLE_OpenFailedError
 from fiona.errors import DriverError
+from solaris.utils.core import _check_gdf_load
 from tqdm.auto import tqdm
 
 from . import iou
@@ -29,28 +31,29 @@ class Evaluator:
 
     Arguments
     ---------
-    ground_truth_vector_file : str
+    ground_truth_vector_file : `str` or :class:`pathlib.Path`
         Path to .geojson file for ground truth.
 
     """
 
     def __init__(self, ground_truth_vector_file):
         # Load Ground Truth : Ground Truth should be in geojson or shape file
-        try:
-            if ground_truth_vector_file.lower().endswith("json"):
-                self.load_truth(ground_truth_vector_file)
-            elif ground_truth_vector_file.lower().endswith("csv"):
-                self.load_truth(ground_truth_vector_file, truthCSV=True)
-            self.ground_truth_fname = ground_truth_vector_file
-        except AttributeError:  # handles passing gdf instead of path to file
-            self.ground_truth_GDF = ground_truth_vector_file
+        if isinstance(ground_truth_vector_file, (str, Path)):
+            self.ground_truth_fname = str(ground_truth_vector_file)
+        else:
             self.ground_truth_fname = "GeoDataFrame variable"
+
+        if isinstance(ground_truth_vector_file, (str, Path)) and ground_truth_vector_file.lower().endswith("csv"):
+            self.load_truth(ground_truth_vector_file, truthCSV=True)
+        else:
+            self.load_truth(ground_truth_vector_file)
         self.ground_truth_sindex = self.ground_truth_GDF.sindex  # get sindex
         # create deep copy of ground truth file for calculations
         self.ground_truth_GDF_Edit = self.ground_truth_GDF.copy(deep=True)
         self.proposal_GDF = gpd.GeoDataFrame([])  # initialize proposal GDF
 
     def __repr__(self):
+
         return "Evaluator {}".format(os.path.split(self.ground_truth_fname)[-1])
 
     def get_iou_by_building(self):
@@ -509,7 +512,7 @@ class Evaluator:
 
         Arguments
         ---------
-        proposal_vector_file : str
+        proposal_vector_file : `str` or :class:`pathlib.Path`
             Path to the file containing proposal vector objects. This can be
             a .geojson or a .csv.
         conf_field_list : list, optional
@@ -540,7 +543,7 @@ class Evaluator:
         """
 
         # Load Proposal if proposal_vector_file is a path to a file
-        if os.path.isfile(proposal_vector_file):
+        if Path(proposal_vector_file).is_file():
             # if it's a CSV format, first read into a pd df and then convert
             # to gpd gdf by loading in geometries using shapely
             if proposalCSV:
@@ -588,7 +591,7 @@ class Evaluator:
 
         Arguments
         ---------
-        ground_truth_vector_file : str
+        ground_truth_vector_file : `str` or :class:`pathlib.Path`
             Path to the ground truth vector file. Must be either .geojson or
             .csv format.
         truthCSV : bool, optional
@@ -617,12 +620,7 @@ class Evaluator:
                 ],
             )
         else:
-            try:
-                self.ground_truth_GDF = gpd.read_file(ground_truth_vector_file)
-            except (CPLE_OpenFailedError, DriverError):  # empty geojson
-                self.ground_truth_GDF = gpd.GeoDataFrame(
-                    {"sindex": [], "condition": [], "geometry": []}
-                )
+            self.ground_truth_GDF = _check_gdf_load(ground_truth_vector_file)
         # force calculation of spatialindex
         self.ground_truth_sindex = self.ground_truth_GDF.sindex
         # create deep copy of ground truth file for calculations

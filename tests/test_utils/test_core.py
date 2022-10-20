@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
@@ -26,6 +27,13 @@ class TestLoadCheckers(object):
 
         assert truth_gdf.equals(test_gdf)
 
+    def test_unloaded_geojson_from_pathlib(self):
+        geojson_path = Path(data_dir) / "sample.geojson"
+        truth_gdf = gpd.read_file(geojson_path)
+        test_gdf = _check_gdf_load(geojson_path)
+
+        assert truth_gdf.equals(test_gdf)
+
     def test_loaded_geojson(self):
         geojson_path = os.path.join(data_dir, "sample.geojson")
         truth_gdf = gpd.read_file(geojson_path)
@@ -40,6 +48,13 @@ class TestLoadCheckers(object):
 
         assert truth_df.equals(test_df)
 
+    def test_unloaded_df_from_pathlib(self):
+        csv_path = Path(data_dir) / "sample.csv"
+        truth_df = pd.read_csv(csv_path)
+        test_df = _check_df_load(csv_path)
+
+        assert truth_df.equals(test_df)
+
     def test_loaded_df(self):
         csv_path = os.path.join(data_dir, "sample.csv")
         truth_df = pd.read_csv(csv_path)
@@ -49,6 +64,17 @@ class TestLoadCheckers(object):
 
     def test_unloaded_image(self):
         im_path = os.path.join(data_dir, "sample_geotiff.tif")
+        truth_im = rasterio.open(im_path)
+        test_im = _check_rasterio_im_load(im_path)
+
+        assert truth_im.profile == test_im.profile
+        assert np.array_equal(truth_im.read(1), test_im.read(1))
+
+        truth_im.close()  # need to close the rasterio datasetreader objects
+        test_im.close()
+
+    def test_unloaded_image_from_pathlib(self):
+        im_path = Path(data_dir) / "sample_geotiff.tif"
         truth_im = rasterio.open(im_path)
         test_im = _check_rasterio_im_load(im_path)
 

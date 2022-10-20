@@ -20,7 +20,7 @@ def imread(
 
     Arguments
     ---------
-    path : str
+    path : `str`, :class:`pathlib.Path` or :class:`Rasterio.DatasetReader`
         Path to the image file to load.
     make_8bit : bool, optional
         Should the image be converted to an 8-bit format? Defaults to False.

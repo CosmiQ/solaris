@@ -62,11 +62,11 @@ def df_to_px_mask(
             maximum spacing between polygons to be labeled.
 
         Each channel correspond to its own `shape` plane in the output.
-    out_file : str, optional
+    out_file : str or :class:`pathlib.Path`, optional
         Path to an image file to save the output to. Must be compatible with
         :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
         provided (for metadata purposes).
-    reference_im : :class:`rasterio.DatasetReader` or `str`, optional
+    reference_im : `str`, :class:`pathlib.Path` or :class:`rasterio.DatasetReader`, optional
         An image to extract necessary coordinate information from: the
         affine transformation matrix, the image extent, etc. If provided,
         `affine_obj` and `shape` are ignored.
@@ -189,7 +189,7 @@ def footprint_mask(
         Path to an image file to save the output to. Must be compatible with
         :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
         provided (for metadata purposes).
-    reference_im : :class:`rasterio.DatasetReader` or `str`, optional
+    reference_im : `str`, :class:`pathlib.Path` or :class:`rasterio.DatasetReader`, optional
         An image to extract necessary coordinate information from: the
         affine transformation matrix, the image extent, etc. If provided,
         `affine_obj` and `shape` are ignored.
@@ -307,7 +307,7 @@ def boundary_mask(
         Path to an image file to save the output to. Must be compatible with
         :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
         provided (for metadata purposes).
-    reference_im : :class:`rasterio.DatasetReader` or `str`, optional
+    reference_im : `str`, :class:`pathlib.Path` or :class:`rasterio.DatasetReader`, optional
         An image to extract necessary coordinate information from: the
         affine transformation matrix, the image extent, etc. If provided,
         `affine_obj` and `shape` are ignored
@@ -403,7 +403,7 @@ def contact_mask(
         Path to an image file to save the output to. Must be compatible with
         :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
         provided (for metadata purposes).
-    reference_im : :class:`rasterio.DatasetReader` or `str`, optional
+    reference_im : `str`, :class:`pathlib.Path` or :class:`rasterio.DatasetReader`, optional
         An image to extract necessary coordinate information from: the
         affine transformation matrix, the image extent, etc. If provided,
         `affine_obj` and `shape` are ignored.
@@ -547,7 +547,7 @@ def road_mask(
         the function will attempt to transform to the relevant CRS using
         ``df.to_crs()`` (if `df` is a :class:`geopandas.GeoDataFrame`) or
         using the data provided in `reference_im` (if not).
-    out_file : str, optional
+    out_file : str or :class:`pathlib.Path`, optional
         Path to an image file to save the output to. Must be compatible with
         :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
         provided (for metadata purposes).
@@ -580,7 +580,7 @@ def road_mask(
     burn_field : str, optional
         Name of a column in `df` that provides values for `burn_value` for each
         independent object. If provided, `burn_value` is ignored.
-    min_background_val : int
+    min_background_value : int
         Minimum value for mask background. Optional, ignore if ``None``.
         Defaults to ``None``.
     verbose : str, optional
@@ -670,7 +670,7 @@ def buffer_df_geoms(
     meters : bool, optional
         Should buffers be in pixel units (default) or metric units (if `meters`
         is ``True``)?
-    reference_im : `str` or :class:`rasterio.DatasetReader`, optional
+    reference_im : `str`, :class:`pathlib.Path` or :class:`rasterio.DatasetReader`, optional
         The path to a reference image covering the same geographic extent as
         the area labeled in `df`. Provided for georeferencing of pixel
         coordinate geometries in `df` or conversion of georeferenced geometries
@@ -830,11 +830,11 @@ def mask_to_poly_geojson(
 
         If not provided, no scaling will be performend and channels will be
         summed.
-    reference_im : str, optional
+    reference_im : str or :class:`pathlib.Path`, optional
         The path to a reference geotiff to use for georeferencing the polygons
         in the mask. Required if saving to a GeoJSON (see the ``output_type``
         argument), otherwise only required if ``do_transform=True``.
-    output_path : str, optional
+    output_path : str or :class:`pathlib.Path`, optional
         Path to save the output file to. If not provided, no file is saved.
     output_type : ``'csv'`` or ``'geojson'``, optional
         If ``output_path`` is provided, this argument defines what type of file
@@ -953,7 +953,7 @@ def instance_mask(
         with a column containing geometries (identified by `geom_col`). If the
         geometries in `df` are not in pixel coordinates, then `affine` or
         `reference_im` must be passed to provide the transformation to convert.
-    out_file : str, optional
+    out_file : str or :class:`pathlib.Path`, optional
         Path to an image file to save the output to. Must be compatible with
         :class:`rasterio.DatasetReader`. If provided, a `reference_im` must be
         provided (for metadata purposes).

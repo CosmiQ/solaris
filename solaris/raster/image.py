@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import rasterio
 
@@ -9,7 +11,7 @@ def get_geo_transform(raster_src):
 
     Arguments
     ---------
-    raster_src : str, :class:`rasterio.DatasetReader`, or `osgeo.gdal.Dataset`
+    raster_src : str, :class:`pathlib.Path`, :class:`rasterio.DatasetReader`, or `osgeo.gdal.Dataset`
         Path to a raster image with georeferencing data to apply to `geom`.
         Alternatively, an opened :class:`rasterio.Band` object or
         :class:`osgeo.gdal.Dataset` object can be provided. Required if not
@@ -21,7 +23,7 @@ def get_geo_transform(raster_src):
         An affine transformation object to the image's location in its CRS.
     """
 
-    if isinstance(raster_src, str):
+    if isinstance(raster_src, (str, Path)):
         affine_obj = rasterio.open(raster_src).transform
     elif isinstance(raster_src, rasterio.DatasetReader):
         affine_obj = raster_src.transform
@@ -175,7 +177,7 @@ def stitch_images(
 #     ---------
 #     array  : :class:`numpy.ndarray`
 #         A numpy array with a the shape: [Channels, X, Y] or [X, Y]
-#     out_name : str
+#     out_name : str or :class:`pathlib.Path`
 #         The output name and path for your image
 #     proj : :class:`gdal.projection`
 #         A projection, can be extracted from an image opened with gdal with
@@ -200,7 +202,7 @@ def stitch_images(
 #     driver = gdal.GetDriverByName("GTiff")
 #     if len(array.shape) == 2:
 #         array = array[np.newaxis, ...]
-#     os.makedirs(os.path.dirname(os.path.abspath(out_name)), exist_ok=True)
+#     Path(out_name).resolve().parent.mkdir(exist_ok=True)
 #     dataset = driver.Create(out_name, array.shape[2], array.shape[1], array.shape[0], out_format)
 #     if verbose is True:
 #         print("Array Shape, should be [Channels, X, Y] or [X,Y]:", array.shape)
