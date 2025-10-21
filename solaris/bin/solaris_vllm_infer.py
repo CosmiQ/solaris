@@ -1,32 +1,42 @@
 """
-CLI entry point for vLLM multimodal inference in Solaris.
+CLI entry point for LiteLLM multimodal inference in Solaris.
 
 This command enables vision-language model inference on overhead imagery
-using configuration files.
+using US-based models (Google Gemini) and NVIDIA models via LiteLLM.
 """
 
 import argparse
 import os
 import sys
 from ..utils.config import parse
-from ..nets.vllm_infer import VLLMInferer
+from ..nets.litellm_infer import MultimodalInferer
 
 
 def main():
-    """Main entry point for vLLM inference CLI."""
+    """Main entry point for LiteLLM multimodal inference CLI."""
     parser = argparse.ArgumentParser(
-        description='Run vLLM multimodal inference on overhead imagery',
+        description='Run LiteLLM multimodal inference on overhead imagery using Gemini and NVIDIA models',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Basic inference with config file
-  solaris_vllm_infer --config vllm_config.yml
+  # Basic inference with Gemini
+  solaris_vllm_infer --config litellm_config.yml
 
   # Inference with custom prompt
-  solaris_vllm_infer --config vllm_config.yml --prompt "What buildings are visible in this image?"
+  solaris_vllm_infer --config litellm_config.yml --prompt "What buildings are visible in this image?"
 
   # Quick inference on a single image
-  solaris_vllm_infer --config vllm_config.yml --image path/to/image.tif
+  solaris_vllm_infer --config litellm_config.yml --image path/to/image.tif
+
+Supported Models:
+  - gemini/gemini-1.5-pro (Google Gemini Pro with vision)
+  - gemini/gemini-1.5-flash (Google Gemini Flash - faster)
+  - gemini/gemini-pro-vision (Google Gemini Vision)
+  - NVIDIA models via nvidia/* prefix
+
+Environment Variables:
+  GEMINI_API_KEY - Google Gemini API key (get from https://makersuite.google.com/app/apikey)
+  NVIDIA_API_KEY - NVIDIA API key (if using NVIDIA models)
 
 For more information, see the documentation at:
 https://github.com/CosmiQ/solaris
@@ -38,7 +48,7 @@ https://github.com/CosmiQ/solaris
         type=str,
         required=True,
         help="Full path to a YAML-formatted config file specifying "
-             "parameters for vLLM multimodal inference."
+             "parameters for LiteLLM multimodal inference."
     )
 
     parser.add_argument(
@@ -111,22 +121,22 @@ https://github.com/CosmiQ/solaris
 
     # Override output directory if provided
     if args.output:
-        if 'vllm_inference' not in config:
-            config['vllm_inference'] = {}
-        config['vllm_inference']['output_dir'] = args.output
+        if 'litellm_inference' not in config:
+            config['litellm_inference'] = {}
+        config['litellm_inference']['output_dir'] = args.output
 
     # Override prompt if provided
     if args.prompt:
-        if 'vllm_inference' not in config:
-            config['vllm_inference'] = {}
-        config['vllm_inference']['prompt_template'] = args.prompt
+        if 'litellm_inference' not in config:
+            config['litellm_inference'] = {}
+        config['litellm_inference']['prompt_template'] = args.prompt
 
     # Run inference
     try:
         if args.verbose:
-            print("Initializing vLLM model...")
+            print("Initializing LiteLLM multimodal model...")
 
-        inferer = VLLMInferer(config)
+        inferer = MultimodalInferer(config)
 
         if args.verbose:
             print("Running inference...")

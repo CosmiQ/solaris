@@ -1,0 +1,45 @@
+# Example LiteLLM configuration for NVIDIA models
+# NVIDIA provides various vision-language models through their API catalog
+
+# Model configuration - Use NVIDIA model
+# Note: Check NVIDIA's API catalog for available vision models
+# Common options might include:
+# - 'nvidia/llama-3.2-neva-22b' (hypothetical - check current catalog)
+# - Other NVIDIA multimodal models
+model_name: 'nvidia/vision-model-name'  # Replace with actual NVIDIA model name
+
+# API key (can also set NVIDIA_API_KEY environment variable)
+# Get your API key from: https://build.nvidia.com/
+# api_key: 'your-nvidia-api-key-here'
+
+# Batch size
+batch_size: 1
+
+# Input data
+inference_data_csv: 'images.csv'
+
+# LiteLLM inference configuration
+litellm_inference:
+  output_dir: './nvidia_outputs'
+
+  # Prompt template for NVIDIA model
+  prompt_template: |
+    Analyze this satellite or aerial image. Describe the key features including:
+    - Terrain type and land coverage
+    - Man-made structures and infrastructure
+    - Vegetation and natural features
+    - Any notable patterns or characteristics
+
+  # Sampling parameters
+  temperature: 0.7
+  max_tokens: 512
+  top_p: 0.9
+
+verbose: false
+
+# Example usage:
+# export NVIDIA_API_KEY='your-api-key-here'
+# solaris_vllm_infer --config litellm_config_nvidia.yml
+
+# Note: NVIDIA's vision model availability may vary.
+# Check https://build.nvidia.com/ for current offerings and model names.

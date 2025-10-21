@@ -1,12 +1,10 @@
-name: solaris-vllm
+name: solaris-litellm
 channels:
-  - pytorch
-  - nvidia
   - conda-forge
   - defaults
 dependencies:
-  # Python 3.8+ required for vLLM
-  - python>=3.8
+  # Python 3.7+ compatible
+  - python>=3.7
   - pip>=21.0
 
   # Core geospatial dependencies
@@ -28,12 +26,6 @@ dependencies:
   - scipy>=1.7.0
   - rtree>=0.9.3
 
-  # Deep learning (PyTorch 2.0+ for vLLM)
-  - pytorch>=2.0.0
-  - torchvision>=0.15.0
-  - pytorch-cuda=11.8  # or 12.1 depending on your system
-  - cudatoolkit>=11.8
-
   # Utilities
   - pyyaml>=5.4
   - requests>=2.25.0
@@ -44,9 +36,9 @@ dependencies:
   - pip:
     # Image augmentation
     - albumentations>=1.0.0
-    # vLLM and dependencies
-    - vllm>=0.3.0
+    # Image processing
     - Pillow>=9.0.0
-    # Optional: for some vision-language models
-    - transformers>=4.36.0
-    - accelerate>=0.20.0
+    # LiteLLM for multimodal models (Gemini, NVIDIA, etc.)
+    - litellm>=1.0.0
+    # Google Gemini support
+    - google-generativeai>=0.3.0

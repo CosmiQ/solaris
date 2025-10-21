@@ -1,0 +1,45 @@
+# Example LiteLLM configuration for Google Gemini 1.5 Flash
+# Gemini is a US-based vision-language model by Google with excellent multimodal capabilities
+
+# Model configuration - Use Google Gemini
+model_name: 'gemini/gemini-1.5-flash'  # Fast, efficient model
+# Alternative models:
+# - 'gemini/gemini-1.5-pro' (More capable, slower)
+# - 'gemini/gemini-pro-vision' (Earlier version)
+
+# API key (can also set GEMINI_API_KEY environment variable)
+# Get your API key from: https://makersuite.google.com/app/apikey
+# api_key: 'your-google-api-key-here'
+
+# Batch size for inference (Note: API calls are typically sequential)
+batch_size: 1
+
+# Input data
+inference_data_csv: 'images.csv'  # CSV with 'image' column containing image paths
+
+# LiteLLM inference configuration
+litellm_inference:
+  # Output directory for results
+  output_dir: './gemini_outputs'
+
+  # Prompt template for the model
+  # This prompt will be used for all images unless overridden
+  prompt_template: |
+    Analyze this overhead satellite or aerial image. Provide a detailed description including:
+    1. The type of terrain or landscape visible
+    2. Any buildings, roads, or infrastructure
+    3. Vegetation and land use patterns
+    4. Notable features or points of interest
+    5. Approximate scale and coverage area if identifiable
+
+  # Sampling parameters for text generation
+  temperature: 0.7  # Higher = more creative, lower = more deterministic
+  max_tokens: 512   # Maximum length of generated response
+  top_p: 0.9        # Nucleus sampling parameter
+
+# Enable verbose logging (optional)
+verbose: false
+
+# Example usage:
+# export GEMINI_API_KEY='your-api-key-here'
+# solaris_vllm_infer --config litellm_config_gemini.yml
