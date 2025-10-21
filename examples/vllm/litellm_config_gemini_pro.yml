@@ -1,0 +1,64 @@
+# Example LiteLLM configuration for Google Gemini 1.5 Pro
+# Gemini Pro offers enhanced capabilities for complex analysis
+
+# Model configuration - Use Google Gemini Pro
+model_name: 'gemini/gemini-1.5-pro'  # Most capable Gemini model
+
+# API key (can also set GEMINI_API_KEY environment variable)
+# Get your API key from: https://makersuite.google.com/app/apikey
+# api_key: 'your-google-api-key-here'
+
+# Batch size
+batch_size: 1
+
+# Input data
+inference_data_csv: 'satellite_images.csv'
+
+# LiteLLM inference configuration
+litellm_inference:
+  output_dir: './gemini_pro_analysis'
+
+  # Task-specific prompt for detailed land use classification
+  prompt_template: |
+    You are an expert in satellite image analysis and geospatial intelligence.
+
+    Analyze this overhead image and provide:
+
+    1. LAND USE CLASSIFICATION:
+       - Primary land use category (Urban, Agricultural, Forest, Water, Industrial, etc.)
+       - Secondary uses if mixed-use area
+       - Estimated percentage breakdown if multiple uses
+
+    2. INFRASTRUCTURE ANALYSIS:
+       - Roads and transportation networks
+       - Buildings (count, type, density)
+       - Utilities and industrial facilities
+
+    3. NATURAL FEATURES:
+       - Vegetation type and density
+       - Water bodies (rivers, lakes, reservoirs)
+       - Topographical characteristics
+
+    4. DEVELOPMENT PATTERNS:
+       - Urban sprawl or planned development
+       - Agricultural field patterns
+       - Conservation or protected areas
+
+    5. NOTABLE OBSERVATIONS:
+       - Any unique or unusual features
+       - Signs of recent development or change
+       - Environmental indicators
+
+    Provide a comprehensive but concise analysis.
+
+  # Sampling parameters optimized for detailed, factual responses
+  temperature: 0.4   # Lower for more consistent, factual outputs
+  max_tokens: 1024   # Longer responses for detailed analysis
+  top_p: 0.95
+
+# Enable verbose logging
+verbose: true
+
+# Example usage:
+# export GEMINI_API_KEY='your-api-key-here'
+# solaris_vllm_infer --config litellm_config_gemini_pro.yml --verbose

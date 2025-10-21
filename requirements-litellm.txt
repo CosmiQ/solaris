@@ -1,0 +1,40 @@
+# LiteLLM-compatible requirements for Solaris multimodal inference
+# Works with Python 3.7+
+
+# Core dependencies
+pip>=21.0
+affine>=2.3.0
+albumentations>=1.0.0
+fiona>=1.8.0
+gdal>=3.0.2
+geopandas>=0.10.0
+matplotlib>=3.1.2
+networkx>=2.4
+numpy>=1.20.0
+opencv-python>=4.5.0
+pandas>=1.3.0
+pyproj>=3.0.0
+pyyaml>=5.4
+rasterio>=1.2.0
+requests>=2.25.0
+rtree>=0.9.3
+scikit-image>=0.18.0
+scipy>=1.7.0
+shapely>=1.8.0
+tqdm>=4.60.0
+urllib3>=1.26.0
+Pillow>=9.0.0
+
+# Deep Learning (optional, lighter weight than vLLM)
+torch>=1.13.0
+torchvision>=0.14.0
+
+# LiteLLM for multimodal vision-language models
+litellm>=1.0.0
+
+# For Google Gemini support
+google-generativeai>=0.3.0
+
+# Optional: For enhanced functionality
+# anthropic>=0.7.0    # For Claude with vision
+# openai>=1.0.0       # For GPT-4 Vision
