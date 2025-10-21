@@ -1,0 +1,46 @@
+# Example vLLM configuration with custom settings
+# This shows various options for different use cases
+
+# Model configuration - can be any vLLM-compatible vision-language model
+model_name: 'llava-hf/llava-1.5-13b-hf'  # Larger model for better quality
+
+# Batch processing
+batch_size: 2  # Process 2 images at a time
+
+# Multi-GPU configuration
+tensor_parallel_size: 2  # Use 2 GPUs with tensor parallelism
+
+# Memory management
+gpu_memory_utilization: 0.85  # Leave some memory for other processes
+
+# Input data
+inference_data_csv: 'satellite_images.csv'
+
+# vLLM inference configuration
+vllm_inference:
+  output_dir: './analysis_results'
+
+  # Task-specific prompt for land use classification
+  prompt_template: |
+    You are an expert in satellite image analysis.
+    Classify the land use in this image into one or more of these categories:
+    - Urban/Built-up
+    - Agricultural/Cropland
+    - Forest/Vegetation
+    - Water bodies
+    - Bare land/Desert
+    - Industrial
+    - Residential
+
+    Provide percentages for each category if possible, and describe any notable features.
+
+  # Sampling parameters optimized for factual responses
+  temperature: 0.3   # Lower temperature for more consistent outputs
+  max_tokens: 256    # Shorter responses
+  top_p: 0.95
+  top_k: 50
+
+# Alternative models you can try:
+# - 'llava-hf/llava-v1.6-mistral-7b-hf'  # LLaVA 1.6 with Mistral base
+# - 'Qwen/Qwen-VL-Chat'                  # Qwen Vision-Language model
+# - Any other vLLM-compatible vision model

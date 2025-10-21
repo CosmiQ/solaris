@@ -22,3 +22,9 @@ torchvision>=0.5.0
 tqdm>=4.40.0
 urllib3>=1.25.7
 tensorflow==1.13.1
+
+# vLLM multimodal support (optional)
+# NOTE: vLLM requires Python 3.8+ and PyTorch 1.13+
+# For vLLM support, use requirements-vllm.txt or environment-vllm.yml
+# vllm>=0.3.0
+# Pillow>=9.0.0
